@@ -11,6 +11,7 @@ import { subscriptionsRouter } from './routers/subscriptions'
 import { usersRouter } from './routers/users'
 import { publicRouter } from './routers/public'
 import { healthRouter } from './routers/health'
+import { auditRouter } from './routers/audit'
 
 export const appRouter = router({
   auth: authRouter,              // AccessManager (repository pattern)
@@ -21,6 +22,7 @@ export const appRouter = router({
   users: usersRouter,            // ManageSecurityPermissions boundary
   public: publicRouter,          // ProvidePublicAPI boundary (abstraction: filtered data)
   health: healthRouter,          // MonitorSCEMASPlatformStatus boundary
+  audit: auditRouter,            // AlertAndAuditLogDB viewer
 })
 
 export type AppRouter = typeof appRouter

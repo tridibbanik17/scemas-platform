@@ -9,6 +9,7 @@
     "./client": "./src/client.ts"
   },
   "scripts": {
+    "ensure-users": "bun run scripts/ensure-users.ts",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
     "studio": "drizzle-kit studio",

@@ -99,9 +99,24 @@ scemas-dev() {
   sleep 2
   (cd "$SCEMAS_ROOT" && bun db:push)
   echo "[scemas] starting rust engine + dashboard"
-  (cd "$SCEMAS_ROOT" && cargo run -p scemas-server &)
-  (cd "$SCEMAS_ROOT" && bun --filter @scemas/dashboard dev &)
-  echo "[scemas] engine on :3001, dashboard on :3000"
+  echo "[scemas] engine on :3001, dashboard on :3000 (ctrl+c to stop all)"
+
+  cleanup() {
+    echo ""
+    echo "[scemas] shutting down..."
+    kill $ENGINE_PID $DASH_PID 2>/dev/null
+    wait $ENGINE_PID $DASH_PID 2>/dev/null
+    echo "[scemas] stopped"
+  }
+  trap cleanup INT TERM
+
+  cd "$SCEMAS_ROOT"
+  cargo run -p scemas-server &
+  ENGINE_PID=$!
+  bun --filter @scemas/dashboard dev &
+  DASH_PID=$!
+
+  wait $ENGINE_PID $DASH_PID
 }
 
 scemas-seed() {

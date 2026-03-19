@@ -23,5 +23,10 @@
   { "sensor_id": "temp-mc-001", "device_type": "temperature", "zone": "mcmaster", "lat": 43.2610, "lng": -79.9190 },
   { "sensor_id": "hum-mc-001", "device_type": "humidity", "zone": "mcmaster", "lat": 43.2605, "lng": -79.9195 },
   { "sensor_id": "aqi-mc-001", "device_type": "air_quality", "zone": "mcmaster", "lat": 43.2615, "lng": -79.9185 },
-  { "sensor_id": "noise-mc-001", "device_type": "noise_level", "zone": "mcmaster", "lat": 43.2600, "lng": -79.9200 }
+  { "sensor_id": "noise-mc-001", "device_type": "noise_level", "zone": "mcmaster", "lat": 43.2600, "lng": -79.9200 },
+
+  { "sensor_id": "temp-sc-001", "device_type": "temperature", "zone": "stoney_creek", "lat": 43.2185, "lng": -79.7590 },
+  { "sensor_id": "hum-sc-001", "device_type": "humidity", "zone": "stoney_creek", "lat": 43.2190, "lng": -79.7580 },
+  { "sensor_id": "aqi-sc-001", "device_type": "air_quality", "zone": "stoney_creek", "lat": 43.2180, "lng": -79.7600 },
+  { "sensor_id": "noise-sc-001", "device_type": "noise_level", "zone": "stoney_creek", "lat": 43.2195, "lng": -79.7595 }
 ]

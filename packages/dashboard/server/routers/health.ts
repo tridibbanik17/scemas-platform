@@ -1,14 +1,16 @@
 // MonitorSCEMASPlatformStatus boundary
 
-import { router, protectedProcedure } from '../trpc'
+import { router, adminProcedure } from '../trpc'
 import { platformStatus } from '@scemas/db/schema'
 import { desc } from 'drizzle-orm'
 
-const RUST_URL = process.env.INTERNAL_RUST_URL ?? 'http://localhost:3001'
+import { getInternalRustUrl } from '../env'
+
+const RUST_URL = getInternalRustUrl()
 
 export const healthRouter = router({
   // platform status from database
-  status: protectedProcedure
+  status: adminProcedure
     .query(async ({ ctx }) => {
       return ctx.db.query.platformStatus.findMany({
         orderBy: [desc(platformStatus.time)],
@@ -16,8 +18,17 @@ export const healthRouter = router({
       })
     }),
 
+  // platform status time series (more rows for charting)
+  statusTimeSeries: adminProcedure
+    .query(async ({ ctx }) => {
+      return ctx.db.query.platformStatus.findMany({
+        orderBy: [desc(platformStatus.time)],
+        limit: 50,
+      })
+    }),
+
   // ingestion health from rust engine
-  ingestion: protectedProcedure
+  ingestion: adminProcedure
     .query(async () => {
       try {
         const res = await fetch(`${RUST_URL}/internal/health`)

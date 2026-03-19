@@ -60,11 +60,11 @@ scemas-platform/
 
 ## getting started
 
-### with nix
+### with nix (recommended)
 
 ```sh
 nix develop       # rust, bun, node, postgres, shell helpers, first-time setup
-scemas-dev        # starts db + engine + dashboard
+scemas-dev        # starts db + schema + default accounts + engine + dashboard
 ```
 
 ### without nix
@@ -73,10 +73,39 @@ install rust (>= 1.85), bun (>= 1.0), node (>= 22), and docker manually.
 
 ```sh
 source scripts/start-scemas.sh   # shell helpers + first-time setup
-scemas-dev                       # starts db (docker) + engine + dashboard
+scemas-dev                       # starts db (docker) + schema + accounts + engine + dashboard
+```
+
+or step by step:
+
+```sh
+docker-compose up -d                    # postgres
+bun install && bun db:push              # deps + schema + default accounts
+cargo run -p scemas-server &            # rust engine on :3001
+bun --filter @scemas/dashboard dev      # next.js on :3000
 ```
 
 first-time setup (`.env` copy, `bun install`) runs automatically on first source and is tracked via a `.derived` sentinel file. delete `.derived` to re-run it.
+
+### default accounts
+
+`bun db:push` runs `@scemas/db`'s `ensure-users` script. it creates one account per role, skips any that already exist, and uses `1234` for all three defaults.
+
+| email | role | dashboard |
+|-------|------|-----------|
+| `admin@example.com` | admin | `/rules`, `/users`, `/health`, `/audit` |
+| `operator@example.com` | operator | `/dashboard`, `/alerts`, `/subscriptions`, `/metrics` |
+| `viewer@example.com` | viewer | `/display` (public AQI grid) |
+
+### seed sensor data
+
+```sh
+scemas-seed                 # nix shell
+bun run scripts/seed.ts     # non-nix
+```
+
+pass `--spike` to generate readings that trigger alerts.
+pass `--rate 8` or `--rate=8` to increase the aggregate generation frequency across all sensors.
 
 ### shell helpers
 
@@ -84,11 +113,11 @@ both paths give you the same functions:
 
 | function | description |
 |----------|-------------|
-| `scemas-dev` | start everything (db + engine + dashboard) |
+| `scemas-dev` | start everything (db + schema + accounts + engine + dashboard) |
 | `scemas-db` / `scemas-db-stop` | start/stop postgres (auto-detects nix or docker) |
 | `scemas-engine` | rust engine on :3001 |
 | `scemas-dash` | next.js dashboard on :3000 |
-| `scemas-seed` | seed sample data (pass `--spike` for alerts) |
+| `scemas-seed` | seed sample data (supports `--spike` and `--rate <n>`) |
 | `scemas-check` | run all lints (cargo fmt + clippy + tsc) |
 | `scemas-nuke` | stop everything |
 
@@ -99,6 +128,65 @@ see `.env.example`. defaults work out of the box for both nix and docker setups.
 ## source of truth
 
 all classes, attributes, methods, and relationships derive from the UML class diagram at [`docs/diagrams/class_diagram.puml`](docs/diagrams/class_diagram.puml). sequence diagrams and state charts in the same directory define interaction contracts.
+
+## route map
+
+### web routes
+
+| route | audience | purpose |
+|-------|----------|---------|
+| `/` | everyone | root redirect to `/sign-in` |
+| `/sign-in` | operator, admin, viewer | canonical login page |
+| `/sign-up` | new users | canonical signup page |
+| `/dashboard` | operator | main city operator dashboard |
+| `/alerts` | operator | live alert queue |
+| `/alerts/[alertId]` | operator | alert detail drill-down |
+| `/subscriptions` | operator | personal alert subscription controls |
+| `/metrics` | operator | sensor subagent overview |
+| `/metrics/[zone]` | operator | zone-specific metric drill-down |
+| `/rules` | admin | threshold rule CRUD |
+| `/rules/[ruleId]` | admin | threshold rule detail page |
+| `/users` | admin | user and role management |
+| `/users/[userId]` | admin | account-specific audit trail |
+| `/health` | admin | ingestion counters, failures, platform status |
+| `/audit` | admin | audit log viewer |
+| `/display` | public, viewer, third-party developers | public AQI display |
+
+### internal rust routes
+
+these are server-to-server routes used by the next/tRPC layer and seed scripts, not browser pages.
+
+| route | method | purpose |
+|-------|--------|---------|
+| `/internal/auth/signup` | `POST` | create account and issue session |
+| `/internal/auth/login` | `POST` | authenticate and issue session |
+| `/internal/alerting/rules` | `POST` | create threshold rule |
+| `/internal/alerting/rules/{rule_id}/status` | `POST` | activate or pause rule |
+| `/internal/alerting/rules/{rule_id}/delete` | `POST` | delete rule |
+| `/internal/alerting/alerts/{alert_id}/acknowledge` | `POST` | acknowledge alert |
+| `/internal/alerting/alerts/{alert_id}/resolve` | `POST` | resolve alert |
+| `/internal/telemetry/ingest` | `POST` | ingest seeded or device telemetry |
+| `/internal/health` | `GET` | ingestion health counters |
+
+### public API routes
+
+| route | method | purpose |
+|-------|--------|---------|
+| `/api/v1/zones/aqi` | `GET` | public, versioned AQI feed |
+| `/api/trpc/*` | `GET`, `POST` | dashboard tRPC transport for authenticated app views |
+
+## document map
+
+| path | purpose |
+|------|---------|
+| `docs/D1.pdf` | requirements and system framing |
+| `docs/D2.pdf` | design/package deliverable |
+| `docs/diagrams/class_diagram.puml` | UML class source of truth |
+| `docs/diagrams/signup_and_login.puml` | signup/login interaction flow |
+| `docs/diagrams/define_alert_rule.puml` | admin rule creation sequence |
+| `docs/diagrams/acknowledge_critical_env.puml` | operator alert acknowledgement sequence |
+| `docs/diagrams/data_distribution_management_controller.puml` | distribution controller sequence/state flow |
+| `docs/diagrams/encryption_manager.puml` | auth/encryption manager notes |
 
 ## tech stack
 

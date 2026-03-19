@@ -6,6 +6,8 @@ pub struct Config {
     pub port: u16,
     pub jwt_secret: String,
     pub jwt_expiry_hours: u64,
+    pub device_auth_secret: String,
+    pub device_catalog_path: String,
 }
 
 impl Config {
@@ -24,12 +26,18 @@ impl Config {
             .unwrap_or_else(|_| "24".into())
             .parse::<u64>()
             .map_err(|_| Error::Internal("invalid JWT_EXPIRY_HOURS".into()))?;
+        let device_auth_secret = std::env::var("DEVICE_AUTH_SECRET")
+            .map_err(|_| Error::Internal("DEVICE_AUTH_SECRET not set".into()))?;
+        let device_catalog_path = std::env::var("DEVICE_CATALOG_PATH")
+            .unwrap_or_else(|_| "data/hamilton-sensors.json".into());
 
         Ok(Self {
             database_url,
             port,
             jwt_secret,
             jwt_expiry_hours,
+            device_auth_secret,
+            device_catalog_path,
         })
     }
 }

@@ -2,22 +2,35 @@
 // this is the Control layer of PAC: coordinates between Presentation (react) and Abstraction (drizzle/rust)
 
 import { initTRPC, TRPCError } from '@trpc/server'
+import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
 import superjson from 'superjson'
-import { createDb } from '@scemas/db'
+import { createDb, type Database } from '@scemas/db'
 
-type AuthUser = { id: string; role: string }
+import { resolveSessionUser, type SessionUser } from '@/lib/session'
+import { getDatabaseUrl, getJwtSecret } from './env'
 
 export type Context = {
-  db: ReturnType<typeof createDb>
-  user: AuthUser | null
+  db: Database
+  user: SessionUser | null
+  resHeaders: Headers
 }
 
-export type AuthenticatedContext = Context & { user: AuthUser }
+export type AuthenticatedContext = Context & { user: SessionUser }
 
-export async function createContext(): Promise<Context> {
-  const db = createDb(process.env.DATABASE_URL!)
-  // TODO: extract user from JWT cookie in phase 3 (auth)
-  return { db, user: null }
+export async function createContext(
+  opts: FetchCreateContextFnOptions,
+): Promise<Context> {
+  const db = createDb(getDatabaseUrl())
+  const user = await resolveSessionUser(
+    opts.req.headers.get('cookie'),
+    getJwtSecret(),
+  )
+
+  return {
+    db,
+    user,
+    resHeaders: opts.resHeaders,
+  }
 }
 
 const t = initTRPC.context<Context>().create({
@@ -27,13 +40,14 @@ const t = initTRPC.context<Context>().create({
 export const router = t.router
 export const publicProcedure = t.procedure
 export const middleware = t.middleware
+export const createCallerFactory = t.createCallerFactory
 
 // auth middleware: rejects if no user, narrows type so ctx.user is guaranteed non-null
 const enforceAuth = middleware(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: 'UNAUTHORIZED', message: 'not authenticated' })
   }
-  return next({ ctx: { db: ctx.db, user: ctx.user } })
+  return next({ ctx: { db: ctx.db, user: ctx.user, resHeaders: ctx.resHeaders } })
 })
 
 export const protectedProcedure = t.procedure.use(enforceAuth)
@@ -43,7 +57,7 @@ const enforceAdmin = middleware(async ({ ctx, next }) => {
   if (!ctx.user || ctx.user.role !== 'admin') {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'admin access required' })
   }
-  return next({ ctx: { db: ctx.db, user: ctx.user } })
+  return next({ ctx: { db: ctx.db, user: ctx.user, resHeaders: ctx.resHeaders } })
 })
 
 export const adminProcedure = t.procedure.use(enforceAuth).use(enforceAdmin)

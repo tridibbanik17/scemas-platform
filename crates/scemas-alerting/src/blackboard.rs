@@ -13,22 +13,29 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 /// shared state for the alerting subsystem
-/// this IS the blackboard: a data store that knowledge sources post to and read from
 pub struct Blackboard {
-    pub active_rules: Vec<ThresholdRule>,
+    pub active_rules: HashMap<Uuid, ThresholdRule>,
     pub active_alerts: HashMap<Uuid, Alert>,
 }
 
 impl Blackboard {
     pub fn new() -> Self {
         Self {
-            active_rules: Vec::new(),
+            active_rules: HashMap::new(),
             active_alerts: HashMap::new(),
         }
     }
 
-    pub fn add_rule(&mut self, rule: ThresholdRule) {
-        self.active_rules.push(rule);
+    pub fn replace_rules(&mut self, rules: impl IntoIterator<Item = ThresholdRule>) {
+        self.active_rules = rules.into_iter().map(|rule| (rule.id, rule)).collect();
+    }
+
+    pub fn upsert_rule(&mut self, rule: ThresholdRule) {
+        self.active_rules.insert(rule.id, rule);
+    }
+
+    pub fn remove_rule(&mut self, id: &Uuid) {
+        self.active_rules.remove(id);
     }
 
     pub fn post_alert(&mut self, alert: Alert) {

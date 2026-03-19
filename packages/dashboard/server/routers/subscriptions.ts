@@ -9,9 +9,11 @@ import { UpdateAlertSubscriptionSchema } from '@scemas/types'
 export const subscriptionsRouter = router({
   get: protectedProcedure
     .query(async ({ ctx }) => {
-      return ctx.db.query.alertSubscriptions.findFirst({
+      const subscription = await ctx.db.query.alertSubscriptions.findFirst({
         where: eq(alertSubscriptions.userId, ctx.user.id),
       })
+
+      return subscription ?? null
     }),
 
   update: protectedProcedure

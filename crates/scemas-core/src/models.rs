@@ -83,6 +83,7 @@ impl std::fmt::Display for MetricType {
 // ─── AlertingManager entities ───
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ThresholdRule {
     pub id: Uuid,
     pub metric_type: MetricType,

@@ -2,24 +2,53 @@
 // handles: SignupForAccount, LoginToSCEMAS boundaries
 // passive data store: deterministic queries against postgres via drizzle
 
+import { TRPCError } from '@trpc/server'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
-import { SignupSchema, LoginSchema } from '@scemas/types'
+import { AuthSessionSchema, LoginSchema, SignupSchema } from '@scemas/types'
 import { accounts } from '@scemas/db/schema'
 import { eq } from 'drizzle-orm'
+
+import {
+  serializeClearedSessionCookie,
+  serializeSessionCookie,
+  sessionLandingPath,
+} from '@/lib/session'
+import {
+  callRustEndpoint,
+  extractRustErrorMessage,
+} from '../rust-client'
 
 export const authRouter = router({
   signup: publicProcedure
     .input(SignupSchema)
     .mutation(async ({ input, ctx }) => {
-      // TODO phase 3: argon2 hash password, insert account, return JWT
-      return { success: true, message: 'signup stub' }
+      const session = await authenticateWithRust('/internal/auth/signup', input)
+      ctx.resHeaders.append(
+        'set-cookie',
+        serializeSessionCookie(session.token, session.expiresAt),
+      )
+
+      return {
+        success: true,
+        redirectTo: sessionLandingPath(session.user.role),
+        user: session.user,
+      }
     }),
 
   login: publicProcedure
     .input(LoginSchema)
     .mutation(async ({ input, ctx }) => {
-      // TODO phase 3: verify credentials, issue JWT
-      return { success: true, message: 'login stub' }
+      const session = await authenticateWithRust('/internal/auth/login', input)
+      ctx.resHeaders.append(
+        'set-cookie',
+        serializeSessionCookie(session.token, session.expiresAt),
+      )
+
+      return {
+        success: true,
+        redirectTo: sessionLandingPath(session.user.role),
+        user: session.user,
+      }
     }),
 
   me: protectedProcedure
@@ -30,4 +59,37 @@ export const authRouter = router({
       })
       return user
     }),
+
+  logout: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      ctx.resHeaders.append('set-cookie', serializeClearedSessionCookie())
+      return { success: true }
+    }),
 })
+
+async function authenticateWithRust(
+  path: string,
+  payload: unknown,
+) {
+  const { data, status } = await callRustEndpoint(path, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+  if (status >= 400) {
+    throw new TRPCError({
+      code: status === 401 ? 'UNAUTHORIZED' : 'BAD_REQUEST',
+      message: extractRustErrorMessage(data) ?? 'authentication request failed',
+    })
+  }
+
+  const parsed = AuthSessionSchema.safeParse(data)
+  if (!parsed.success) {
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'rust access manager returned an invalid response',
+    })
+  }
+
+  return parsed.data
+}

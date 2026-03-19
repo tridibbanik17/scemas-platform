@@ -8,7 +8,7 @@ use chrono::Utc;
 use scemas_core::error::{Error, Result};
 use scemas_core::models::{IndividualSensorReading, MetricType};
 
-/// filter 1: validate that all required fields are present and non-empty
+/// validate that all required fields are present and non-empty
 pub fn schema_validator(reading: IndividualSensorReading) -> Result<IndividualSensorReading> {
     if reading.sensor_id.is_empty() {
         return Err(Error::Validation("sensor_id is empty".into()));
@@ -19,7 +19,7 @@ pub fn schema_validator(reading: IndividualSensorReading) -> Result<IndividualSe
     Ok(reading)
 }
 
-/// filter 2: validate that the value is within plausible range for its metric type
+/// validate that the value is within plausible range for its metric type
 pub fn range_validator(reading: IndividualSensorReading) -> Result<IndividualSensorReading> {
     let (min, max) = plausible_range(&reading.metric_type);
     if reading.value < min || reading.value > max {
@@ -31,7 +31,7 @@ pub fn range_validator(reading: IndividualSensorReading) -> Result<IndividualSen
     Ok(reading)
 }
 
-/// filter 3: validate that the timestamp is within acceptable drift (5 minutes)
+/// validate that the timestamp is within acceptable drift (5 minutes)
 pub fn timestamp_validator(reading: IndividualSensorReading) -> Result<IndividualSensorReading> {
     let now = Utc::now();
     let drift = (now - reading.timestamp).num_seconds().unsigned_abs();

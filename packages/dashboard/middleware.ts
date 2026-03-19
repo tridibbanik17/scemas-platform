@@ -5,31 +5,63 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import {
+  SESSION_COOKIE_NAME,
+  sessionLandingPath,
+  verifySessionToken,
+} from '@/lib/session'
+
 // routes that require authentication (any role)
 const protectedPaths = ['/dashboard', '/alerts', '/subscriptions', '/metrics']
 
 // routes that require admin role
 const adminPaths = ['/rules', '/users', '/health', '/audit']
 
-// public paths (no auth needed)
-const publicPaths = ['/login', '/signup', '/display', '/api']
+const publicPaths = ['/sign-in', '/sign-up', '/display', '/api']
+const authPaths = ['/sign-in', '/sign-up']
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const token = request.cookies.get('scemas-token')?.value
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
+  const jwtSecret = process.env.JWT_SECRET
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
 
-  // public paths always allowed
-  if (publicPaths.some(p => pathname.startsWith(p))) {
-    return NextResponse.next()
+  if (!jwtSecret) {
+    if (isPublicPath) {
+      return NextResponse.next()
+    }
+    return NextResponse.redirect(new URL('/sign-in', request.url))
   }
 
-  // no token: redirect to login
   if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    if (isPublicPath) {
+      return NextResponse.next()
+    }
+    return NextResponse.redirect(new URL('/sign-in', request.url))
   }
 
-  // TODO phase 3: decode JWT, check role, enforce admin paths
-  // for now: allow all authenticated requests
+  const session = await verifySessionToken(token, jwtSecret)
+  if (!session) {
+    if (isPublicPath) {
+      return NextResponse.next()
+    }
+    return NextResponse.redirect(new URL('/sign-in', request.url))
+  }
+
+  if (authPaths.some(path => pathname.startsWith(path))) {
+    return NextResponse.redirect(new URL(sessionLandingPath(session.role), request.url))
+  }
+
+  if (adminPaths.some(path => pathname.startsWith(path)) && session.role !== 'admin') {
+    return NextResponse.redirect(new URL(sessionLandingPath(session.role), request.url))
+  }
+
+  if (
+    protectedPaths.some(path => pathname.startsWith(path)) &&
+    session.role === 'viewer'
+  ) {
+    return NextResponse.redirect(new URL(sessionLandingPath(session.role), request.url))
+  }
 
   return NextResponse.next()
 }

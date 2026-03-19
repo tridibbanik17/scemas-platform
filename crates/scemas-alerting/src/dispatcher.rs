@@ -6,21 +6,18 @@
 // in this simplified version, "dispatch" means marking the notification
 // in the database. a real system would send emails/webhooks.
 
-use scemas_core::models::{Alert, AlertSubscription, Severity};
+use scemas_core::models::{Alert, AlertSubscription};
 
 /// check if an alert matches an operator's subscription preferences
 pub fn matches_subscription(alert: &Alert, sub: &AlertSubscription) -> bool {
-    // check severity threshold
     if (alert.severity as i32) < (sub.min_severity as i32) {
         return false;
     }
 
-    // check metric type filter (empty = all)
     if !sub.metric_types.is_empty() && !sub.metric_types.contains(&alert.metric_type) {
         return false;
     }
 
-    // check zone filter (empty = all)
     if !sub.zones.is_empty() && !sub.zones.contains(&alert.zone) {
         return false;
     }
@@ -42,7 +39,7 @@ pub fn find_subscribers<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use scemas_core::models::{AlertStatus, MetricType};
+    use scemas_core::models::{AlertStatus, MetricType, Severity};
     use uuid::Uuid;
 
     fn sample_alert() -> Alert {

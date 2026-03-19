@@ -48,6 +48,21 @@ export const UserInformationSchema = z.object({
 })
 export type UserInformation = z.infer<typeof UserInformationSchema>
 
+export const ActiveSessionTokenSchema = z.object({
+  tokenValue: z.string().min(1),
+  userId: z.string().uuid(),
+  role: RoleSchema,
+  expiry: z.string().datetime(),
+})
+export type ActiveSessionToken = z.infer<typeof ActiveSessionTokenSchema>
+
+export const AuthSessionSchema = z.object({
+  token: z.string().min(1),
+  expiresAt: z.string().datetime(),
+  user: UserInformationSchema,
+})
+export type AuthSession = z.infer<typeof AuthSessionSchema>
+
 export const ThresholdRuleSchema = z.object({
   id: z.string().uuid(),
   metricType: MetricTypeSchema,

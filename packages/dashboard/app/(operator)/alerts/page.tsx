@@ -1,11 +1,19 @@
+import { AlertsManager } from '@/components/operator/alerts-manager'
+import { serverTrpc, HydrateClient } from '@/lib/trpc-server'
+
 // HandleActiveAlerts boundary (AlertingManager)
-export default function AlertsPage() {
+export default async function AlertsPage() {
+  void serverTrpc.alerts.list.prefetch({ limit: 50 })
+
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">alerts</h1>
-      <div className="rounded-lg border border-border bg-card p-4">
-        <p className="text-sm text-muted-foreground">alert management table with acknowledge workflow (phase 6)</p>
-      </div>
+      <h1 className="text-xl font-semibold text-balance">alerts</h1>
+      <p className="text-sm text-muted-foreground text-pretty">
+        triage the live queue, acknowledge what has an owner, and resolve what has actually been handled
+      </p>
+      <HydrateClient>
+        <AlertsManager />
+      </HydrateClient>
     </div>
   )
 }

@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>
+      <body className="antialiased">
         <TRPCProvider>{children}</TRPCProvider>
       </body>
     </html>

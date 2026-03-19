@@ -1,7 +1,8 @@
 use scemas_core::config::Config;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
+mod access;
+mod distribution;
 mod routes;
 mod state;
 
@@ -16,8 +17,19 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("connected to database");
 
+    let access = access::AccessManager::new(
+        pool.clone(),
+        config.jwt_secret.clone(),
+        config.jwt_expiry_hours,
+        config.device_auth_secret.clone(),
+    );
+    let registered_devices = access
+        .sync_device_registry(&config.device_catalog_path)
+        .await?;
+    tracing::info!(registered_devices, "device registry synchronized");
+    let distribution = distribution::DataDistributionManager::new(pool.clone());
     let telemetry = scemas_telemetry::controller::TelemetryManager::new(pool.clone());
-    let mut alerting = scemas_alerting::controller::AlertingManager::new(pool.clone());
+    let alerting = scemas_alerting::controller::AlertingManager::new(pool.clone());
 
     // load active rules into the blackboard on startup
     if let Err(e) = alerting.load_rules().await {
@@ -25,9 +37,10 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let state = state::AppState {
-        db: pool,
+        access: Arc::new(access),
+        distribution: Arc::new(distribution),
         telemetry: Arc::new(telemetry),
-        alerting: Arc::new(RwLock::new(alerting)),
+        alerting: Arc::new(alerting),
         health: Arc::new(scemas_telemetry::health::IngestionHealth::new()),
     };
 
