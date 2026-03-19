@@ -1,0 +1,118 @@
+@startuml data_distribution_management_controller
+hide empty description
+
+skinparam state {
+  BackgroundColor<<init>> #F2F4F4
+  BorderColor<<init>> #7F8C8D
+  FontColor<<init>> #2C3E50
+
+  BackgroundColor<<auth>> #FCEAE8
+  BorderColor<<auth>> #ea9a97
+  FontColor<<auth>> #6B3A38
+
+  BackgroundColor<<distribute>> #EDE8F5
+  BorderColor<<distribute>> #a692c3
+  FontColor<<distribute>> #4A3767
+
+  BackgroundColor<<ingest>> #D6EAF8
+  BorderColor<<ingest>> #2980B9
+  FontColor<<ingest>> #1A5276
+
+  BackgroundColor<<monitor>> #D5F5E3
+  BorderColor<<monitor>> #27AE60
+  FontColor<<monitor>> #1E8449
+
+  BackgroundColor<<error>> #FDEBD0
+  BorderColor<<error>> #E67E22
+  FontColor<<error>> #7E5109
+
+  StartColor black
+  EndColor black
+}
+
+' ──────────────────────────────────
+' TOP-LEVEL LIFECYCLE
+' ──────────────────────────────────
+
+state "Initializing" as INIT <<init>> {
+  state "ConnectDataSources" as CDS <<init>>
+  state "LoadAnalyticsDB" as LDB <<init>>
+  CDS --> LDB : sources available
+}
+
+state "Authenticating" as AUTH <<auth>> {
+  state "ValidateToken" as VT <<auth>>
+  state "AuthorizeRole" as AR <<auth>>
+  VT --> AR : token valid
+}
+
+state "Distributing" as DIST <<distribute>> {
+
+  state "DataAggregation" as AGG <<ingest>> {
+    state "IngestSensorReadings" as ISR <<ingest>>
+    state "AggregateMetrics" as AM <<ingest>>
+    state "StoreToAnalyticsDB" as STA <<ingest>>
+    ISR --> AM : raw data received
+    AM --> STA : aggregation complete
+    STA --> ISR : await next batch
+  }
+
+  state "OperatorService" as OPS <<distribute>> {
+    state "FilterAggregatedData" as FAD <<distribute>>
+    state "VisualizeCityMetrics" as VCM <<distribute>>
+    FAD --> VCM : filtered results ready
+    VCM --> FAD : new filter query
+  }
+
+  state "PublicAPIService" as API <<distribute>> {
+    state "HandleAPIRequest" as HAR <<distribute>>
+    state "RateLimitCheck" as RLC <<distribute>>
+    state "ReturnAggregatedData" as RAD <<distribute>>
+    HAR --> RLC : request received
+    RLC --> RAD : within rate limit
+  }
+
+  state "PlatformMonitoring" as MON <<monitor>> {
+    state "CollectHealthMetrics" as CHM <<monitor>>
+    state "UpdateStatusDB" as USD <<monitor>>
+    state "DisplayDashboard" as DD <<monitor>>
+    CHM --> USD : metrics collected
+    USD --> DD : status persisted
+    DD --> CHM : polling interval elapsed
+  }
+
+  AGG --> OPS : aggregated data available
+  AGG --> API : aggregated data available
+  AGG --> MON : platform metrics available
+}
+
+state "Error" as ERR <<error>> {
+  state "LogFailure" as LF <<error>>
+  state "NotifyAdmin" as NA <<error>>
+  state "AttemptRecovery" as REC <<error>>
+  LF --> NA : failure logged
+  NA --> REC : admin notified
+}
+
+' ──────────────────────────────────
+' TRANSITIONS
+' ──────────────────────────────────
+
+[*] --> INIT : controller startup
+
+INIT --> AUTH : initialization complete
+INIT --> ERR : data source unavailable
+
+AUTH --> DIST : authentication successful
+AUTH --> ERR : authentication failed
+
+DIST --> AUTH : session expired
+DIST --> ERR : distribution failure
+
+ERR --> INIT : recovery: reinitialize
+ERR --> [*] : unrecoverable failure
+
+RLC --> ERR : rate limit exceeded
+REC --> INIT : retry initialization
+
+@enduml

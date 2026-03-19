@@ -1,0 +1,24 @@
+@startuml
+title Acknowledge Critical Environmental Alert
+
+actor "City Operator" as Operator
+participant "Handle Active\nAlerts" as HAA
+participant "Alerting\nManagement" as AM
+database "Alert and Audit\nLog DB" as DB
+
+Operator -> HAA : Select Critical Alert
+HAA -> AM : Send Alert Selection
+AM -> DB : Retrieve Alert Details
+DB --> AM : Alert Details
+AM --> HAA : Display Alert Details
+
+Operator -> HAA : Acknowledge Alert
+HAA -> AM : Send Acknowledgement
+AM -> DB : Update Alert Status
+DB --> AM : Status Updated
+AM -> DB : Record Audit Log
+DB --> AM : Log Recorded
+AM --> HAA : Send Confirmation
+HAA --> Operator : Confirm Alert Acknowledged
+
+@enduml

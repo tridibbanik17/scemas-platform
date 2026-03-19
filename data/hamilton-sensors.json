@@ -1,0 +1,27 @@
+[
+  { "sensor_id": "temp-dt-001", "device_type": "temperature", "zone": "downtown", "lat": 43.2560, "lng": -79.8720 },
+  { "sensor_id": "temp-dt-002", "device_type": "temperature", "zone": "downtown", "lat": 43.2545, "lng": -79.8695 },
+  { "sensor_id": "hum-dt-001", "device_type": "humidity", "zone": "downtown", "lat": 43.2552, "lng": -79.8730 },
+  { "sensor_id": "aqi-dt-001", "device_type": "air_quality", "zone": "downtown", "lat": 43.2565, "lng": -79.8705 },
+  { "sensor_id": "noise-dt-001", "device_type": "noise_level", "zone": "downtown", "lat": 43.2548, "lng": -79.8715 },
+
+  { "sensor_id": "temp-wm-001", "device_type": "temperature", "zone": "west_mountain", "lat": 43.2390, "lng": -79.8990 },
+  { "sensor_id": "hum-wm-001", "device_type": "humidity", "zone": "west_mountain", "lat": 43.2385, "lng": -79.9000 },
+  { "sensor_id": "aqi-wm-001", "device_type": "air_quality", "zone": "west_mountain", "lat": 43.2380, "lng": -79.8985 },
+  { "sensor_id": "noise-wm-001", "device_type": "noise_level", "zone": "west_mountain", "lat": 43.2395, "lng": -79.8995 },
+
+  { "sensor_id": "temp-ee-001", "device_type": "temperature", "zone": "east_end", "lat": 43.2480, "lng": -79.8210 },
+  { "sensor_id": "hum-ee-001", "device_type": "humidity", "zone": "east_end", "lat": 43.2470, "lng": -79.8200 },
+  { "sensor_id": "aqi-ee-001", "device_type": "air_quality", "zone": "east_end", "lat": 43.2475, "lng": -79.8215 },
+  { "sensor_id": "noise-ee-001", "device_type": "noise_level", "zone": "east_end", "lat": 43.2485, "lng": -79.8205 },
+
+  { "sensor_id": "temp-wf-001", "device_type": "temperature", "zone": "waterfront", "lat": 43.2715, "lng": -79.8650 },
+  { "sensor_id": "hum-wf-001", "device_type": "humidity", "zone": "waterfront", "lat": 43.2710, "lng": -79.8660 },
+  { "sensor_id": "aqi-wf-001", "device_type": "air_quality", "zone": "waterfront", "lat": 43.2720, "lng": -79.8645 },
+  { "sensor_id": "noise-wf-001", "device_type": "noise_level", "zone": "waterfront", "lat": 43.2705, "lng": -79.8655 },
+
+  { "sensor_id": "temp-mc-001", "device_type": "temperature", "zone": "mcmaster", "lat": 43.2610, "lng": -79.9190 },
+  { "sensor_id": "hum-mc-001", "device_type": "humidity", "zone": "mcmaster", "lat": 43.2605, "lng": -79.9195 },
+  { "sensor_id": "aqi-mc-001", "device_type": "air_quality", "zone": "mcmaster", "lat": 43.2615, "lng": -79.9185 },
+  { "sensor_id": "noise-mc-001", "device_type": "noise_level", "zone": "mcmaster", "lat": 43.2600, "lng": -79.9200 }
+]

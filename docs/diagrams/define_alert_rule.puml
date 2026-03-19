@@ -1,0 +1,22 @@
+@startuml
+title Define Alert Rules
+
+actor "System Administrator" as Admin
+participant "Define Threshold\nRules" as DTR
+participant "Alerting\nManagement" as AM
+participant "Threshold\nRulebook" as TR
+database "Alert and Audit\nLog DB" as DB
+
+Admin -> DTR : Define Alert Rule
+DTR -> AM : Send Rule Details
+AM -> AM : Validate Rule
+AM -> TR : Store Rule
+TR --> AM : Rule Stored
+AM -> TR : Activate Rule
+TR --> AM : Rule Activated
+AM -> DB : Record Audit Log
+DB --> AM : Log Recorded
+AM --> DTR : Send Confirmation
+DTR --> Admin : Confirm Rule Defined
+
+@enduml

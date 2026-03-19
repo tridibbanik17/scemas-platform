@@ -1,0 +1,7 @@
+[
+  { "id": "downtown", "name": "Downtown Hamilton", "lat": 43.2557, "lng": -79.8711 },
+  { "id": "west_mountain", "name": "West Mountain", "lat": 43.2387, "lng": -79.8994 },
+  { "id": "east_end", "name": "East End", "lat": 43.2476, "lng": -79.8206 },
+  { "id": "waterfront", "name": "Waterfront", "lat": 43.2712, "lng": -79.8652 },
+  { "id": "mcmaster", "name": "McMaster Area", "lat": 43.2609, "lng": -79.9192 }
+]

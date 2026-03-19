@@ -1,0 +1,45 @@
+# rust
+target/
+**/*.rs.bk
+
+# node/bun
+node_modules/
+.next/
+.turbo/
+out/
+dist/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# ide
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# os
+.DS_Store
+Thumbs.db
+
+# drizzle
+packages/db/drizzle/meta/
+
+# cloudflare
+.wrangler/
+.open-next/
+
+# nix
+.pgdata/
+result
+.derived
+
+# generated
+*.log
+*.tsbuildinfo
+CLAUDE.md
+AGENTS.md
+.claude/

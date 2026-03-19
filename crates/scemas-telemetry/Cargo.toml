@@ -1,0 +1,13 @@
+[package]
+name = "scemas-telemetry"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+scemas-core = { path = "../scemas-core" }
+sqlx.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+thiserror.workspace = true

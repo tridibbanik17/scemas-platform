@@ -1,0 +1,31 @@
+@startuml
+hide empty description
+
+skinparam state {
+  BackgroundColor<<encrypt>> #D6EAF8
+  BorderColor<<encrypt>> #2980B9
+  FontColor<<encrypt>> #1A5276
+
+  BackgroundColor<<decrypt>> #D5F5E3
+  BorderColor<<decrypt>> #27AE60
+  FontColor<<decrypt>> #1E8449
+
+  StartColor black
+  EndColor black
+}
+
+state "encryptMessage" as EM <<encrypt>> {
+  state "encyption" as ENC <<encrypt>>
+}
+
+state "decryptMessage" as DM <<decrypt>> {
+  state "decryption" as DEC <<decrypt>>
+}
+
+[*] --> EM : encrypt message
+[*] --> DM : decrypt message
+
+EM --> [*] : submit message
+DM --> [*] : submit message
+
+@enduml

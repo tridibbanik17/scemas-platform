@@ -1,0 +1,19 @@
+[package]
+name = "scemas-server"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+scemas-core = { path = "../scemas-core" }
+scemas-telemetry = { path = "../scemas-telemetry" }
+scemas-alerting = { path = "../scemas-alerting" }
+axum.workspace = true
+tokio.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+sqlx.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow = "1"

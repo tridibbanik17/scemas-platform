@@ -1,0 +1,35 @@
+@startuml
+title Signup and Login
+
+actor User
+participant "Encryption\nManager" as EM
+participant "Access\nManagement" as AMC
+database "Account\nDB" as DB
+
+== Signup ==
+
+User -> User : Enter User Info
+User -> EM : Create Account
+EM -> AMC : Encrypt Message
+AMC -> AMC : Validate Account
+
+group Validation Pass
+    AMC -> DB : Store Account
+    DB --> AMC : Store Account
+    AMC --> EM : Send Confirmation
+    EM -> User : Decrypt Message
+end
+
+== Login ==
+
+User -> User : Enter User Info
+User -> EM : Login
+EM -> AMC : Encrypt Message
+AMC -> AMC : Validate Account
+
+group Validation Pass
+    AMC --> EM : Send Confirmation
+    EM -> User : Decrypt Message
+end
+
+@enduml
