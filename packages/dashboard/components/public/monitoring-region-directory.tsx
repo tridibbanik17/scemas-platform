@@ -1,5 +1,11 @@
+'use client'
+
+import { useState } from 'react'
+import { ListPagination } from '@/components/list-pagination'
 import { sensorCatalog } from '@/lib/sensor-catalog'
 import { hamiltonMonitoringRegions } from '@/lib/zones'
+
+const REGIONS_PER_PAGE = 4
 
 type MonitoringRegionSummary = {
   zoneId: string
@@ -38,11 +44,21 @@ const planningUnitCount = new Set(
 const stationCount = new Set(sensorCatalog.map(sensor => sensor.station_id)).size
 
 export function MonitoringRegionDirectory() {
+  const [page, setPage] = useState(0)
+  const totalPages = Math.ceil(monitoringRegions.length / REGIONS_PER_PAGE)
+  const safePage = Math.min(page, Math.max(0, totalPages - 1))
+  const pageRegions = monitoringRegions.slice(
+    safePage * REGIONS_PER_PAGE,
+    (safePage + 1) * REGIONS_PER_PAGE,
+  )
+
   return (
-    <section className="space-y-4 rounded-xl border border-border/50 bg-card p-6">
+    <section className="space-y-4 rounded-xl bg-card/40 p-6">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold text-balance">monitoring coverage directory</h2>
-        <p className="text-sm text-muted-foreground text-pretty">
+        <h2 className="text-base font-normal text-foreground/80 text-balance">
+          monitoring coverage directory
+        </h2>
+        <p className="text-sm text-muted-foreground/60 text-pretty">
           public-facing region labels, ward crosswalks, and planning-unit coverage for the seeded
           hamilton network.
         </p>
@@ -59,29 +75,31 @@ export function MonitoringRegionDirectory() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {monitoringRegions.map(region => (
+        {pageRegions.map(region => (
           <article
-            className="rounded-xl border border-border/50 bg-background/40 p-4"
+            className="rounded-xl border border-border/30 bg-muted/30 p-4"
             key={region.zoneId}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-base font-medium text-foreground">
+                <h3 className="text-sm font-medium text-foreground/90">
                   {toTitleCase(region.label)}
                 </h3>
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                <p className="text-xs text-muted-foreground/60">
                   {region.community} · {region.focusArea}
                 </p>
               </div>
               <div className="text-right text-xs text-muted-foreground">
-                <p className="font-mono tabular-nums text-foreground">
+                <p className="font-mono tabular-nums text-foreground/70">
                   {region.stationCount} stations
                 </p>
-                <p className="font-mono tabular-nums">{region.sensorCount} sensors</p>
+                <p className="font-mono tabular-nums text-muted-foreground/60">
+                  {region.sensorCount} sensors
+                </p>
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-2">
+            <div className="mt-3 grid gap-2.5 text-sm text-muted-foreground md:grid-cols-2">
               <MetadataLine label="wards" value={region.wardLabels.join(', ')} />
               <MetadataLine
                 label="planning units"
@@ -96,15 +114,23 @@ export function MonitoringRegionDirectory() {
           </article>
         ))}
       </div>
+
+      <ListPagination
+        onPageChange={setPage}
+        page={safePage}
+        pageSize={REGIONS_PER_PAGE}
+        totalItems={monitoringRegions.length}
+        totalPages={totalPages}
+      />
     </section>
   )
 }
 
 function CoverageStat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-xl border border-border/50 bg-background/40 p-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <p className="mt-2 font-mono text-3xl tabular-nums text-foreground">{value}</p>
+    <div className="rounded-xl border border-border/30 bg-muted/40 p-4">
+      <p className="text-xs text-muted-foreground/60">{label}</p>
+      <p className="mt-1.5 font-mono text-2xl tabular-nums text-foreground/70">{value}</p>
     </div>
   )
 }
@@ -120,8 +146,8 @@ function MetadataLine({
 }) {
   return (
     <div className={wide ? 'md:col-span-2' : undefined}>
-      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground/70">{label}</p>
-      <p className="mt-1 text-sm text-foreground text-pretty">{value}</p>
+      <p className="text-[11px] text-muted-foreground/50">{label}</p>
+      <p className="mt-0.5 text-sm text-foreground/80 text-pretty">{value}</p>
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { createPublicApiResponse } from '@/server/public-api'
 
 export async function GET(): Promise<Response> {
   const manager = getManager()
-  const zones = await manager.getPublicZoneAqi()
+  const status = await manager.getPublicFeedStatus()
 
-  return createPublicApiResponse(zones, 'live')
+  return createPublicApiResponse(status, 'live')
 }

@@ -143,6 +143,92 @@ export const ZoneSchema = z.object({
 })
 export type Zone = z.infer<typeof ZoneSchema>
 
+export const PublicAggregationTypeSchema = z.enum(['5m_avg'])
+export type PublicAggregationType = z.infer<typeof PublicAggregationTypeSchema>
+
+export const PublicRankingStatSchema = z.enum(['current', 'avg', 'max'])
+export type PublicRankingStat = z.infer<typeof PublicRankingStatSchema>
+
+export const PublicZoneSummarySchema = z.object({
+  zone: z.string(),
+  zoneName: z.string(),
+  aqi: z.number(),
+  aqiLabel: z.string(),
+  temperature: z.number().nullable(),
+  humidity: z.number().nullable(),
+  noiseLevel: z.number().nullable(),
+  lastUpdated: z.string().datetime().nullable(),
+  freshnessSeconds: z.number().int().nonnegative().nullable(),
+})
+export type PublicZoneSummary = z.infer<typeof PublicZoneSummarySchema>
+
+export const PublicZoneCurrentSchema = PublicZoneSummarySchema
+export type PublicZoneCurrent = z.infer<typeof PublicZoneCurrentSchema>
+
+export const PublicZoneCurrentQuerySchema = z.object({ zoneId: z.string().min(1) })
+export type PublicZoneCurrentQuery = z.infer<typeof PublicZoneCurrentQuerySchema>
+
+export const PublicZoneHistoryPointSchema = z.object({
+  zone: z.string(),
+  zoneName: z.string(),
+  metricType: MetricTypeSchema,
+  aggregationType: PublicAggregationTypeSchema,
+  time: z.string().datetime(),
+  value: z.number(),
+  sampleCount: z.number().int().nullable(),
+})
+export type PublicZoneHistoryPoint = z.infer<typeof PublicZoneHistoryPointSchema>
+
+export const PublicZoneHistoryQuerySchema = z.object({
+  zoneId: z.string().min(1),
+  metricType: MetricTypeSchema,
+  bucket: PublicAggregationTypeSchema.default('5m_avg'),
+  windowHours: z.coerce.number().int().min(1).max(168).default(24),
+})
+export type PublicZoneHistoryQuery = z.infer<typeof PublicZoneHistoryQuerySchema>
+
+export const PublicRankingRowSchema = z.object({
+  zone: z.string(),
+  zoneName: z.string(),
+  metricType: MetricTypeSchema,
+  stat: PublicRankingStatSchema,
+  value: z.number(),
+  aggregationType: PublicAggregationTypeSchema,
+  windowHours: z.number().int().positive(),
+  lastUpdated: z.string().datetime().nullable(),
+})
+export type PublicRankingRow = z.infer<typeof PublicRankingRowSchema>
+
+export const PublicRankingsQuerySchema = z.object({
+  metricType: MetricTypeSchema,
+  bucket: PublicAggregationTypeSchema.default('5m_avg'),
+  periodHours: z.coerce.number().int().min(1).max(168).default(24),
+  stat: PublicRankingStatSchema.default('current'),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+})
+export type PublicRankingsQuery = z.infer<typeof PublicRankingsQuerySchema>
+
+export const PublicMetricDescriptorSchema = z.object({
+  metricType: MetricTypeSchema,
+  label: z.string(),
+  unit: z.string(),
+  description: z.string(),
+  supportedAggregations: z.array(PublicAggregationTypeSchema).min(1),
+  updateCadenceSeconds: z.number().int().positive(),
+})
+export type PublicMetricDescriptor = z.infer<typeof PublicMetricDescriptorSchema>
+
+export const PublicFeedStatusSchema = z.object({
+  generatedAt: z.string().datetime(),
+  aggregationType: PublicAggregationTypeSchema,
+  zonesTotal: z.number().int().nonnegative(),
+  zonesReporting: z.number().int().nonnegative(),
+  zonesAwaitingTelemetry: z.array(z.string()),
+  latestAggregateAt: z.string().datetime().nullable(),
+  oldestAggregateAt: z.string().datetime().nullable(),
+})
+export type PublicFeedStatus = z.infer<typeof PublicFeedStatusSchema>
+
 export const ZoneAQISchema = z.object({
   zone: z.string(),
   aqi: z.number(),

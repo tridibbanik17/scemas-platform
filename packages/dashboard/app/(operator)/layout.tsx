@@ -18,7 +18,6 @@ export default async function OperatorLayout({ children }: { children: React.Rea
         { href: '/metrics', label: 'metrics' },
       ]}
       navExtra={<SubscriptionDrawer availableZones={availableZones} />}
-      subtitle="city operator"
       title="SCEMAS"
     >
       {children}

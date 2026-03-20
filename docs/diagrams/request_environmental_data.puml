@@ -27,4 +27,14 @@ group Rate Limit Exceeded
     FC --> Client : Display Error Message
 end
 
+note over API,DB
+  same aggregate-only flow also backs:
+  - GET /api/v1/zones/summary
+  - GET /api/v1/zones/{zoneId}/current
+  - GET /api/v1/zones/{zoneId}/history
+  - GET /api/v1/rankings
+  - GET /api/v1/metrics
+  - GET /api/v1/status
+end note
+
 @enduml

@@ -1,22 +1,27 @@
 'use client'
 
-import { ZoneAQISchema, type ZoneAQI } from '@scemas/types'
+import { PublicZoneSummarySchema, type PublicZoneSummary } from '@scemas/types'
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { ListPagination } from '@/components/list-pagination'
 import { Spinner } from '@/components/ui/spinner'
-import { formatZoneName } from '@/lib/zones'
+import { cn } from '@/lib/utils'
 import { ZoneAqiBarChart } from './zone-aqi-bar-chart'
+
+const ZONES_PER_PAGE = 4
 
 export function ZoneAqiGrid() {
   const regionAqi = useQuery({
-    queryKey: ['public-zone-aqi'],
-    queryFn: fetchZoneAqi,
+    queryKey: ['public-zone-summary'],
+    queryFn: fetchZoneSummary,
     refetchInterval: 10_000,
   })
   const regions = regionAqi.data ?? []
+  const [page, setPage] = useState(0)
 
   if (regionAqi.isLoading) {
     return (
-      <div className="flex min-h-[16rem] items-center justify-center">
+      <div className="flex min-h-64 items-center justify-center">
         <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
           <Spinner />
           loading monitoring region data
@@ -42,86 +47,111 @@ export function ZoneAqiGrid() {
     )
   }
 
+  const totalPages = Math.ceil(regions.length / ZONES_PER_PAGE)
+  const safePage = Math.min(page, Math.max(0, totalPages - 1))
+  const pageRegions = regions.slice(safePage * ZONES_PER_PAGE, (safePage + 1) * ZONES_PER_PAGE)
+  const emptySlots = ZONES_PER_PAGE - pageRegions.length
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-border/50 bg-card p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            monitoring regions
-          </p>
-          <p className="mt-2 font-mono text-3xl tabular-nums">{regions.length}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            public rollup across named hamilton monitoring regions
-          </p>
-        </div>
-        <div className="rounded-xl border border-border/50 bg-card p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            boundary source
-          </p>
-          <p className="mt-2 text-lg font-medium text-foreground">official planning units</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            display labels are public-facing regions, not parcel zoning or raw planning-unit ids
-          </p>
-        </div>
+      <div className="rounded-xl border border-border/30 bg-card/60 p-4">
+        <p className="text-xs text-muted-foreground/60">monitoring regions</p>
+        <p className="mt-2 font-mono text-2xl tabular-nums text-foreground/80">{regions.length}</p>
+        <p className="mt-1 text-xs text-muted-foreground/60 text-pretty">
+          public rollup across named hamilton monitoring regions
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {regions.map(region => (
-          <article
-            className="flex min-h-[180px] flex-col justify-between rounded-xl border border-border/50 bg-card p-6"
-            key={region.zone}
-          >
-            <p className="text-sm text-muted-foreground text-pretty">
-              {formatZoneName(region.zone, 'title')}
-            </p>
-            <div className="py-3 text-center">
-              <p
-                className="font-mono text-6xl font-bold tabular-nums"
-                style={{ color: aqiColor(region.aqi) }}
-              >
-                {region.aqi}
-              </p>
-              <p className="mt-1 text-xs uppercase text-muted-foreground">{region.label}</p>
-            </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span className="font-mono tabular-nums">
-                {formatMetric(region.temperature, 'temp')}
-              </span>
-              <span className="font-mono tabular-nums">
-                {formatMetric(region.humidity, 'humidity')}
-              </span>
-            </div>
-          </article>
-        ))}
+      <div>
+        <div className="flex flex-wrap gap-4">
+          {pageRegions.map(region => (
+            <article
+              className="min-w-56 flex-1 rounded-xl border border-border/50 bg-card py-3"
+              key={region.zone}
+            >
+              <div className="grid grid-cols-[4.5rem_1fr]">
+                <Row label="region" value={region.zoneName} />
+                <Row label="aqi" value={`${region.aqi}`} color={aqiColor(region.aqi)} />
+                <Row label="status" value={region.aqiLabel} />
+                <Row label="temp" value={formatNullableMetric(region.temperature, '')} mono />
+                <Row label="humidity" value={formatNullableMetric(region.humidity, '')} mono />
+                <Row label="noise" value={formatNullableMetric(region.noiseLevel, '')} mono />
+                {region.freshnessSeconds !== null ? (
+                  <Row label="updated" value={formatFreshness(region.freshnessSeconds)} mono />
+                ) : null}
+              </div>
+            </article>
+          ))}
+          {emptySlots > 0
+            ? Array.from({ length: emptySlots }, (_, i) => (
+                <div className="min-h-48 min-w-56 flex-1 rounded-xl" key={`empty-${i}`} />
+              ))
+            : null}
+        </div>
+        <ListPagination
+          onPageChange={setPage}
+          page={safePage}
+          pageSize={ZONES_PER_PAGE}
+          totalItems={regions.length}
+          totalPages={totalPages}
+        />
       </div>
 
-      <div className="rounded-xl border border-border/50 bg-card p-6">
+      <div className="rounded-xl border border-border/30 bg-card/60 p-5">
         <ZoneAqiBarChart zones={regions} />
       </div>
-
-      <p className="text-center text-xs text-muted-foreground/40">
-        public monitoring-region feed: <code>/api/v1/zones/aqi</code>, refreshes every 10 seconds
-      </p>
     </div>
   )
 }
 
-async function fetchZoneAqi(): Promise<ZoneAQI[]> {
-  const response = await fetch('/api/v1/zones/aqi')
+async function fetchZoneSummary(): Promise<PublicZoneSummary[]> {
+  const response = await fetch('/api/v1/zones/summary')
   if (!response.ok) {
     throw new Error('public API request failed')
   }
 
   const payload = await response.json()
-  return ZoneAQISchema.array().parse(payload)
+  return PublicZoneSummarySchema.array().parse(payload)
 }
 
-function formatMetric(value: number | undefined, label: string): string {
-  if (value === undefined) {
+function formatNullableMetric(value: number | null, label: string): string {
+  if (label === '') {
+    return value === null ? '--' : `${value}`
+  }
+  if (value === null) {
     return `${label}: --`
   }
-
   return `${label}: ${value}`
+}
+
+function formatFreshness(seconds: number): string {
+  if (seconds < 60) return `${seconds}s ago`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+  return `${Math.floor(seconds / 3600)}h ago`
+}
+
+function Row({
+  label,
+  value,
+  mono = false,
+  color,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+  color?: string
+}) {
+  return (
+    <>
+      <span className="px-3 py-1 text-[10px] text-muted-foreground/50">{label}</span>
+      <span
+        className={cn('px-3 py-1 text-xs text-foreground/80', mono && 'font-mono tabular-nums')}
+        style={color ? { color } : undefined}
+      >
+        {value}
+      </span>
+    </>
+  )
 }
 
 function aqiColor(aqi: number): string {

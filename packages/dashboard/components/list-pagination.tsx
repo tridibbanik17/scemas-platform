@@ -22,7 +22,7 @@ export function ListPagination({
   const singlePage = totalPages <= 1
 
   return (
-    <div className="flex items-center justify-between border-t border-border px-4 py-3">
+    <div className="flex items-center justify-between border-t border-border/30 px-4 py-2.5">
       <p className="text-xs text-muted-foreground tabular-nums">
         {start}&ndash;{end} of {totalItems}
       </p>

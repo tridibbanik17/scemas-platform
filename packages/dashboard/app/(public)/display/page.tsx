@@ -11,8 +11,8 @@ export default function PublicDisplayPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-balance">public air quality display</h1>
-        <p className="text-sm text-muted-foreground text-pretty">
+        <h1 className="text-lg font-normal text-balance">public air quality display</h1>
+        <p className="text-sm text-muted-foreground/70 text-pretty">
           live monitoring-region conditions grouped from hamilton&apos;s official planning-unit
           layer. the public api route stays <code>/api/v1/zones/aqi</code> for compatibility.
         </p>

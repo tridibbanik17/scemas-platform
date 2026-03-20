@@ -11,7 +11,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: '/health', label: 'platform health' },
         { href: '/audit', label: 'audit logs' },
       ]}
-      subtitle="system admin"
       title="SCEMAS"
     >
       {children}

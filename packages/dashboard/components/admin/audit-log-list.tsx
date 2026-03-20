@@ -2,6 +2,7 @@
 
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useRef, useState } from 'react'
+import { CopyButton } from '@/components/copy-button'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
 
@@ -100,9 +101,12 @@ export function AuditLogList() {
 
                 {isExpanded ? (
                   <div
-                    className="overflow-auto border-b border-border bg-muted/20 px-4 py-3"
+                    className="relative overflow-auto border-b border-border bg-muted/20 px-4 py-3"
                     style={{ height: DETAIL_HEIGHT }}
                   >
+                    <div className="sticky right-3 top-0 z-10 float-right">
+                      <CopyButton value={formatDetails(log.details)} />
+                    </div>
                     <pre className="font-mono text-xs text-muted-foreground">
                       {formatDetails(log.details)}
                     </pre>
