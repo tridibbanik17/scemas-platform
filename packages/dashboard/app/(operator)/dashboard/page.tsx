@@ -2,8 +2,6 @@
 // shows: metric KPIs, zone metrics chart, sensor feed, alert frequency, active alerts
 // this is the primary Presentation component for the operator agent
 
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { Suspense } from 'react'
 import { alerts } from '@scemas/db/schema'
 import { desc, eq } from 'drizzle-orm'
@@ -14,17 +12,14 @@ import { Spinner } from '@/components/ui/spinner'
 import { getDb, getManager } from '@/server/cached'
 import { DashboardChartsPanel, AlertFrequencyPanel } from './dashboard-charts'
 
+import sensorCatalog from '../../../../../data/hamilton-sensors.json'
+
 type SensorPosition = {
   sensor_id: string
   device_type: string
   zone: string
   lat: number
   lng: number
-}
-
-function loadSensorPositions(): SensorPosition[] {
-  const filePath = join(process.cwd(), '../../data/hamilton-sensors.json')
-  return JSON.parse(readFileSync(filePath, 'utf-8'))
 }
 
 export default function OperatorDashboard() {
@@ -72,7 +67,7 @@ async function ZoneMapWrapper() {
   const manager = getManager()
   const db = getDb()
 
-  const positions = loadSensorPositions()
+  const positions = sensorCatalog as SensorPosition[]
   const latestReadings = await manager.getLatestSensorReadings(100)
   const activeAlerts = await db.query.alerts.findMany({
     where: eq(alerts.status, 'active'),
