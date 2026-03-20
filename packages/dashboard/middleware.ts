@@ -2,14 +2,9 @@
 // mirrors the Authenticating state in the data distribution state chart:
 // ValidateToken → AuthorizeRole → grant/deny
 
-import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-import {
-  SESSION_COOKIE_NAME,
-  sessionLandingPath,
-  verifySessionToken,
-} from '@/lib/session'
+import { NextResponse } from 'next/server'
+import { SESSION_COOKIE_NAME, sessionLandingPath, verifySessionToken } from '@/lib/session'
 
 // routes that require authentication (any role)
 const protectedPaths = ['/dashboard', '/alerts', '/subscriptions', '/metrics']
@@ -56,18 +51,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(sessionLandingPath(session.role), request.url))
   }
 
-  if (
-    protectedPaths.some(path => pathname.startsWith(path)) &&
-    session.role === 'viewer'
-  ) {
+  if (protectedPaths.some(path => pathname.startsWith(path)) && session.role === 'viewer') {
     return NextResponse.redirect(new URL(sessionLandingPath(session.role), request.url))
   }
 
   return NextResponse.next()
 }
 
-export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
-}
+export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] }

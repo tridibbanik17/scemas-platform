@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-
 import { Button } from '@/components/ui/button'
 import { SESSION_COOKIE_NAME } from '@/lib/session'
 

@@ -1,15 +1,13 @@
-import { MetricSubagentPanels, buildMetricSubagentPanels } from '@/components/operator/metric-subagent-panels'
 import { notFound } from 'next/navigation'
-
+import {
+  MetricSubagentPanels,
+  buildMetricSubagentPanels,
+} from '@/components/operator/metric-subagent-panels'
 import { getManager } from '@/server/cached'
 import { ZoneTimeSeriesPanel } from './zone-time-series'
 
 // zone drill-down: all 4 sensor subagent metrics for a specific zone
-export default async function ZoneMetricsPage({
-  params,
-}: {
-  params: Promise<{ zone: string }>
-}) {
+export default async function ZoneMetricsPage({ params }: { params: Promise<{ zone: string }> }) {
   const { zone } = await params
   const manager = getManager()
   const readings = await manager.getRecentZoneReadings(zone, 120)
@@ -24,7 +22,8 @@ export default async function ZoneMetricsPage({
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-balance">{zone.replaceAll('_', ' ')} metrics</h1>
       <p className="text-sm text-muted-foreground text-pretty">
-        zone drill-down for the four sensor subagents. this is the operator view, so raw zone-level telemetry remains visible.
+        zone drill-down for the four sensor subagents. this is the operator view, so raw zone-level
+        telemetry remains visible.
       </p>
       <ZoneTimeSeriesPanel zone={zone} />
       <MetricSubagentPanels panels={panels} showZoneLinks={false} />

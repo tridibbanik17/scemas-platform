@@ -194,7 +194,12 @@ async fn ingest_telemetry(
     let latency_ms = request_started_at.elapsed().as_secs_f64() * 1000.0;
     if let Err(error) = state
         .distribution
-        .record_ingestion_health(snapshot.total_received, snapshot.total_rejected, latency_ms)
+        .record_ingestion_health(
+            snapshot.total_received,
+            snapshot.total_accepted,
+            snapshot.total_rejected,
+            latency_ms,
+        )
         .await
     {
         record_ingestion_failure(&state, "health_snapshot", &reading, &error).await;

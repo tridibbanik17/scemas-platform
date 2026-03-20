@@ -1,7 +1,6 @@
 'use client'
 
 import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts'
-
 import {
   ChartContainer,
   ChartTooltip,
@@ -9,11 +8,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 
-type HealthPoint = {
-  time: string
-  latencyMs: number
-  errorRate: number
-}
+type HealthPoint = { time: string; latencyMs: number; errorRate: number }
 
 const chartConfig = {
   latencyMs: { label: 'latency (ms)', color: '#ea9a97' },
@@ -27,11 +22,7 @@ function formatTime(isoString: string) {
 
 export function PlatformHealthChart({ data }: { data: HealthPoint[] }) {
   if (data.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        no platform status has been recorded yet
-      </p>
-    )
+    return <p className="text-sm text-muted-foreground">no platform status has been recorded yet</p>
   }
 
   return (

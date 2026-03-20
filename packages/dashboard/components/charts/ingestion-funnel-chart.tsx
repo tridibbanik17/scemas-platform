@@ -1,7 +1,6 @@
 'use client'
 
 import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts'
-
 import {
   ChartContainer,
   ChartTooltip,
@@ -9,11 +8,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 
-type IngestionStats = {
-  received: number
-  accepted: number
-  rejected: number
-}
+type IngestionStats = { received: number; accepted: number; rejected: number }
 
 const chartConfig = {
   received: { label: 'received', color: 'oklch(0.705 0.213 47.604)' },

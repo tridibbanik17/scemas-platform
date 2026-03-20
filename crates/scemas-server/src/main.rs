@@ -36,12 +36,26 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("failed to load alert rules: {e}");
     }
 
+    let (base_recv, base_accepted, base_rejected) = distribution.load_ingestion_counters().await?;
+    tracing::info!(
+        base_recv,
+        base_accepted,
+        base_rejected,
+        "restored ingestion counters"
+    );
+
     let state = state::AppState {
         access: Arc::new(access),
         distribution: Arc::new(distribution),
         telemetry: Arc::new(telemetry),
         alerting: Arc::new(alerting),
-        health: Arc::new(scemas_telemetry::health::IngestionHealth::new()),
+        health: Arc::new(
+            scemas_telemetry::health::IngestionHealth::new_with_baseline(
+                base_recv,
+                base_accepted,
+                base_rejected,
+            ),
+        ),
     };
 
     let app = routes::create_router(state);

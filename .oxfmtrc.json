@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "arrowParens": "avoid",
+  "quoteProps": "as-needed",
+  "trailingComma": "all",
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true,
+  "objectWrap": "collapse",
+  "experimentalSortImports": {
+    "groups": [
+      "type-import",
+      ["value-builtin", "value-external"],
+      "type-internal",
+      "value-internal",
+      ["type-parent", "type-sibling", "type-index"],
+      ["value-parent", "value-sibling", "value-index"],
+      "unknown"
+    ],
+    "newlinesBetween": false
+  },
+  "experimentalSortPackageJson": true,
+  "ignorePatterns": [
+    "worker-configuration.d.ts",
+    "packages/dashboard/components/ui"
+  ]
+}

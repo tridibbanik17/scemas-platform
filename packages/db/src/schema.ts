@@ -7,6 +7,7 @@ import {
   integer,
   serial,
   jsonb,
+  bigint,
   bigserial,
   index,
   uniqueIndex,
@@ -37,9 +38,7 @@ export const devices = pgTable(
     status: text('status').notNull().default('active'),
     registeredAt: timestamp('registered_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  table => ({
-    zoneStatusIdx: index('devices_zone_status_idx').on(table.zone, table.status),
-  }),
+  table => ({ zoneStatusIdx: index('devices_zone_status_idx').on(table.zone, table.status) }),
 )
 
 export const activeSessionTokens = pgTable(
@@ -70,7 +69,11 @@ export const sensorReadings = pgTable(
   },
   table => ({
     sensorTimeIdx: index('sensor_readings_sensor_time_idx').on(table.sensorId, table.time),
-    zoneMetricTimeIdx: index('sensor_readings_zone_metric_time_idx').on(table.zone, table.metricType, table.time),
+    zoneMetricTimeIdx: index('sensor_readings_zone_metric_time_idx').on(
+      table.zone,
+      table.metricType,
+      table.time,
+    ),
   }),
 )
 
@@ -113,7 +116,11 @@ export const alerts = pgTable(
   },
   table => ({
     statusCreatedAtIdx: index('alerts_status_created_at_idx').on(table.status, table.createdAt),
-    zoneStatusCreatedAtIdx: index('alerts_zone_status_created_at_idx').on(table.zone, table.status, table.createdAt),
+    zoneStatusCreatedAtIdx: index('alerts_zone_status_created_at_idx').on(
+      table.zone,
+      table.status,
+      table.createdAt,
+    ),
   }),
 )
 
@@ -197,6 +204,14 @@ export const ingestionFailures = pgTable(
     ),
   }),
 )
+
+export const ingestionCounters = pgTable('ingestion_counters', {
+  subsystem: text('subsystem').primaryKey(),
+  totalReceived: bigint('total_received', { mode: 'number' }).notNull().default(0),
+  totalAccepted: bigint('total_accepted', { mode: 'number' }).notNull().default(0),
+  totalRejected: bigint('total_rejected', { mode: 'number' }).notNull().default(0),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+})
 
 export const platformStatus = pgTable(
   'platform_status',

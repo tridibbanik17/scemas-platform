@@ -20,26 +20,19 @@ export default {
     try {
       await container.startAndWaitForPorts({
         ports: 3001,
-        startOptions: {
-          envVars: buildContainerEnv(env),
-        },
-        cancellationOptions: {
-          portReadyTimeoutMS: 30_000,
-        },
+        startOptions: { envVars: buildContainerEnv(env) },
+        cancellationOptions: { portReadyTimeoutMS: 30_000 },
       })
 
       return await container.fetch(request)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'unknown container startup failure'
+      const message = error instanceof Error ? error.message : 'unknown container startup failure'
 
       console.error('container bootstrap failed', { message })
 
       return new Response(`container bootstrap failed: ${message}`, {
         status: 503,
-        headers: {
-          'content-type': 'text/plain; charset=UTF-8',
-        },
+        headers: { 'content-type': 'text/plain; charset=UTF-8' },
       })
     }
   },

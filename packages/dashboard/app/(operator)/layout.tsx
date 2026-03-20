@@ -4,16 +4,10 @@ import { getDb } from '@/server/cached'
 
 export const dynamic = 'force-dynamic'
 
-export default async function OperatorLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function OperatorLayout({ children }: { children: React.ReactNode }) {
   const db = getDb()
-  const devices = await db.query.devices.findMany({
-    columns: { zone: true },
-  })
-  const availableZones = Array.from(new Set(devices.map(device => device.zone))).sort()
+  const devices = await db.query.devices.findMany({ columns: { zone: true } })
+  const availableZones = Array.from(new Set(devices.map(device => device.zone))).toSorted()
 
   return (
     <AgentShell

@@ -2,11 +2,7 @@ import { AgentShell } from '@/components/layout/agent-shell'
 
 export const dynamic = 'force-dynamic'
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <AgentShell
       navItems={[

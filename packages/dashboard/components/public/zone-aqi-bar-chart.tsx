@@ -2,7 +2,6 @@
 
 import type { ZoneAQI } from '@scemas/types'
 import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts'
-
 import {
   ChartContainer,
   ChartTooltip,
@@ -10,9 +9,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 
-const chartConfig = {
-  aqi: { label: 'AQI', color: '#a692c3' },
-} satisfies ChartConfig
+const chartConfig = { aqi: { label: 'AQI', color: '#a692c3' } } satisfies ChartConfig
 
 function aqiColor(aqi: number): string {
   if (aqi <= 50) return 'oklch(0.837 0.128 66.29)'
@@ -23,9 +20,7 @@ function aqiColor(aqi: number): string {
   return 'oklch(0.47 0.157 37.304)'
 }
 
-const zoneNameOverrides: Record<string, string> = {
-  mcmaster: 'McMaster',
-}
+const zoneNameOverrides: Record<string, string> = { mcmaster: 'McMaster' }
 
 function formatZoneName(zone: string): string {
   if (zoneNameOverrides[zone]) {
@@ -37,10 +32,7 @@ function formatZoneName(zone: string): string {
 export function ZoneAqiBarChart({ zones }: { zones: ZoneAQI[] }) {
   if (zones.length === 0) return null
 
-  const data = zones.map(z => ({
-    zone: formatZoneName(z.zone),
-    aqi: z.aqi,
-  }))
+  const data = zones.map(z => ({ zone: formatZoneName(z.zone), aqi: z.aqi }))
 
   return (
     <ChartContainer className="h-48 w-full" config={chartConfig}>

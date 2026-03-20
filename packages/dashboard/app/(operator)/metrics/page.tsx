@@ -1,4 +1,7 @@
-import { MetricSubagentPanels, buildMetricSubagentPanels } from '@/components/operator/metric-subagent-panels'
+import {
+  MetricSubagentPanels,
+  buildMetricSubagentPanels,
+} from '@/components/operator/metric-subagent-panels'
 import { getManager } from '@/server/cached'
 
 // VisualizeCityMetrics boundary (DataDistributionManager)
@@ -10,7 +13,8 @@ export default async function MetricsPage() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-balance">city metrics</h1>
       <p className="text-sm text-muted-foreground text-pretty">
-        four distinct sensor subagents summarize the latest telemetry by metric family, with zone drill-downs for operators
+        four distinct sensor subagents summarize the latest telemetry by metric family, with zone
+        drill-downs for operators
       </p>
       <MetricSubagentPanels panels={panels} />
     </div>

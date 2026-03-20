@@ -80,21 +80,13 @@ export class DataDistributionManager {
     const zones = new Map<string, ZoneAQI>(
       deviceRows.map(row => [
         row.zone,
-        {
-          zone: row.zone,
-          aqi: 0,
-          label: 'awaiting telemetry',
-        } satisfies ZoneAQI,
+        { zone: row.zone, aqi: 0, label: 'awaiting telemetry' } satisfies ZoneAQI,
       ]),
     )
 
     for (const row of rows) {
       if (!zones.has(row.zone)) {
-        zones.set(row.zone, {
-          zone: row.zone,
-          aqi: 0,
-          label: 'good',
-        })
+        zones.set(row.zone, { zone: row.zone, aqi: 0, label: 'good' })
       }
 
       const zone = zones.get(row.zone)
@@ -116,9 +108,7 @@ export class DataDistributionManager {
       }
     }
 
-    return Array.from(zones.values()).sort((left, right) =>
-      left.zone.localeCompare(right.zone),
-    )
+    return Array.from(zones.values()).toSorted((left, right) => left.zone.localeCompare(right.zone))
   }
 }
 
@@ -139,9 +129,10 @@ function coerceReadingRow(row: Record<string, unknown>): LatestSensorReading {
 function pm25ToAqi(concentration: number): number {
   const truncatedConcentration = Math.floor(concentration * 10) / 10
   const breakpoint =
-    pm25Breakpoints.find(candidate =>
-      truncatedConcentration >= candidate.concentrationLow &&
-      truncatedConcentration <= candidate.concentrationHigh,
+    pm25Breakpoints.find(
+      candidate =>
+        truncatedConcentration >= candidate.concentrationLow &&
+        truncatedConcentration <= candidate.concentrationHigh,
     ) ?? pm25Breakpoints.at(-1)
 
   if (!breakpoint) {

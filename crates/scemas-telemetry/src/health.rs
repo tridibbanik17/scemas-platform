@@ -12,10 +12,14 @@ pub struct IngestionHealth {
 
 impl IngestionHealth {
     pub fn new() -> Self {
+        Self::new_with_baseline(0, 0, 0)
+    }
+
+    pub fn new_with_baseline(received: u64, accepted: u64, rejected: u64) -> Self {
         Self {
-            total_received: AtomicU64::new(0),
-            total_accepted: AtomicU64::new(0),
-            total_rejected: AtomicU64::new(0),
+            total_received: AtomicU64::new(received),
+            total_accepted: AtomicU64::new(accepted),
+            total_rejected: AtomicU64::new(rejected),
         }
     }
 

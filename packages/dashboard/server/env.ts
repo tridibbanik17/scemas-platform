@@ -1,8 +1,6 @@
 const DEFAULT_INTERNAL_RUST_URL = 'http://localhost:3001'
 
-type CloudflareRuntimeContext = {
-  env?: Record<string, unknown>
-}
+type CloudflareRuntimeContext = { env?: Record<string, unknown> }
 
 export function getDatabaseUrl(): string {
   return getRequiredEnv('DATABASE_URL')

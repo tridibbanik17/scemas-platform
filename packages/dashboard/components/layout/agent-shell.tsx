@@ -1,6 +1,5 @@
-import { cookies } from 'next/headers'
 import type { ReactNode } from 'react'
-
+import { cookies } from 'next/headers'
 import {
   Sidebar,
   SidebarContent,
@@ -13,14 +12,10 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
-
 import { NavLinks } from './nav-links'
 import { SignOutForm } from './sign-out-form'
 
-type AgentNavItem = {
-  href: string
-  label: string
-}
+type AgentNavItem = { href: string; label: string }
 
 type AgentShellProps = {
   title: string
@@ -56,9 +51,7 @@ export async function AgentShell({
           </SidebarGroup>
           {navExtra ? (
             <SidebarGroup>
-              <SidebarGroupContent className="px-2">
-                {navExtra}
-              </SidebarGroupContent>
+              <SidebarGroupContent className="px-2">{navExtra}</SidebarGroupContent>
             </SidebarGroup>
           ) : null}
         </SidebarContent>
@@ -74,9 +67,7 @@ export async function AgentShell({
         <header className="flex h-10 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger />
         </header>
-        <div className="mx-auto w-full max-w-5xl p-6">
-          {children}
-        </div>
+        <div className="mx-auto w-full max-w-5xl p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   )

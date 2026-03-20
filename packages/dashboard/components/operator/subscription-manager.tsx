@@ -1,8 +1,7 @@
 'use client'
 
-import { type FormEvent, useState } from 'react'
 import type { MetricType, Severity } from '@scemas/types'
-
+import { type FormEvent, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
@@ -14,9 +13,7 @@ const severityOptions = [
   { value: 3, label: 'critical only' },
 ] as const
 
-type SubscriptionManagerProps = {
-  availableZones: string[]
-}
+type SubscriptionManagerProps = { availableZones: string[] }
 
 export function SubscriptionManager({ availableZones }: SubscriptionManagerProps) {
   const utils = trpc.useUtils()
@@ -81,7 +78,12 @@ export function SubscriptionManager({ availableZones }: SubscriptionManagerProps
         <div className="grid gap-2 md:grid-cols-2">
           {metricTypes.map(metricType => (
             <label className="flex items-center gap-2 text-sm" key={metricType}>
-              <input defaultChecked={selectedMetricTypes.includes(metricType)} name="metricTypes" type="checkbox" value={metricType} />
+              <input
+                defaultChecked={selectedMetricTypes.includes(metricType)}
+                name="metricTypes"
+                type="checkbox"
+                value={metricType}
+              />
               {metricType.replaceAll('_', ' ')}
             </label>
           ))}
@@ -93,7 +95,12 @@ export function SubscriptionManager({ availableZones }: SubscriptionManagerProps
         <div className="grid gap-2 md:grid-cols-2">
           {availableZones.map(zone => (
             <label className="flex items-center gap-2 text-sm" key={zone}>
-              <input defaultChecked={selectedZones.includes(zone)} name="zones" type="checkbox" value={zone} />
+              <input
+                defaultChecked={selectedZones.includes(zone)}
+                name="zones"
+                type="checkbox"
+                value={zone}
+              />
               {zone.replaceAll('_', ' ')}
             </label>
           ))}
@@ -104,7 +111,12 @@ export function SubscriptionManager({ availableZones }: SubscriptionManagerProps
         <label className="text-sm font-medium" htmlFor="minSeverity">
           minimum severity
         </label>
-        <select className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" defaultValue={`${subscription?.minSeverity ?? 1}`} id="minSeverity" name="minSeverity">
+        <select
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          defaultValue={`${subscription?.minSeverity ?? 1}`}
+          id="minSeverity"
+          name="minSeverity"
+        >
           {severityOptions.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}

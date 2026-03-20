@@ -1,17 +1,20 @@
 'use client'
 
-import { useState } from 'react'
 import { keepPreviousData } from '@tanstack/react-query'
-
-import { ZoneMetricsChart } from '@/components/charts/zone-metrics-chart'
+import { useState } from 'react'
 import { AlertFrequencyChart } from '@/components/charts/alert-frequency-chart'
+import { ZoneMetricsChart } from '@/components/charts/zone-metrics-chart'
 import { trpc } from '@/lib/trpc'
 
 export function DashboardChartsPanel({ availableZones }: { availableZones: string[] }) {
   const [selectedZone, setSelectedZone] = useState(availableZones[0] ?? '')
   const timeSeriesQuery = trpc.telemetry.getTimeSeries.useQuery(
     { zone: selectedZone, hours: 6 },
-    { enabled: selectedZone.length > 0, refetchInterval: 30_000, placeholderData: keepPreviousData },
+    {
+      enabled: selectedZone.length > 0,
+      refetchInterval: 30_000,
+      placeholderData: keepPreviousData,
+    },
   )
 
   return (
@@ -45,10 +48,7 @@ export function DashboardChartsPanel({ availableZones }: { availableZones: strin
 }
 
 export function AlertFrequencyPanel() {
-  const frequencyQuery = trpc.alerts.frequency.useQuery(
-    { hours: 24 },
-    { refetchInterval: 30_000 },
-  )
+  const frequencyQuery = trpc.alerts.frequency.useQuery({ hours: 24 }, { refetchInterval: 30_000 })
 
   if (frequencyQuery.isLoading) return null
 

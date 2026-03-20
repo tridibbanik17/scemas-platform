@@ -1,7 +1,7 @@
 import { alerts } from '@scemas/db/schema'
 import { eq } from 'drizzle-orm'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-
 import { SeverityBadge } from '@/components/ui/severity-badge'
 import { getDb } from '@/server/cached'
 import { AlertActions } from './alert-actions'
@@ -13,9 +13,7 @@ export default async function AlertDetailPage({
 }) {
   const { alertId } = await params
   const db = getDb()
-  const alert = await db.query.alerts.findFirst({
-    where: eq(alerts.id, alertId),
-  })
+  const alert = await db.query.alerts.findFirst({ where: eq(alerts.id, alertId) })
 
   if (!alert) {
     notFound()
@@ -23,7 +21,23 @@ export default async function AlertDetailPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-balance">alert detail</h1>
+      <div>
+        <Link
+          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          href="/alerts"
+        >
+          back to alerts
+        </Link>
+      </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-balance">alert detail</h1>
+          <p className="text-sm text-muted-foreground text-pretty">
+            {alert.metricType.replaceAll('_', ' ')} alert in {alert.zone}, severity {alert.severity}
+          </p>
+        </div>
+        <AlertActions alertId={alert.id} currentStatus={alert.status} />
+      </div>
       <div className="rounded-lg border border-border bg-card p-4">
         <dl className="grid gap-4 md:grid-cols-2">
           <div>
@@ -36,7 +50,9 @@ export default async function AlertDetailPage({
           </div>
           <div>
             <dt className="text-xs uppercase text-muted-foreground">severity</dt>
-            <dd className="mt-1 text-sm"><SeverityBadge severity={alert.severity} /></dd>
+            <dd className="mt-1 text-sm">
+              <SeverityBadge severity={alert.severity} />
+            </dd>
           </div>
           <div>
             <dt className="text-xs uppercase text-muted-foreground">status</dt>
@@ -52,7 +68,6 @@ export default async function AlertDetailPage({
           </div>
         </dl>
       </div>
-      <AlertActions alertId={alert.id} currentStatus={alert.status} />
     </div>
   )
 }

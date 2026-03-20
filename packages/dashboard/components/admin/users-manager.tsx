@@ -1,28 +1,103 @@
 'use client'
 
+import type { Role } from '@scemas/types'
 import Link from 'next/link'
-import { useState } from 'react'
-
+import { type FormEvent, useState } from 'react'
 import { ListPagination } from '@/components/list-pagination'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
 
 const roles = ['operator', 'admin', 'viewer'] as const
 const PAGE_SIZE = 10
 
+function isRole(value: string): value is Role {
+  return roles.some(r => r === value)
+}
+
 export function UsersManager() {
   const utils = trpc.useUtils()
   const [page, setPage] = useState(0)
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
+
   const usersQuery = trpc.users.list.useQuery()
-  const updateRole = trpc.users.updateRole.useMutation({
+  const createUser = trpc.users.create.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.users.list.invalidate(),
-        utils.audit.list.invalidate(),
-      ])
+      setSubmissionError(null)
+      await Promise.all([utils.users.list.invalidate(), utils.audit.list.invalidate()])
+    },
+    onError: error => {
+      setSubmissionError(error.message)
     },
   })
+  const updateRole = trpc.users.updateRole.useMutation({
+    onSuccess: async () => {
+      await Promise.all([utils.users.list.invalidate(), utils.audit.list.invalidate()])
+    },
+  })
+  const deleteUser = trpc.users.delete.useMutation({
+    onSuccess: async (_, variables) => {
+      utils.users.list.setData(
+        undefined,
+        current => current?.filter(u => u.id !== variables.userId) ?? current,
+      )
+      await Promise.all([utils.users.list.invalidate(), utils.audit.list.invalidate()])
+    },
+    onError: error => {
+      setSubmissionError(error.message)
+    },
+  })
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSubmissionError(null)
+
+    const formData = new FormData(event.currentTarget)
+    const email = formData.get('email')
+    const username = formData.get('username')
+    const password = formData.get('password')
+    const role = formData.get('role')
+
+    if (
+      typeof email !== 'string' ||
+      typeof username !== 'string' ||
+      typeof password !== 'string' ||
+      typeof role !== 'string'
+    ) {
+      setSubmissionError('form submission was malformed')
+      return
+    }
+
+    if (!isRole(role)) {
+      setSubmissionError('invalid role selected')
+      return
+    }
+
+    if (username.length < 3) {
+      setSubmissionError('username must be at least 3 characters')
+      return
+    }
+
+    if (password.length < 8) {
+      setSubmissionError('password must be at least 8 characters')
+      return
+    }
+
+    createUser.mutate({ email, username, password, role })
+    event.currentTarget.reset()
+  }
 
   if (usersQuery.isLoading) {
     return (
@@ -46,62 +121,126 @@ export function UsersManager() {
   const users = usersQuery.data ?? []
   const totalPages = Math.ceil(users.length / PAGE_SIZE)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageUsers = users.slice(
-    safePage * PAGE_SIZE,
-    (safePage + 1) * PAGE_SIZE,
-  )
+  const pageUsers = users.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3 text-sm font-medium">
-        accounts and permissions
-      </div>
-      {users.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-muted-foreground text-pretty">
-          no accounts exist yet
-        </p>
-      ) : (
-        <>
-          <div className="divide-y divide-border">
-            {pageUsers.map(account => (
-              <div className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between" key={account.id}>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">
-                    <Link className="underline-offset-4 hover:underline" href={`/users/${account.id}`}>
-                      {account.username}
-                    </Link>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {account.email} | created {account.createdAt.toLocaleString()}
-                  </p>
-                </div>
+    <div className="space-y-6">
+      <form
+        className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-5"
+        onSubmit={handleSubmit}
+      >
+        <Input name="email" placeholder="email" type="email" required />
+        <Input name="username" placeholder="username" minLength={3} required />
+        <Input name="password" placeholder="password" type="password" minLength={8} required />
+        <select
+          className="h-7 w-full rounded-md border border-input bg-input/20 px-2 text-sm md:text-xs/relaxed dark:bg-input/30"
+          defaultValue="operator"
+          name="role"
+        >
+          {roles.map(role => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </select>
+        <Button disabled={createUser.isPending} type="submit">
+          {createUser.isPending ? <Spinner /> : 'create account'}
+        </Button>
+      </form>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {roles.map(role => (
-                    <Button
-                      disabled={updateRole.isPending}
-                      key={role}
-                      onClick={() => updateRole.mutate({ userId: account.id, role })}
-                      size="sm"
-                      type="button"
-                      variant={account.role === role ? 'default' : 'outline'}
-                    >
-                      {role}
-                    </Button>
-                  ))}
+      {submissionError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {submissionError}
+        </p>
+      ) : null}
+
+      <div className="rounded-lg border border-border bg-card">
+        <div className="border-b border-border px-4 py-3 text-sm font-medium">
+          accounts and permissions
+        </div>
+        {users.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground text-pretty">
+            no accounts exist yet. use the form above to create one.
+          </p>
+        ) : (
+          <>
+            <div className="divide-y divide-border">
+              {pageUsers.map(account => (
+                <div
+                  className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between"
+                  key={account.id}
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">
+                      <Link
+                        className="underline-offset-4 hover:underline"
+                        href={`/users/${account.id}`}
+                      >
+                        {account.username}
+                      </Link>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {account.email} | created {account.createdAt.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {roles.map(role => (
+                      <Button
+                        disabled={updateRole.isPending}
+                        key={role}
+                        onClick={() => updateRole.mutate({ userId: account.id, role })}
+                        size="sm"
+                        type="button"
+                        variant={account.role === role ? 'default' : 'outline'}
+                      >
+                        {role}
+                      </Button>
+                    ))}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          disabled={deleteUser.isPending}
+                          size="sm"
+                          type="button"
+                          variant="destructive"
+                        >
+                          delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>delete account</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            this will permanently remove {account.username}&apos;s account and
+                            cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            variant="destructive"
+                            onClick={() => deleteUser.mutate({ userId: account.id })}
+                          >
+                            {deleteUser.isPending ? <Spinner /> : 'delete'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <ListPagination
-            onPageChange={setPage}
-            page={safePage}
-            pageSize={PAGE_SIZE}
-            totalItems={users.length}
-            totalPages={totalPages}
-          />
-        </>
-      )}
+              ))}
+            </div>
+            <ListPagination
+              onPageChange={setPage}
+              page={safePage}
+              pageSize={PAGE_SIZE}
+              totalItems={users.length}
+              totalPages={totalPages}
+            />
+          </>
+        )}
+      </div>
     </div>
   )
 }

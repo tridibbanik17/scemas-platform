@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetContent,
@@ -8,12 +9,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
 import { SubscriptionManager } from './subscription-manager'
 
-type SubscriptionDrawerProps = {
-  availableZones: string[]
-}
+type SubscriptionDrawerProps = { availableZones: string[] }
 
 export function SubscriptionDrawer({ availableZones }: SubscriptionDrawerProps) {
   return (

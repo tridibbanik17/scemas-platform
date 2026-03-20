@@ -1,30 +1,26 @@
 // AlertingManager read operations (HandleActiveAlerts boundary)
 // writes (acknowledge, resolve) also here since they're simple state transitions
 
-import { TRPCError } from '@trpc/server'
-import { router, protectedProcedure } from '../trpc'
 import { alerts } from '@scemas/db/schema'
+import { AlertStatusSchema } from '@scemas/types'
+import { TRPCError } from '@trpc/server'
 import { eq, desc, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { AlertStatusSchema } from '@scemas/types'
+import { callRustEndpoint, extractRustErrorMessage } from '../rust-client'
+import { router, protectedProcedure } from '../trpc'
 
-import {
-  callRustEndpoint,
-  extractRustErrorMessage,
-} from '../rust-client'
-
-const SuccessResponseSchema = z.object({
-  success: z.literal(true),
-})
+const SuccessResponseSchema = z.object({ success: z.literal(true) })
 
 export const alertsRouter = router({
   // list alerts with optional status filter
   list: protectedProcedure
-    .input(z.object({
-      status: AlertStatusSchema.optional(),
-      zone: z.string().optional(),
-      limit: z.number().default(50),
-    }))
+    .input(
+      z.object({
+        status: AlertStatusSchema.optional(),
+        zone: z.string().optional(),
+        limit: z.number().default(50),
+      }),
+    )
     .query(async ({ input, ctx }) => {
       const conditions = []
       if (input.status) conditions.push(eq(alerts.status, input.status))
@@ -41,9 +37,7 @@ export const alertsRouter = router({
   get: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ input, ctx }) => {
-      return ctx.db.query.alerts.findFirst({
-        where: eq(alerts.id, input.id),
-      })
+      return ctx.db.query.alerts.findFirst({ where: eq(alerts.id, input.id) })
     }),
 
   // alert frequency: count by hour grouped by severity (for charts)
@@ -75,12 +69,7 @@ export const alertsRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { data, status } = await callRustEndpoint(
         `/internal/alerting/alerts/${input.id}/acknowledge`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            userId: ctx.user.id,
-          }),
-        },
+        { method: 'POST', body: JSON.stringify({ userId: ctx.user.id }) },
       )
 
       if (status >= 400) {
@@ -107,12 +96,7 @@ export const alertsRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { data, status } = await callRustEndpoint(
         `/internal/alerting/alerts/${input.id}/resolve`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            userId: ctx.user.id,
-          }),
-        },
+        { method: 'POST', body: JSON.stringify({ userId: ctx.user.id }) },
       )
 
       if (status >= 400) {

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { type FormEvent, startTransition, useState } from 'react'
-
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
@@ -34,11 +33,7 @@ export function SignupForm() {
     const email = formData.get('email')
     const password = formData.get('password')
 
-    if (
-      typeof username !== 'string' ||
-      typeof email !== 'string' ||
-      typeof password !== 'string'
-    ) {
+    if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
       setSubmissionError('signup form submission was malformed')
       return
     }

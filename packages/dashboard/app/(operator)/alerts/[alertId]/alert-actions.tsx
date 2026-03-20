@@ -4,10 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
 
-type AlertActionsProps = {
-  alertId: string
-  currentStatus: string
-}
+type AlertActionsProps = { alertId: string; currentStatus: string }
 
 export function AlertActions({ alertId, currentStatus }: AlertActionsProps) {
   const utils = trpc.useUtils()

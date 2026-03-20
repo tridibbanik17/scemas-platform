@@ -1,15 +1,11 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
 
-type RuleActionsProps = {
-  ruleId: string
-  ruleStatus: string
-}
+type RuleActionsProps = { ruleId: string; ruleStatus: string }
 
 export function RuleActions({ ruleId, ruleStatus }: RuleActionsProps) {
   const router = useRouter()
@@ -41,7 +37,13 @@ export function RuleActions({ ruleId, ruleStatus }: RuleActionsProps) {
         }
         variant="outline"
       >
-        {updateRule.isPending ? <Spinner /> : ruleStatus === 'active' ? 'pause rule' : 'activate rule'}
+        {updateRule.isPending ? (
+          <Spinner />
+        ) : ruleStatus === 'active' ? (
+          'pause rule'
+        ) : (
+          'activate rule'
+        )}
       </Button>
       <Button
         disabled={deleteRule.isPending}

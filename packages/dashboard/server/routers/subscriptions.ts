@@ -1,20 +1,19 @@
 // ManageAlertSubscriptions boundary (innovative feature)
 // operators subscribe to specific metrics/zones/severity levels
 
-import { router, protectedProcedure } from '../trpc'
 import { alertSubscriptions } from '@scemas/db/schema'
-import { eq } from 'drizzle-orm'
 import { UpdateAlertSubscriptionSchema } from '@scemas/types'
+import { eq } from 'drizzle-orm'
+import { router, protectedProcedure } from '../trpc'
 
 export const subscriptionsRouter = router({
-  get: protectedProcedure
-    .query(async ({ ctx }) => {
-      const subscription = await ctx.db.query.alertSubscriptions.findFirst({
-        where: eq(alertSubscriptions.userId, ctx.user.id),
-      })
+  get: protectedProcedure.query(async ({ ctx }) => {
+    const subscription = await ctx.db.query.alertSubscriptions.findFirst({
+      where: eq(alertSubscriptions.userId, ctx.user.id),
+    })
 
-      return subscription ?? null
-    }),
+    return subscription ?? null
+  }),
 
   update: protectedProcedure
     .input(UpdateAlertSubscriptionSchema)
@@ -29,12 +28,14 @@ export const subscriptionsRouter = router({
           .set({ ...input, updatedAt: new Date() })
           .where(eq(alertSubscriptions.userId, ctx.user.id))
       } else {
-        await ctx.db.insert(alertSubscriptions).values({
-          userId: ctx.user.id,
-          metricTypes: input.metricTypes ?? [],
-          zones: input.zones ?? [],
-          minSeverity: input.minSeverity ?? 1,
-        })
+        await ctx.db
+          .insert(alertSubscriptions)
+          .values({
+            userId: ctx.user.id,
+            metricTypes: input.metricTypes ?? [],
+            zones: input.zones ?? [],
+            minSeverity: input.minSeverity ?? 1,
+          })
       }
 
       return { success: true }

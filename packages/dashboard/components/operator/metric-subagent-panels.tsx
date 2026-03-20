@@ -1,6 +1,5 @@
-import Link from 'next/link'
 import type { MetricType } from '@scemas/types'
-
+import Link from 'next/link'
 import type { LatestSensorReading } from '@/server/data-distribution-manager'
 
 type MetricPanelData = {
@@ -9,12 +8,7 @@ type MetricPanelData = {
   unit: string
   averageValue: string
   latestTime: string
-  zones: Array<{
-    zone: string
-    averageValue: string
-    latestValue: string
-    sensorCount: number
-  }>
+  zones: Array<{ zone: string; averageValue: string; latestValue: string; sensorCount: number }>
 }
 
 const metricConfig: Record<MetricType, { title: string; unit: string }> = {
@@ -26,9 +20,7 @@ const metricConfig: Record<MetricType, { title: string; unit: string }> = {
 
 const metricOrder: MetricType[] = ['temperature', 'humidity', 'air_quality', 'noise_level']
 
-export function buildMetricSubagentPanels(
-  readings: LatestSensorReading[],
-): MetricPanelData[] {
+export function buildMetricSubagentPanels(readings: LatestSensorReading[]): MetricPanelData[] {
   return metricOrder.map(metricType => {
     const metricReadings = readings.filter(reading => reading.metricType === metricType)
     const zones = new Map<string, LatestSensorReading[]>()
@@ -54,7 +46,7 @@ export function buildMetricSubagentPanels(
           latestValue: formatValue(zoneReadings[0]?.value),
           sensorCount: zoneReadings.length,
         }))
-        .sort((left, right) => left.zone.localeCompare(right.zone)),
+        .toSorted((left, right) => left.zone.localeCompare(right.zone)),
     }
   })
 }
@@ -71,11 +63,10 @@ export function MetricSubagentPanels({
       {panels.map(panel => (
         <article className="rounded-lg border border-border bg-card p-4" key={panel.metricType}>
           <div className="mb-4 space-y-1">
-            <p className="text-xs uppercase text-muted-foreground">
-              {panel.title}
-            </p>
+            <p className="text-xs uppercase text-muted-foreground">{panel.title}</p>
             <p className="font-mono text-3xl tabular-nums">
-              {panel.averageValue} <span className="text-sm text-muted-foreground">{panel.unit}</span>
+              {panel.averageValue}{' '}
+              <span className="text-sm text-muted-foreground">{panel.unit}</span>
             </p>
             <p className="text-xs text-muted-foreground">
               latest reading window: {panel.latestTime}
@@ -89,10 +80,16 @@ export function MetricSubagentPanels({
               </p>
             ) : (
               panel.zones.map(zone => (
-                <div className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2 text-sm" key={`${panel.metricType}-${zone.zone}`}>
+                <div
+                  className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2 text-sm"
+                  key={`${panel.metricType}-${zone.zone}`}
+                >
                   <div className="space-y-1">
                     {showZoneLinks ? (
-                      <Link className="font-medium underline-offset-4 hover:underline" href={`/metrics/${zone.zone}`}>
+                      <Link
+                        className="font-medium underline-offset-4 hover:underline"
+                        href={`/metrics/${zone.zone}`}
+                      >
                         {zone.zone.replaceAll('_', ' ')}
                       </Link>
                     ) : (
@@ -106,9 +103,7 @@ export function MetricSubagentPanels({
                     <p className="font-mono tabular-nums">
                       {zone.averageValue} {panel.unit}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      latest {zone.latestValue}
-                    </p>
+                    <p className="text-xs text-muted-foreground">latest {zone.latestValue}</p>
                   </div>
                 </div>
               ))

@@ -1,5 +1,4 @@
 import { TRPCError } from '@trpc/server'
-
 import { getInternalRustUrl } from './env'
 
 type WorkerServiceBinding = {
@@ -21,10 +20,7 @@ export async function callRustEndpoint(
       target: request.target,
       error: error instanceof Error ? error.message : 'unknown error',
     })
-    throw new TRPCError({
-      code: 'SERVICE_UNAVAILABLE',
-      message: 'rust engine is unavailable',
-    })
+    throw new TRPCError({ code: 'SERVICE_UNAVAILABLE', message: 'rust engine is unavailable' })
   }
 
   if (!response.ok) {
@@ -35,10 +31,7 @@ export async function callRustEndpoint(
     })
   }
 
-  return {
-    data: await readJsonBody(response),
-    status: response.status,
-  }
+  return { data: await readJsonBody(response), status: response.status }
 }
 
 export function extractRustErrorMessage(payload: unknown): string | null {
@@ -57,19 +50,16 @@ async function readJsonBody(response: Response): Promise<unknown> {
   }
 }
 
-function buildRustRequest(path: string, options: RequestInit): {
+function buildRustRequest(
+  path: string,
+  options: RequestInit,
+): {
   fetcher: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
   init: RequestInit
   target: string
   url: string
 } {
-  const init = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  }
+  const init = { ...options, headers: { 'Content-Type': 'application/json', ...options.headers } }
 
   const serviceBinding = getRustServiceBinding()
   if (serviceBinding) {
@@ -82,12 +72,7 @@ function buildRustRequest(path: string, options: RequestInit): {
   }
 
   const rustUrl = getInternalRustUrl()
-  return {
-    fetcher: fetch,
-    init,
-    target: rustUrl,
-    url: `${rustUrl}${path}`,
-  }
+  return { fetcher: fetch, init, target: rustUrl, url: `${rustUrl}${path}` }
 }
 
 function getRustServiceBinding(): WorkerServiceBinding | null {

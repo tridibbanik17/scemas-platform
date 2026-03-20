@@ -1,8 +1,7 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
 import { ZoneAQISchema, type ZoneAQI } from '@scemas/types'
-
+import { useQuery } from '@tanstack/react-query'
 import { Spinner } from '@/components/ui/spinner'
 import { ZoneAqiBarChart } from './zone-aqi-bar-chart'
 
@@ -36,7 +35,8 @@ export function ZoneAqiGrid() {
   if (!zones.length) {
     return (
       <div className="rounded-xl bg-card p-6 text-sm text-muted-foreground">
-        no aggregated telemetry is available yet. run the seed flow and wait for the analytics windows to fill.
+        no aggregated telemetry is available yet. run the seed flow and wait for the analytics
+        windows to fill.
       </div>
     )
   }
@@ -49,9 +49,7 @@ export function ZoneAqiGrid() {
             className="flex min-h-[180px] flex-col justify-between rounded-xl border border-border/50 bg-card p-6"
             key={zone.zone}
           >
-            <p className="text-sm text-muted-foreground text-pretty">
-              {formatZoneName(zone.zone)}
-            </p>
+            <p className="text-sm text-muted-foreground text-pretty">{formatZoneName(zone.zone)}</p>
             <div className="py-3 text-center">
               <p
                 className="font-mono text-6xl font-bold tabular-nums"
@@ -59,13 +57,15 @@ export function ZoneAqiGrid() {
               >
                 {zone.aqi}
               </p>
-              <p className="mt-1 text-xs uppercase text-muted-foreground">
-                {zone.label}
-              </p>
+              <p className="mt-1 text-xs uppercase text-muted-foreground">{zone.label}</p>
             </div>
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span className="font-mono tabular-nums">{formatMetric(zone.temperature, 'temp')}</span>
-              <span className="font-mono tabular-nums">{formatMetric(zone.humidity, 'humidity')}</span>
+              <span className="font-mono tabular-nums">
+                {formatMetric(zone.temperature, 'temp')}
+              </span>
+              <span className="font-mono tabular-nums">
+                {formatMetric(zone.humidity, 'humidity')}
+              </span>
             </div>
           </article>
         ))}
@@ -100,9 +100,7 @@ function formatMetric(value: number | undefined, label: string): string {
   return `${label}: ${value}`
 }
 
-const zoneNameOverrides: Record<string, string> = {
-  mcmaster: 'McMaster',
-}
+const zoneNameOverrides: Record<string, string> = { mcmaster: 'McMaster' }
 
 function formatZoneName(zone: string): string {
   if (zoneNameOverrides[zone]) {

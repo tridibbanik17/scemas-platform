@@ -1,32 +1,21 @@
+import { ingestionFailures, platformStatus } from '@scemas/db/schema'
+import { desc, eq } from 'drizzle-orm'
 // MonitorSCEMASPlatformStatus boundary (DataDistributionManager)
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ingestionFailures, platformStatus } from '@scemas/db/schema'
-import { desc, eq } from 'drizzle-orm'
-
-import {
-  resolveSessionUser,
-  sessionLandingPath,
-} from '@/lib/session'
+import { resolveSessionUser, sessionLandingPath } from '@/lib/session'
 import { getDb } from '@/server/cached'
 import { getJwtSecret } from '@/server/env'
 import { callRustEndpoint } from '@/server/rust-client'
 import { IngestionFunnelWrapper, PlatformHealthWrapper } from './health-charts'
 
-type IngestionHealth = {
-  total_received: number
-  total_accepted: number
-  total_rejected: number
-}
+type IngestionHealth = { total_received: number; total_accepted: number; total_rejected: number }
 
 export default async function HealthPage() {
   const db = getDb()
   const [statusRows, failureRows, ingestionHealth] = await Promise.all([
-    db.query.platformStatus.findMany({
-      orderBy: [desc(platformStatus.time)],
-      limit: 10,
-    }),
+    db.query.platformStatus.findMany({ orderBy: [desc(platformStatus.time)], limit: 10 }),
     db.query.ingestionFailures.findMany({
       where: eq(ingestionFailures.status, 'pending'),
       orderBy: [desc(ingestionFailures.createdAt)],
@@ -37,11 +26,18 @@ export default async function HealthPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-balance">platform health</h1>
+      <div>
+        <h1 className="text-xl font-semibold text-balance">platform health</h1>
+        <p className="text-sm text-muted-foreground text-pretty">
+          ingestion pipeline throughput, downstream failure tracking, and platform status over time
+        </p>
+      </div>
       <div className="rounded-lg border border-border bg-card p-4">
         <h2 className="text-sm font-medium">ingestion counters</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          received <span className="font-mono tabular-nums">{ingestionHealth.total_received}</span>, accepted <span className="font-mono tabular-nums">{ingestionHealth.total_accepted}</span>, rejected <span className="font-mono tabular-nums">{ingestionHealth.total_rejected}</span>
+          received <span className="font-mono tabular-nums">{ingestionHealth.total_received}</span>,
+          accepted <span className="font-mono tabular-nums">{ingestionHealth.total_accepted}</span>,
+          rejected <span className="font-mono tabular-nums">{ingestionHealth.total_rejected}</span>
         </p>
         <div className="mt-4">
           <IngestionFunnelWrapper stats={ingestionHealth} />
@@ -82,11 +78,13 @@ export default async function HealthPage() {
 
       <div className="rounded-lg border border-border bg-card p-4">
         <h2 className="mb-4 text-sm font-medium">platform status history</h2>
-        <PlatformHealthWrapper data={statusRows.map(row => ({
-          time: row.time.toISOString(),
-          latencyMs: row.latencyMs ?? 0,
-          errorRate: row.errorRate ?? 0,
-        }))} />
+        <PlatformHealthWrapper
+          data={statusRows.map(row => ({
+            time: row.time.toISOString(),
+            latencyMs: row.latencyMs ?? 0,
+            errorRate: row.errorRate ?? 0,
+          }))}
+        />
       </div>
     </div>
   )
@@ -94,24 +92,14 @@ export default async function HealthPage() {
 
 async function fetchIngestionHealth(): Promise<IngestionHealth> {
   try {
-    const { data, status } = await callRustEndpoint('/internal/health', {
-      method: 'GET',
-    })
+    const { data, status } = await callRustEndpoint('/internal/health', { method: 'GET' })
 
     if (status >= 400) {
-      return {
-        total_received: 0,
-        total_accepted: 0,
-        total_rejected: 0,
-      }
+      return { total_received: 0, total_accepted: 0, total_rejected: 0 }
     }
 
     if (!isRecord(data)) {
-      return {
-        total_received: 0,
-        total_accepted: 0,
-        total_rejected: 0,
-      }
+      return { total_received: 0, total_accepted: 0, total_rejected: 0 }
     }
 
     return {
@@ -120,11 +108,7 @@ async function fetchIngestionHealth(): Promise<IngestionHealth> {
       total_rejected: getNumericField(data, 'total_rejected'),
     }
   } catch {
-    return {
-      total_received: 0,
-      total_accepted: 0,
-      total_rejected: 0,
-    }
+    return { total_received: 0, total_accepted: 0, total_rejected: 0 }
   }
 }
 
@@ -139,14 +123,6 @@ function getNumericField(payload: Record<string, unknown>, key: string): number 
 
 function isRecord(payload: unknown): payload is Record<string, unknown> {
   return typeof payload === 'object' && payload !== null
-}
-
-function formatNumber(value: number | null): string {
-  return value === null ? '--' : value.toFixed(1)
-}
-
-function formatPercent(value: number | null): string {
-  return value === null ? '--' : `${(value * 100).toFixed(1)}%`
 }
 
 async function resolveIngestionFailureAction(formData: FormData) {
@@ -164,10 +140,7 @@ async function resolveIngestionFailureAction(formData: FormData) {
 
   await getDb()
     .update(ingestionFailures)
-    .set({
-      status: 'resolved',
-      resolvedAt: new Date(),
-    })
+    .set({ status: 'resolved', resolvedAt: new Date() })
     .where(eq(ingestionFailures.id, failureId))
 
   revalidatePath('/health')

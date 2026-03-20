@@ -1,9 +1,8 @@
 'use client'
 
+import type { Comparison, MetricType, ThresholdRule } from '@scemas/types'
 import Link from 'next/link'
 import { type FormEvent, useState } from 'react'
-import type { Comparison, MetricType, ThresholdRule } from '@scemas/types'
-
 import { ListPagination } from '@/components/list-pagination'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,9 +21,7 @@ export function RulesManager() {
   const createRule = trpc.rules.create.useMutation({
     onSuccess: createdRule => {
       setSubmissionError(null)
-      utils.rules.list.setData(undefined, currentRules =>
-        prependRule(currentRules, createdRule),
-      )
+      utils.rules.list.setData(undefined, currentRules => prependRule(currentRules, createdRule))
     },
     onError: error => {
       setSubmissionError(error.message)
@@ -33,12 +30,12 @@ export function RulesManager() {
   const updateRule = trpc.rules.update.useMutation({
     onSuccess: (_, variables) => {
       setSubmissionError(null)
-      utils.rules.list.setData(undefined, currentRules =>
-        currentRules?.map(rule =>
-          rule.id === variables.id
-            ? { ...rule, ruleStatus: variables.ruleStatus }
-            : rule,
-        ) ?? currentRules,
+      utils.rules.list.setData(
+        undefined,
+        currentRules =>
+          currentRules?.map(rule =>
+            rule.id === variables.id ? { ...rule, ruleStatus: variables.ruleStatus } : rule,
+          ) ?? currentRules,
       )
       void utils.rules.list.invalidate()
     },
@@ -49,8 +46,9 @@ export function RulesManager() {
   const deleteRule = trpc.rules.delete.useMutation({
     onSuccess: (_, variables) => {
       setSubmissionError(null)
-      utils.rules.list.setData(undefined, currentRules =>
-        currentRules?.filter(rule => rule.id !== variables.id) ?? currentRules,
+      utils.rules.list.setData(
+        undefined,
+        currentRules => currentRules?.filter(rule => rule.id !== variables.id) ?? currentRules,
       )
       void utils.rules.list.invalidate()
     },
@@ -122,15 +120,19 @@ export function RulesManager() {
   const rules = rulesQuery.data ?? []
   const totalPages = Math.ceil(rules.length / PAGE_SIZE)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageRules = rules.slice(
-    safePage * PAGE_SIZE,
-    (safePage + 1) * PAGE_SIZE,
-  )
+  const pageRules = rules.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
 
   return (
     <div className="space-y-6">
-      <form className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-5" onSubmit={handleSubmit}>
-        <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" defaultValue="temperature" name="metricType">
+      <form
+        className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-5"
+        onSubmit={handleSubmit}
+      >
+        <select
+          className="h-7 w-full rounded-md border border-input bg-input/20 px-2 text-sm md:text-xs/relaxed dark:bg-input/30"
+          defaultValue="temperature"
+          name="metricType"
+        >
           {metricTypes.map(metricType => (
             <option key={metricType} value={metricType}>
               {metricType.replaceAll('_', ' ')}
@@ -138,7 +140,11 @@ export function RulesManager() {
           ))}
         </select>
 
-        <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" defaultValue="gt" name="comparison">
+        <select
+          className="h-7 w-full rounded-md border border-input bg-input/20 px-2 text-sm md:text-xs/relaxed dark:bg-input/30"
+          defaultValue="gt"
+          name="comparison"
+        >
           {comparisons.map(comparison => (
             <option key={comparison} value={comparison}>
               {comparison}
@@ -146,7 +152,13 @@ export function RulesManager() {
           ))}
         </select>
 
-        <Input min="1" name="thresholdValue" placeholder="threshold value" step="0.1" type="number" />
+        <Input
+          min="1"
+          name="thresholdValue"
+          placeholder="threshold value"
+          step="0.1"
+          type="number"
+        />
         <Input name="zone" placeholder="optional zone override" />
         <Button disabled={createRule.isPending} type="submit">
           {createRule.isPending ? <Spinner /> : 'create rule'}
@@ -160,63 +172,68 @@ export function RulesManager() {
       ) : null}
 
       <div className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border px-4 py-3 text-sm font-medium">
-          active rulebook
-        </div>
+        <div className="border-b border-border px-4 py-3 text-sm font-medium">active rulebook</div>
         {rules.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground text-pretty">
             no threshold rules have been defined yet. use the form above to create one.
           </p>
         ) : (
           <>
-          <div className="divide-y divide-border">
-            {pageRules.map(rule => (
-              <div className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between" key={rule.id}>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">
-                    <Link className="underline-offset-4 hover:underline" href={`/rules/${rule.id}`}>
-                      {rule.metricType.replaceAll('_', ' ')}
-                    </Link>{' '}
-                    {rule.comparison}{' '}
+            <div className="divide-y divide-border">
+              {pageRules.map(rule => (
+                <div
+                  className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between"
+                  key={rule.id}
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">
+                      <Link
+                        className="underline-offset-4 hover:underline"
+                        href={`/rules/${rule.id}`}
+                      >
+                        {rule.metricType.replaceAll('_', ' ')}
+                      </Link>{' '}
+                      {rule.comparison}{' '}
                       <span className="font-mono tabular-nums">{rule.thresholdValue}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    scope: {rule.zone ?? 'all zones'} | status: {rule.ruleStatus}
-                  </p>
-                </div>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      scope: {rule.zone ?? 'all zones'} | status: {rule.ruleStatus}
+                    </p>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    disabled={updateRule.isPending}
-                    onClick={() =>
-                      updateRule.mutate({
-                        id: rule.id,
-                        ruleStatus: rule.ruleStatus === 'active' ? 'inactive' : 'active',
-                      })}
-                    type="button"
-                    variant="outline"
-                  >
-                    {rule.ruleStatus === 'active' ? 'pause' : 'activate'}
-                  </Button>
-                  <Button
-                    disabled={deleteRule.isPending}
-                    onClick={() => deleteRule.mutate({ id: rule.id })}
-                    type="button"
-                    variant="destructive"
-                  >
-                    delete
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      disabled={updateRule.isPending}
+                      onClick={() =>
+                        updateRule.mutate({
+                          id: rule.id,
+                          ruleStatus: rule.ruleStatus === 'active' ? 'inactive' : 'active',
+                        })
+                      }
+                      type="button"
+                      variant="outline"
+                    >
+                      {rule.ruleStatus === 'active' ? 'pause' : 'activate'}
+                    </Button>
+                    <Button
+                      disabled={deleteRule.isPending}
+                      onClick={() => deleteRule.mutate({ id: rule.id })}
+                      type="button"
+                      variant="destructive"
+                    >
+                      delete
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <ListPagination
-            onPageChange={setPage}
-            page={safePage}
-            pageSize={PAGE_SIZE}
-            totalItems={rules.length}
-            totalPages={totalPages}
-          />
+              ))}
+            </div>
+            <ListPagination
+              onPageChange={setPage}
+              page={safePage}
+              pageSize={PAGE_SIZE}
+              totalItems={rules.length}
+              totalPages={totalPages}
+            />
           </>
         )}
       </div>

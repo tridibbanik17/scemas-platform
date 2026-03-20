@@ -2,17 +2,15 @@
 // shows: metric KPIs, zone metrics chart, sensor feed, alert frequency, active alerts
 // this is the primary Presentation component for the operator agent
 
-import { Suspense } from 'react'
 import { alerts } from '@scemas/db/schema'
 import { desc, eq } from 'drizzle-orm'
-
+import { Suspense } from 'react'
 import { ZoneMap, type SensorPin } from '@/components/map/zone-map'
 import { SeverityBadge } from '@/components/ui/severity-badge'
 import { Spinner } from '@/components/ui/spinner'
 import { getDb, getManager } from '@/server/cached'
-import { DashboardChartsPanel, AlertFrequencyPanel } from './dashboard-charts'
-
 import sensorCatalog from '../../../../../data/hamilton-sensors.json'
+import { DashboardChartsPanel, AlertFrequencyPanel } from './dashboard-charts'
 
 type SensorPosition = {
   sensor_id: string
@@ -25,7 +23,13 @@ type SensorPosition = {
 export default function OperatorDashboard() {
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-balance">operator dashboard</h1>
+      <div>
+        <h1 className="text-xl font-semibold text-balance">operator dashboard</h1>
+        <p className="text-sm text-muted-foreground text-pretty">
+          real-time telemetry, sensor coverage, and active alert monitoring across all hamilton
+          zones
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Suspense fallback={<MetricCardsSkeleton />}>
@@ -58,7 +62,7 @@ export default function OperatorDashboard() {
 async function DashboardChartsPanelWrapper() {
   const manager = getManager()
   const readings = await manager.getLatestSensorReadings(100)
-  const zones = Array.from(new Set(readings.map(r => r.zone))).sort()
+  const zones = Array.from(new Set(readings.map(r => r.zone))).toSorted()
   if (zones.length === 0) return null
   return <DashboardChartsPanel availableZones={zones} />
 }
@@ -69,9 +73,7 @@ async function ZoneMapWrapper() {
 
   const positions = sensorCatalog as SensorPosition[]
   const latestReadings = await manager.getLatestSensorReadings(100)
-  const activeAlerts = await db.query.alerts.findMany({
-    where: eq(alerts.status, 'active'),
-  })
+  const activeAlerts = await db.query.alerts.findMany({ where: eq(alerts.status, 'active') })
 
   const alertCountsByZone: Record<string, number> = {}
   for (const alert of activeAlerts) {
@@ -113,10 +115,14 @@ async function SensorCoveragePanel() {
       </p>
       <div className="mt-4 max-h-80 space-y-1.5 overflow-y-auto text-sm text-muted-foreground">
         {latestReadings.slice(0, 12).map(reading => (
-          <p className="flex items-baseline justify-between gap-2" key={`${reading.sensorId}-${reading.time.toISOString()}`}>
+          <p
+            className="flex items-baseline justify-between gap-2"
+            key={`${reading.sensorId}-${reading.time.toISOString()}`}
+          >
             <span className="truncate">{reading.sensorId}</span>
             <span className="shrink-0 font-mono tabular-nums">
-              {reading.metricType.replaceAll('_', ' ')} <span className="text-foreground">{reading.value}</span>
+              {reading.metricType.replaceAll('_', ' ')}{' '}
+              <span className="text-foreground">{reading.value}</span>
             </span>
           </p>
         ))}
@@ -161,7 +167,10 @@ async function ActiveAlertsPanel() {
       ) : (
         <div className="mt-4 max-h-80 space-y-1.5 overflow-y-auto text-sm">
           {activeAlerts.map(alert => (
-            <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-3 py-2" key={alert.id}>
+            <div
+              className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-3 py-2"
+              key={alert.id}
+            >
               <span className="flex items-center gap-2">
                 <SeverityBadge severity={alert.severity} />
                 <span className="truncate font-medium">{alert.zone}</span>
@@ -180,7 +189,10 @@ async function ActiveAlertsPanel() {
 
 function MapSkeleton() {
   return (
-    <div className="flex items-center justify-center rounded-lg border border-border bg-card p-4" style={{ height: 400 }}>
+    <div
+      className="flex items-center justify-center rounded-lg border border-border bg-card p-4"
+      style={{ height: 400 }}
+    >
       <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
         <Spinner />
         loading sensor map

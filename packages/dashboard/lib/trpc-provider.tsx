@@ -4,8 +4,8 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { httpBatchLink } from '@trpc/client'
 import { useState } from 'react'
 import superjson from 'superjson'
-import { trpc } from './trpc'
 import { makeQueryClient } from './query-client'
+import { trpc } from './trpc'
 
 function getBaseUrl() {
   if (typeof window !== 'undefined') return ''
@@ -17,20 +17,13 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
 
   const [trpcClient] = useState(() =>
     trpc.createClient({
-      links: [
-        httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
-          transformer: superjson,
-        }),
-      ],
-    })
+      links: [httpBatchLink({ url: `${getBaseUrl()}/api/trpc`, transformer: superjson })],
+    }),
   )
 
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </trpc.Provider>
   )
 }

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "nextjs", "import", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "settings": {
+    "react": {
+      "runtime": "automatic"
+    }
+  },
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "react/react-in-jsx-scope": "off",
+    "typescript/triple-slash-reference": "off",
+    "import/no-unassigned-import": "off",
+    "import/no-named-as-default-member": "off"
+  },
+  "ignorePatterns": [
+    "node_modules",
+    ".next",
+    "dist",
+    "drizzle",
+    ".wrangler",
+    ".open-next",
+    "packages/dashboard/components/ui",
+    "worker-configuration.d.ts"
+  ]
+}

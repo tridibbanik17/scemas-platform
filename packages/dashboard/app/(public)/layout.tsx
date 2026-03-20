@@ -1,17 +1,12 @@
-import Link from 'next/link'
 import { cookies } from 'next/headers'
-
+import Link from 'next/link'
 import { SignOutForm } from '@/components/layout/sign-out-form'
 import { Button } from '@/components/ui/button'
 import { SESSION_COOKIE_NAME } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PublicLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const hasSession = (await cookies()).has(SESSION_COOKIE_NAME)
 
   return (

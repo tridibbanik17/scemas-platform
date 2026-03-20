@@ -13,10 +13,7 @@ type SensorPin = {
   value: number
 }
 
-type ZoneMapProps = {
-  sensors: SensorPin[]
-  alertCounts: Record<string, number>
-}
+type ZoneMapProps = { sensors: SensorPin[]; alertCounts: Record<string, number> }
 
 export type { SensorPin }
 
@@ -24,13 +21,12 @@ export function ZoneMap({ sensors, alertCounts }: ZoneMapProps) {
   const [selected, setSelected] = useState<SensorPin | null>(null)
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card" style={{ height: 400 }}>
+    <div
+      className="overflow-hidden rounded-lg border border-border bg-card"
+      style={{ height: 400 }}
+    >
       <Map
-        initialViewState={{
-          longitude: -79.87,
-          latitude: 43.255,
-          zoom: 12,
-        }}
+        initialViewState={{ longitude: -79.87, latitude: 43.255, zoom: 12 }}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
         style={{ width: '100%', height: '100%' }}
       >
@@ -49,9 +45,8 @@ export function ZoneMap({ sensors, alertCounts }: ZoneMapProps) {
               <div
                 className="h-3 w-3 cursor-pointer rounded-full border-2 border-white shadow-sm"
                 style={{
-                  backgroundColor: zoneAlerts > 0
-                    ? 'var(--color-severity-critical)'
-                    : 'var(--color-severity-low)',
+                  backgroundColor:
+                    zoneAlerts > 0 ? 'var(--color-severity-critical)' : 'var(--color-severity-low)',
                 }}
               />
             </Marker>

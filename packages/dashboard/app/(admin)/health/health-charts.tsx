@@ -3,7 +3,9 @@
 import { IngestionFunnelChart } from '@/components/charts/ingestion-funnel-chart'
 import { PlatformHealthChart } from '@/components/charts/platform-health-chart'
 
-export function IngestionFunnelWrapper({ stats }: {
+export function IngestionFunnelWrapper({
+  stats,
+}: {
   stats: { total_received: number; total_accepted: number; total_rejected: number }
 }) {
   return (
@@ -17,9 +19,11 @@ export function IngestionFunnelWrapper({ stats }: {
   )
 }
 
-export function PlatformHealthWrapper({ data }: {
+export function PlatformHealthWrapper({
+  data,
+}: {
   data: Array<{ time: string; latencyMs: number; errorRate: number }>
 }) {
-  const reversed = [...data].reverse()
+  const reversed = [...data].toReversed()
   return <PlatformHealthChart data={reversed} />
 }

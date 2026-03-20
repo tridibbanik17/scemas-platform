@@ -2,7 +2,6 @@
 // idempotent: safe to run after every schema push.
 
 import { eq } from 'drizzle-orm'
-
 import { createDb } from '../src/client'
 import { accounts } from '../src/schema'
 
@@ -29,12 +28,9 @@ for (const user of defaultUsers) {
 
   const passwordHash = await Bun.password.hash(user.password, 'argon2id')
 
-  await db.insert(accounts).values({
-    email: user.email,
-    username: user.username,
-    passwordHash,
-    role: user.role,
-  })
+  await db
+    .insert(accounts)
+    .values({ email: user.email, username: user.username, passwordHash, role: user.role })
 
   console.log(`[scemas] created ${user.role} account (${user.email} / ${user.password})`)
 }

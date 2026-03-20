@@ -1,42 +1,26 @@
 // tRPC server instance + context
 // this is the Control layer of PAC: coordinates between Presentation (react) and Abstraction (drizzle/rust)
 
-import { initTRPC, TRPCError } from '@trpc/server'
-import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
-import superjson from 'superjson'
 import type { Database } from '@scemas/db'
-
+import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
+import { initTRPC, TRPCError } from '@trpc/server'
+import superjson from 'superjson'
 import { resolveSessionUser, type SessionUser } from '@/lib/session'
-import { getJwtSecret } from './env'
 import { getDb } from './cached'
+import { getJwtSecret } from './env'
 
-export type Context = {
-  db: Database
-  user: SessionUser | null
-  resHeaders: Headers
-}
+export type Context = { db: Database; user: SessionUser | null; resHeaders: Headers }
 
 export type AuthenticatedContext = Context & { user: SessionUser }
 
-export async function createContext(
-  opts: FetchCreateContextFnOptions,
-): Promise<Context> {
+export async function createContext(opts: FetchCreateContextFnOptions): Promise<Context> {
   const db = getDb()
-  const user = await resolveSessionUser(
-    opts.req.headers.get('cookie'),
-    getJwtSecret(),
-  )
+  const user = await resolveSessionUser(opts.req.headers.get('cookie'), getJwtSecret())
 
-  return {
-    db,
-    user,
-    resHeaders: opts.resHeaders,
-  }
+  return { db, user, resHeaders: opts.resHeaders }
 }
 
-const t = initTRPC.context<Context>().create({
-  transformer: superjson,
-})
+const t = initTRPC.context<Context>().create({ transformer: superjson })
 
 export const router = t.router
 export const publicProcedure = t.procedure

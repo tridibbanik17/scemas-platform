@@ -40,9 +40,46 @@ impl DataDistributionManager {
         Ok(())
     }
 
+    pub async fn load_ingestion_counters(&self) -> Result<(u64, u64, u64)> {
+        let row: Option<(i64, i64, i64)> = sqlx::query_as(
+            "SELECT total_received, total_accepted, total_rejected FROM ingestion_counters WHERE subsystem = 'telemetry_ingestion'",
+        )
+        .fetch_optional(&self.db)
+        .await?;
+
+        match row {
+            Some((received, accepted, rejected)) => {
+                Ok((received as u64, accepted as u64, rejected as u64))
+            }
+            None => Ok((0, 0, 0)),
+        }
+    }
+
+    async fn flush_ingestion_counters(
+        &self,
+        total_received: u64,
+        total_accepted: u64,
+        total_rejected: u64,
+    ) -> Result<()> {
+        sqlx::query(
+            "INSERT INTO ingestion_counters (subsystem, total_received, total_accepted, total_rejected, updated_at)
+             VALUES ('telemetry_ingestion', $1, $2, $3, now())
+             ON CONFLICT (subsystem) DO UPDATE
+             SET total_received = $1, total_accepted = $2, total_rejected = $3, updated_at = now()",
+        )
+        .bind(total_received as i64)
+        .bind(total_accepted as i64)
+        .bind(total_rejected as i64)
+        .execute(&self.db)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn record_ingestion_health(
         &self,
         total_received: u64,
+        total_accepted: u64,
         total_rejected: u64,
         latency_ms: f64,
     ) -> Result<()> {
@@ -85,6 +122,13 @@ impl DataDistributionManager {
                 Ordering::Relaxed,
             );
         })?;
+
+        self.flush_ingestion_counters(total_received, total_accepted, total_rejected)
+            .await
+            .inspect_err(|e| {
+                tracing::warn!("failed to flush ingestion counters: {e}");
+            })
+            .ok();
 
         Ok(())
     }

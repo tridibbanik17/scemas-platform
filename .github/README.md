@@ -200,10 +200,3 @@ these are server-to-server routes used by the next/tRPC layer and seed scripts, 
 | validation | zod (typescript), thiserror (rust) |
 | deployment | cloudflare workers via opennext |
 | runtime | bun (typescript), tokio (rust) |
-
-## rust toolchain
-
-- local dev and ci should use the pinned toolchain in `rust-toolchain.toml`
-- current pin: `1.93.0` with `rustfmt` and `clippy`
-- mac: install xcode command line tools, then `rustup`
-- windows: use the `*-pc-windows-msvc` toolchain with visual studio build tools

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-
 import { ListPagination } from '@/components/list-pagination'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
@@ -34,10 +33,7 @@ export function AuditLogList() {
   const logs = auditQuery.data ?? []
   const totalPages = Math.ceil(logs.length / PAGE_SIZE)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageLogs = logs.slice(
-    safePage * PAGE_SIZE,
-    (safePage + 1) * PAGE_SIZE,
-  )
+  const pageLogs = logs.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
 
   return (
     <div className="rounded-lg border border-border bg-card">

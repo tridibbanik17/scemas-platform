@@ -1,7 +1,6 @@
 'use client'
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-
 import {
   ChartContainer,
   ChartTooltip,
@@ -11,12 +10,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 
-type AlertFrequencyPoint = {
-  hour: string
-  low: number
-  warning: number
-  critical: number
-}
+type AlertFrequencyPoint = { hour: string; low: number; warning: number; critical: number }
 
 const chartConfig = {
   low: { label: 'low', color: 'oklch(0.837 0.128 66.29)' },
@@ -31,11 +25,7 @@ function formatHour(isoString: string) {
 
 export function AlertFrequencyChart({ data }: { data: AlertFrequencyPoint[] }) {
   if (data.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        no alerts recorded in this time window
-      </p>
-    )
+    return <p className="text-sm text-muted-foreground">no alerts recorded in this time window</p>
   }
 
   return (

@@ -9,7 +9,10 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "typecheck": "turbo typecheck",
-    "lint": "turbo lint",
+    "lint": "oxlint packages/ && cargo clippy --all --all-features",
+    "lint:fix": "oxlint --fix packages/ && cargo clippy --all --all-features --fix --allow-dirty",
+    "format": "oxfmt --write --ignore-path .gitignore packages/ && cargo fmt --all",
+    "format:check": "oxfmt --check --ignore-path .gitignore packages/ && cargo fmt --all -- --check",
     "db:push": "if [ -f .env ]; then set -a && . ./.env && set +a; fi; bun --filter @scemas/db push && bun --filter @scemas/db ensure-users",
     "db:generate": "bun --filter @scemas/db generate",
     "db:studio": "bun --filter @scemas/db studio",
@@ -18,6 +21,8 @@
     "cf:deploy": "bun --filter @scemas/api cf:deploy && bun --filter @scemas/dashboard cf:deploy"
   },
   "devDependencies": {
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   }

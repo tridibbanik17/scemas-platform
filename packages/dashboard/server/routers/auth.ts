@@ -2,75 +2,48 @@
 // handles: SignupForAccount, LoginToSCEMAS boundaries
 // passive data store: deterministic queries against postgres via drizzle
 
-import { TRPCError } from '@trpc/server'
-import { router, publicProcedure, protectedProcedure } from '../trpc'
-import { AuthSessionSchema, LoginSchema, SignupSchema } from '@scemas/types'
 import { accounts } from '@scemas/db/schema'
+import { AuthSessionSchema, LoginSchema, SignupSchema } from '@scemas/types'
+import { TRPCError } from '@trpc/server'
 import { eq } from 'drizzle-orm'
-
 import {
   serializeClearedSessionCookie,
   serializeSessionCookie,
   sessionLandingPath,
 } from '@/lib/session'
-import {
-  callRustEndpoint,
-  extractRustErrorMessage,
-} from '../rust-client'
+import { callRustEndpoint, extractRustErrorMessage } from '../rust-client'
+import { router, publicProcedure, protectedProcedure } from '../trpc'
 
 export const authRouter = router({
-  signup: publicProcedure
-    .input(SignupSchema)
-    .mutation(async ({ input, ctx }) => {
-      const session = await authenticateWithRust('/internal/auth/signup', input)
-      ctx.resHeaders.append(
-        'set-cookie',
-        serializeSessionCookie(session.token, session.expiresAt),
-      )
+  signup: publicProcedure.input(SignupSchema).mutation(async ({ input, ctx }) => {
+    const session = await authenticateWithRust('/internal/auth/signup', input)
+    ctx.resHeaders.append('set-cookie', serializeSessionCookie(session.token, session.expiresAt))
 
-      return {
-        success: true,
-        redirectTo: sessionLandingPath(session.user.role),
-        user: session.user,
-      }
-    }),
+    return { success: true, redirectTo: sessionLandingPath(session.user.role), user: session.user }
+  }),
 
-  login: publicProcedure
-    .input(LoginSchema)
-    .mutation(async ({ input, ctx }) => {
-      const session = await authenticateWithRust('/internal/auth/login', input)
-      ctx.resHeaders.append(
-        'set-cookie',
-        serializeSessionCookie(session.token, session.expiresAt),
-      )
+  login: publicProcedure.input(LoginSchema).mutation(async ({ input, ctx }) => {
+    const session = await authenticateWithRust('/internal/auth/login', input)
+    ctx.resHeaders.append('set-cookie', serializeSessionCookie(session.token, session.expiresAt))
 
-      return {
-        success: true,
-        redirectTo: sessionLandingPath(session.user.role),
-        user: session.user,
-      }
-    }),
+    return { success: true, redirectTo: sessionLandingPath(session.user.role), user: session.user }
+  }),
 
-  me: protectedProcedure
-    .query(async ({ ctx }) => {
-      const user = await ctx.db.query.accounts.findFirst({
-        where: eq(accounts.id, ctx.user.id),
-        columns: { id: true, email: true, username: true, role: true },
-      })
-      return user
-    }),
+  me: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.db.query.accounts.findFirst({
+      where: eq(accounts.id, ctx.user.id),
+      columns: { id: true, email: true, username: true, role: true },
+    })
+    return user
+  }),
 
-  logout: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      ctx.resHeaders.append('set-cookie', serializeClearedSessionCookie())
-      return { success: true }
-    }),
+  logout: protectedProcedure.mutation(async ({ ctx }) => {
+    ctx.resHeaders.append('set-cookie', serializeClearedSessionCookie())
+    return { success: true }
+  }),
 })
 
-async function authenticateWithRust(
-  path: string,
-  payload: unknown,
-) {
+async function authenticateWithRust(path: string, payload: unknown) {
   const { data, status } = await callRustEndpoint(path, {
     method: 'POST',
     body: JSON.stringify(payload),

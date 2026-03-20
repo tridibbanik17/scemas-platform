@@ -4,18 +4,13 @@ import superjson from 'superjson'
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
-      queries: {
-        staleTime: 10_000,
-        refetchOnWindowFocus: true,
-      },
+      queries: { staleTime: 10_000, refetchOnWindowFocus: true },
       dehydrate: {
         serializeData: superjson.serialize,
-        shouldDehydrateQuery: (query) =>
+        shouldDehydrateQuery: query =>
           defaultShouldDehydrateQuery(query) || query.state.status === 'pending',
       },
-      hydrate: {
-        deserializeData: superjson.deserialize,
-      },
+      hydrate: { deserializeData: superjson.deserialize },
     },
   })
 }

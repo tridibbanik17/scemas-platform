@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-
 import { ListPagination } from '@/components/list-pagination'
 import { Button } from '@/components/ui/button'
 import { SeverityBadge } from '@/components/ui/severity-badge'
@@ -48,10 +47,7 @@ export function AlertsManager() {
   const alerts = alertsQuery.data ?? []
   const totalPages = Math.ceil(alerts.length / PAGE_SIZE)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageAlerts = alerts.slice(
-    safePage * PAGE_SIZE,
-    (safePage + 1) * PAGE_SIZE,
-  )
+  const pageAlerts = alerts.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
 
   return (
     <div className="rounded-lg border border-border bg-card">
@@ -79,9 +75,7 @@ export function AlertsManager() {
                       {alert.zone}
                     </Link>{' '}
                     | {alert.metricType.replaceAll('_', ' ')} at{' '}
-                    <span className="font-mono tabular-nums">
-                      {alert.triggeredValue}
-                    </span>
+                    <span className="font-mono tabular-nums">{alert.triggeredValue}</span>
                   </p>
                   <p className="flex items-center gap-2 text-xs text-muted-foreground">
                     <SeverityBadge severity={alert.severity} /> {alert.status} | opened{' '}
@@ -91,9 +85,7 @@ export function AlertsManager() {
 
                 <div className="flex items-center gap-2">
                   <Button
-                    disabled={
-                      acknowledgeAlert.isPending || alert.status !== 'active'
-                    }
+                    disabled={acknowledgeAlert.isPending || alert.status !== 'active'}
                     onClick={() => acknowledgeAlert.mutate({ id: alert.id })}
                     size="sm"
                     type="button"
@@ -102,9 +94,7 @@ export function AlertsManager() {
                     acknowledge
                   </Button>
                   <Button
-                    disabled={
-                      resolveAlert.isPending || alert.status === 'resolved'
-                    }
+                    disabled={resolveAlert.isPending || alert.status === 'resolved'}
                     onClick={() => resolveAlert.mutate({ id: alert.id })}
                     size="sm"
                     type="button"

@@ -5,8 +5,6 @@ export async function GET(): Promise<Response> {
   const zones = await manager.getPublicZoneAqi()
 
   return Response.json(zones, {
-    headers: {
-      'Cache-Control': 'public, max-age=30, stale-while-revalidate=30',
-    },
+    headers: { 'Cache-Control': 'public, max-age=30, stale-while-revalidate=30' },
   })
 }

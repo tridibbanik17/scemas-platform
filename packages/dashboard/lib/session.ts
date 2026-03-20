@@ -1,10 +1,7 @@
 import { RoleSchema, type Role } from '@scemas/types'
 import { z } from 'zod'
 
-const JwtHeaderSchema = z.object({
-  alg: z.literal('HS256'),
-  typ: z.string().optional(),
-})
+const JwtHeaderSchema = z.object({ alg: z.literal('HS256'), typ: z.string().optional() })
 
 const SessionClaimsSchema = z.object({
   sub: z.string().uuid(),
@@ -19,10 +16,7 @@ export const SESSION_COOKIE_NAME = 'scemas-token'
 
 export type SessionClaims = z.infer<typeof SessionClaimsSchema>
 
-export type SessionUser = {
-  id: string
-  role: Role
-}
+export type SessionUser = { id: string; role: Role }
 
 export function sessionLandingPath(role: Role): string {
   if (role === 'admin') {
@@ -85,10 +79,7 @@ export async function resolveSessionUser(
     return null
   }
 
-  return {
-    id: claims.sub,
-    role: claims.role,
-  }
+  return { id: claims.sub, role: claims.role }
 }
 
 export function serializeSessionCookie(token: string, expiresAtIso: string): string {
@@ -151,12 +142,7 @@ async function verifyHmacSignature(
   const key = await getHmacKey(secret)
   const signatureBytes = base64UrlToArrayBuffer(signatureSegment)
 
-  return crypto.subtle.verify(
-    'HMAC',
-    key,
-    signatureBytes,
-    textEncoder.encode(input),
-  )
+  return crypto.subtle.verify('HMAC', key, signatureBytes, textEncoder.encode(input))
 }
 
 function getHmacKey(secret: string): Promise<CryptoKey> {
@@ -177,10 +163,7 @@ function getHmacKey(secret: string): Promise<CryptoKey> {
   return key
 }
 
-function parseJsonSegment<T>(
-  segment: string,
-  schema: z.ZodSchema<T>,
-): T | null {
+function parseJsonSegment<T>(segment: string, schema: z.ZodSchema<T>): T | null {
   try {
     const decoded = base64UrlToString(segment)
     const json = JSON.parse(decoded)

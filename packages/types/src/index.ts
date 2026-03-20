@@ -3,12 +3,7 @@ import { z } from 'zod'
 export const RoleSchema = z.enum(['operator', 'admin', 'viewer'])
 export type Role = z.infer<typeof RoleSchema>
 
-export const MetricTypeSchema = z.enum([
-  'temperature',
-  'humidity',
-  'air_quality',
-  'noise_level',
-])
+export const MetricTypeSchema = z.enum(['temperature', 'humidity', 'air_quality', 'noise_level'])
 export type MetricType = z.infer<typeof MetricTypeSchema>
 
 export const ComparisonSchema = z.enum(['gt', 'lt', 'gte', 'lte'])
@@ -17,12 +12,7 @@ export type Comparison = z.infer<typeof ComparisonSchema>
 export const SeveritySchema = z.union([z.literal(1), z.literal(2), z.literal(3)])
 export type Severity = z.infer<typeof SeveritySchema>
 
-export const AlertStatusSchema = z.enum([
-  'triggered',
-  'active',
-  'acknowledged',
-  'resolved',
-])
+export const AlertStatusSchema = z.enum(['triggered', 'active', 'acknowledged', 'resolved'])
 export type AlertStatus = z.infer<typeof AlertStatusSchema>
 
 export const DeviceStatusSchema = z.enum(['active', 'inactive', 'revoked'])
@@ -127,11 +117,23 @@ export const SignupSchema = z.object({
 })
 export type Signup = z.infer<typeof SignupSchema>
 
-export const LoginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-})
+export const LoginSchema = z.object({ email: z.string().email(), password: z.string() })
 export type Login = z.infer<typeof LoginSchema>
+
+export const CreateAccountSchema = z.object({
+  email: z.string().email(),
+  username: z.string().min(3).max(50),
+  password: z.string().min(8),
+  role: RoleSchema,
+})
+export type CreateAccount = z.infer<typeof CreateAccountSchema>
+
+export const UpdateAccountDetailsSchema = z.object({
+  userId: z.string().uuid(),
+  username: z.string().min(3).max(50),
+  email: z.string().email(),
+})
+export type UpdateAccountDetails = z.infer<typeof UpdateAccountDetailsSchema>
 
 export const ZoneSchema = z.object({
   id: z.string(),
