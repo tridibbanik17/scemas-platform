@@ -3,9 +3,19 @@
 import { platformStatus } from '@scemas/db/schema'
 import { desc } from 'drizzle-orm'
 import { callRustEndpoint } from '../rust-client'
-import { router, adminProcedure } from '../trpc'
+import { router, publicProcedure, adminProcedure } from '../trpc'
 
 export const healthRouter = router({
+  // lightweight backend reachability check (no auth required)
+  ping: publicProcedure.query(async () => {
+    try {
+      const { status } = await callRustEndpoint('/internal/health', { method: 'GET' })
+      return { ok: status < 400 }
+    } catch {
+      return { ok: false }
+    }
+  }),
+
   // platform status from database
   status: adminProcedure.query(async ({ ctx }) => {
     return ctx.db.query.platformStatus.findMany({ orderBy: [desc(platformStatus.time)], limit: 10 })

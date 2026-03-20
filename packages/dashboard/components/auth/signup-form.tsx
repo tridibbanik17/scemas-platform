@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { type FormEvent, startTransition, useState } from 'react'
+import { BackendStatus } from '@/components/backend-status'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
@@ -101,12 +102,15 @@ export function SignupForm() {
         )}
       </Button>
 
-      <p className="text-sm text-muted-foreground">
-        already have an account?{' '}
-        <Link className="text-foreground underline underline-offset-4" href="/sign-in">
-          sign in
-        </Link>
-      </p>
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <p>
+          already have an account?{' '}
+          <Link className="text-foreground underline underline-offset-4" href="/sign-in">
+            sign in
+          </Link>
+        </p>
+        <BackendStatus />
+      </div>
     </form>
   )
 }

@@ -49,6 +49,13 @@ async function authenticateWithRust(path: string, payload: unknown) {
     body: JSON.stringify(payload),
   })
 
+  if (data === null) {
+    throw new TRPCError({
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'backend is restarting, try again in a moment',
+    })
+  }
+
   if (status >= 400) {
     throw new TRPCError({
       code: status === 401 ? 'UNAUTHORIZED' : 'BAD_REQUEST',

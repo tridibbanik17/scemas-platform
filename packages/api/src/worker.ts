@@ -30,10 +30,7 @@ export default {
 
       console.error('container bootstrap failed', { message })
 
-      return new Response(`container bootstrap failed: ${message}`, {
-        status: 503,
-        headers: { 'content-type': 'text/plain; charset=UTF-8' },
-      })
+      return Response.json({ error: `container bootstrap failed: ${message}` }, { status: 503 })
     }
   },
 }
