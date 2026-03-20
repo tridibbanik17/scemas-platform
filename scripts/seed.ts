@@ -1,10 +1,12 @@
 // seed script: continuously generates sensor data using poisson/gamma distributions
-// usage: bun run scripts/seed.ts [--spike] [--spike-ratio <0..1>] [--rate <readings-per-second>] [--remote <url>]
+// usage: bun run scripts/seed.ts [--spike] [--spike-ratio <0..1>] [--rate <readings-per-second>] [--remote <url>] [--request-timeout-ms <milliseconds>]
 //   ctrl-c to stop and print summary
 
 const seedOptions = parseSeedOptions(process.argv.slice(2))
 const RUST_URL = seedOptions.remoteUrl ?? process.env.INTERNAL_RUST_URL ?? 'http://localhost:3001'
 const DEVICE_AUTH_SECRET = process.env.DEVICE_AUTH_SECRET ?? 'change-me-device-ingest-secret'
+const DEFAULT_LOCAL_REQUEST_TIMEOUT_MS = 10_000
+const DEFAULT_REMOTE_REQUEST_TIMEOUT_MS = 45_000
 
 interface Sensor {
   sensor_id: string
@@ -37,6 +39,11 @@ type GeneratedReading = {
   isSpike: boolean
   reading: { sensorId: string; metricType: string; value: number; zone: string; timestamp: string }
 }
+
+type SubmitReadingResult =
+  | { kind: 'accepted' }
+  | { kind: 'rejected'; message: string }
+  | { kind: 'failed'; message: string }
 
 // marsaglia-tsang method for Gamma(shape, 1) where shape >= 1
 function gammaSample(shape: number, scale: number): number {
@@ -105,10 +112,12 @@ async function main() {
   const sensorsFile = Bun.file('./data/hamilton-sensor-catalog.json')
   const sensors: Sensor[] = await sensorsFile.json()
   const weightedSensors = buildWeightedSensorIndex(sensors)
+  const requestTimeoutMs = seedOptions.requestTimeoutMs ?? defaultRequestTimeoutMs(RUST_URL)
 
   console.log(
     `continuous seed: ${sensors.length} sensors, \u03bb=${formatRate(seedOptions.ratePerSecond)}/s (${formatSpikeMode(seedOptions)})`,
   )
+  console.log(`target: ${RUST_URL}/internal/telemetry/ingest, timeout=${requestTimeoutMs}ms`)
   console.log('ctrl-c to stop\n')
 
   let accepted = 0
@@ -118,8 +127,10 @@ async function main() {
   const startTime = Date.now()
 
   let running = true
+  let activeRequestAbortController: AbortController | null = null
   process.on('SIGINT', () => {
     running = false
+    activeRequestAbortController?.abort('seed interrupted')
   })
 
   while (running) {
@@ -138,40 +149,36 @@ async function main() {
 
     total++
 
-    try {
-      const res = await fetch(`${RUST_URL}/internal/telemetry/ingest`, {
-        method: 'POST',
-        body: JSON.stringify(reading),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-scemas-device-id': sensor.sensor_id,
-          'x-scemas-device-token': DEVICE_AUTH_SECRET,
-        },
-      })
+    const submitResult = await submitReading(sensor, reading, requestTimeoutMs, {
+      setController(controller) {
+        activeRequestAbortController = controller
+      },
+      clearController(controller) {
+        if (activeRequestAbortController === controller) {
+          activeRequestAbortController = null
+        }
+      },
+    })
 
-      if (res.ok) {
-        accepted++
-        await res.json()
-        console.log(
-          `  \u2713 ${sensor.display_name}: ${reading.value} ${sensor.telemetry_unit} at ${sensor.site_name} (${sensor.region_label})${spikeSuffix}`,
-        )
-      } else {
-        rejected++
-        const err = await res.json()
-        console.log(
-          `  \u2717 ${sensor.display_name}: ${err.error} (${sensor.region_label})${spikeSuffix}`,
-        )
-      }
-    } catch {
+    if (submitResult.kind === 'accepted') {
+      accepted++
+      console.log(
+        `  \u2713 ${sensor.display_name}: ${reading.value} ${sensor.telemetry_unit} at ${sensor.site_name} (${sensor.region_label})${spikeSuffix}`,
+      )
+    } else {
       rejected++
       console.log(
-        `  \u2717 ${sensor.display_name}: connection failed (${sensor.region_label})${spikeSuffix}`,
+        `  \u2717 ${sensor.display_name}: ${submitResult.message} (${sensor.region_label})${spikeSuffix}`,
       )
+    }
+
+    if (!running) {
+      break
     }
 
     // poisson inter-arrival: sleep for Exp(lambda) seconds
     const delay = exponentialSample(seedOptions.ratePerSecond) * 1000
-    await Bun.sleep(delay)
+    await sleepInterruptibly(delay, () => running)
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
@@ -186,6 +193,7 @@ function parseSeedOptions(args: string[]): SeedOptions {
   let spikeRatio = 0
   let ratePerSecond = 2
   let remoteUrl: string | undefined
+  let requestTimeoutMs: number | undefined
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
@@ -247,6 +255,22 @@ function parseSeedOptions(args: string[]): SeedOptions {
       continue
     }
 
+    if (argument === '--request-timeout-ms') {
+      const nextArgument = args[index + 1]
+      if (!nextArgument) {
+        printUsageAndExit(1, 'missing value for --request-timeout-ms')
+      }
+
+      requestTimeoutMs = parsePositiveTimeoutMs(nextArgument)
+      index += 1
+      continue
+    }
+
+    if (argument.startsWith('--request-timeout-ms=')) {
+      requestTimeoutMs = parsePositiveTimeoutMs(argument.slice('--request-timeout-ms='.length))
+      continue
+    }
+
     printUsageAndExit(1, `unknown argument: ${argument}`)
   }
 
@@ -254,7 +278,7 @@ function parseSeedOptions(args: string[]): SeedOptions {
     printUsageAndExit(1, 'use either --spike or --spike-ratio, not both')
   }
 
-  return { isSpike, spikeRatio, ratePerSecond, remoteUrl }
+  return { isSpike, spikeRatio, ratePerSecond, remoteUrl, requestTimeoutMs }
 }
 
 function parsePositiveRate(value: string): number {
@@ -273,6 +297,15 @@ function parseSpikeRatio(value: string): number {
   }
 
   return parsedValue
+}
+
+function parsePositiveTimeoutMs(value: string): number {
+  const parsedValue = Number(value)
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    printUsageAndExit(1, `invalid --request-timeout-ms value: ${value}`)
+  }
+
+  return Math.round(parsedValue)
 }
 
 function gammaParamsForSensor(sensor: Sensor) {
@@ -317,7 +350,7 @@ function printUsageAndExit(exitCode: number, errorMessage?: string): never {
   }
 
   console.log(
-    'usage: bun run scripts/seed.ts [--spike] [--spike-ratio <0..1>] [--rate <readings-per-second>] [--remote <url>]',
+    'usage: bun run scripts/seed.ts [--spike] [--spike-ratio <0..1>] [--rate <readings-per-second>] [--remote <url>] [--request-timeout-ms <milliseconds>]',
   )
   console.log('')
   console.log('options:')
@@ -326,6 +359,9 @@ function printUsageAndExit(exitCode: number, errorMessage?: string): never {
   console.log('  --rate <value>   aggregate poisson arrival rate across all sensors')
   console.log(
     '  --remote <url>   override the rust engine URL (default: INTERNAL_RUST_URL or localhost:3001)',
+  )
+  console.log(
+    '  --request-timeout-ms <value>  abort a stalled ingest request after the given timeout',
   )
   console.log('  --help           show this help message')
   process.exit(exitCode)
@@ -356,6 +392,127 @@ type SeedOptions = {
   spikeRatio: number
   ratePerSecond: number
   remoteUrl?: string
+  requestTimeoutMs?: number
 }
 
-main()
+function defaultRequestTimeoutMs(url: string): number {
+  try {
+    const parsedUrl = new URL(url)
+    const isLocalHost =
+      parsedUrl.hostname === 'localhost' ||
+      parsedUrl.hostname === '127.0.0.1' ||
+      parsedUrl.hostname === '0.0.0.0'
+
+    return isLocalHost ? DEFAULT_LOCAL_REQUEST_TIMEOUT_MS : DEFAULT_REMOTE_REQUEST_TIMEOUT_MS
+  } catch {
+    return DEFAULT_REMOTE_REQUEST_TIMEOUT_MS
+  }
+}
+
+async function submitReading(
+  sensor: Sensor,
+  reading: GeneratedReading['reading'],
+  requestTimeoutMs: number,
+  requestState: {
+    setController(controller: AbortController): void
+    clearController(controller: AbortController): void
+  },
+): Promise<SubmitReadingResult> {
+  const controller = new AbortController()
+  requestState.setController(controller)
+
+  const timeoutId = setTimeout(() => {
+    controller.abort(`request timed out after ${requestTimeoutMs}ms`)
+  }, requestTimeoutMs)
+
+  try {
+    const response = await fetch(`${RUST_URL}/internal/telemetry/ingest`, {
+      method: 'POST',
+      body: JSON.stringify(reading),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-scemas-device-id': sensor.sensor_id,
+        'x-scemas-device-token': DEVICE_AUTH_SECRET,
+      },
+      signal: controller.signal,
+    })
+
+    const responseBody = await response.text()
+    if (response.ok) {
+      return { kind: 'accepted' }
+    }
+
+    return {
+      kind: 'rejected',
+      message: formatErrorResponse(response.status, response.statusText, responseBody),
+    }
+  } catch (error) {
+    return {
+      kind: 'failed',
+      message: formatFetchFailure(error, requestTimeoutMs, controller.signal.aborted),
+    }
+  } finally {
+    clearTimeout(timeoutId)
+    requestState.clearController(controller)
+  }
+}
+
+function formatErrorResponse(status: number, statusText: string, responseBody: string): string {
+  const parsedBody = parseJsonObject(responseBody)
+  const bodyError =
+    parsedBody && typeof parsedBody.error === 'string'
+      ? parsedBody.error
+      : responseBody.trim() || statusText || 'request failed'
+
+  return `${bodyError} [${status}]`
+}
+
+function formatFetchFailure(
+  error: unknown,
+  requestTimeoutMs: number,
+  wasAborted: boolean,
+): string {
+  if (wasAborted || (error instanceof DOMException && error.name === 'AbortError')) {
+    return `request timed out after ${requestTimeoutMs}ms`
+  }
+
+  if (error instanceof Error && error.message.length > 0) {
+    return `connection failed: ${error.message}`
+  }
+
+  return 'connection failed'
+}
+
+function parseJsonObject(value: string): Record<string, unknown> | null {
+  if (!value.trim()) {
+    return null
+  }
+
+  try {
+    const parsedValue = JSON.parse(value)
+    return isJsonObject(parsedValue) ? parsedValue : null
+  } catch {
+    return null
+  }
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+async function sleepInterruptibly(delayMs: number, shouldContinue: () => boolean): Promise<void> {
+  const sleepStepMs = 250
+  let remainingDelayMs = delayMs
+
+  while (shouldContinue() && remainingDelayMs > 0) {
+    const currentStepMs = Math.min(sleepStepMs, remainingDelayMs)
+    await Bun.sleep(currentStepMs)
+    remainingDelayMs -= currentStepMs
+  }
+}
+
+main().catch(error => {
+  const message = error instanceof Error ? error.message : String(error)
+  console.error(`[scemas] seed failed: ${message}`)
+  process.exit(1)
+})

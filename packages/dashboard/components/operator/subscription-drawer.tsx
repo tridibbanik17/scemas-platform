@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -14,8 +15,10 @@ import { SubscriptionManager } from './subscription-manager'
 type SubscriptionDrawerProps = { availableZones: string[] }
 
 export function SubscriptionDrawer({ availableZones }: SubscriptionDrawerProps) {
+  const [open, setOpen] = useState(false)
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="w-full">
           subscriptions
@@ -27,7 +30,7 @@ export function SubscriptionDrawer({ availableZones }: SubscriptionDrawerProps) 
           <SheetDescription>personalize which alerts you receive</SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-6">
-          <SubscriptionManager availableZones={availableZones} />
+          <SubscriptionManager availableZones={availableZones} onSaved={() => setOpen(false)} />
         </div>
       </SheetContent>
     </Sheet>

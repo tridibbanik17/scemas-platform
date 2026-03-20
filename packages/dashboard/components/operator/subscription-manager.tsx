@@ -14,9 +14,9 @@ const severityOptions = [
   { value: 3, label: 'critical only' },
 ] as const
 
-type SubscriptionManagerProps = { availableZones: string[] }
+type SubscriptionManagerProps = { availableZones: string[]; onSaved?: () => void }
 
-export function SubscriptionManager({ availableZones }: SubscriptionManagerProps) {
+export function SubscriptionManager({ availableZones, onSaved }: SubscriptionManagerProps) {
   const utils = trpc.useUtils()
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const subscriptionQuery = trpc.subscriptions.get.useQuery()
@@ -24,6 +24,7 @@ export function SubscriptionManager({ availableZones }: SubscriptionManagerProps
     onSuccess: async () => {
       setSubmissionError(null)
       await utils.subscriptions.get.invalidate()
+      onSaved?.()
     },
     onError: error => {
       setSubmissionError(error.message)

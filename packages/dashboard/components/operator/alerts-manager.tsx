@@ -217,7 +217,16 @@ function ZoneBranch({
       >
         <div className="overflow-hidden">
           {metricEntries.length === 0 ? (
-            <p className="px-4 py-3 text-xs text-muted-foreground">no active alerts</p>
+            <div className="ml-6 border-l border-border/50">
+              <div className="ml-5 border-l border-border/30">
+                <p className={`flex items-center px-3 text-xs text-muted-foreground ${ROW_HEIGHT}`}>
+                  no active alerts
+                </p>
+                {Array.from({ length: ALERTS_PER_METRIC - 1 }, (_, i) => (
+                  <div className={ROW_HEIGHT} key={`empty-${i}`} />
+                ))}
+              </div>
+            </div>
           ) : (
             metricEntries.map(([metricType, metricAlerts]) => (
               <MetricBranch

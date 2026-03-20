@@ -15,7 +15,9 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { SESSION_COOKIE_NAME } from '@/lib/session'
+import { HeaderBreadcrumbs } from './header-breadcrumbs'
 import { NavLinks } from './nav-links'
+import { SidebarStatus } from './sidebar-status'
 import { SignOutForm } from './sign-out-form'
 
 type AgentNavItem = { href: string; label: string }
@@ -40,7 +42,7 @@ export async function AgentShell({
   const hasSession = cookieStore.has(SESSION_COOKIE_NAME)
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
+    <SidebarProvider className="h-dvh !min-h-0 overflow-hidden" defaultOpen={defaultOpen}>
       <Sidebar variant="inset" collapsible="offcanvas">
         <SidebarHeader className="px-4 pt-4">
           <h2 className="text-lg font-semibold text-balance">{title}</h2>
@@ -75,11 +77,17 @@ export async function AgentShell({
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset>
-        <header className="flex h-10 items-center gap-2 border-b border-border px-4">
-          <SidebarTrigger />
+      <SidebarInset className="flex min-h-0 flex-col overflow-hidden">
+        <header className="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger />
+            <HeaderBreadcrumbs navItems={navItems} />
+          </div>
+          <SidebarStatus />
         </header>
-        <div className="mx-auto w-full max-w-5xl p-6">{children}</div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-5xl p-6">{children}</div>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )
