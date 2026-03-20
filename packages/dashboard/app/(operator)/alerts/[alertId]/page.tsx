@@ -1,10 +1,10 @@
-// Alert detail + acknowledge flow
-// click 1: arrive here. click 2: acknowledge button. click 3: confirm dialog
 import { alerts } from '@scemas/db/schema'
 import { eq } from 'drizzle-orm'
 import { notFound } from 'next/navigation'
 
+import { SeverityBadge } from '@/components/ui/severity-badge'
 import { getDb } from '@/server/cached'
+import { AlertActions } from './alert-actions'
 
 export default async function AlertDetailPage({
   params,
@@ -36,7 +36,7 @@ export default async function AlertDetailPage({
           </div>
           <div>
             <dt className="text-xs uppercase text-muted-foreground">severity</dt>
-            <dd className="mt-1 text-sm">{alert.severity}</dd>
+            <dd className="mt-1 text-sm"><SeverityBadge severity={alert.severity} /></dd>
           </div>
           <div>
             <dt className="text-xs uppercase text-muted-foreground">status</dt>
@@ -52,6 +52,7 @@ export default async function AlertDetailPage({
           </div>
         </dl>
       </div>
+      <AlertActions alertId={alert.id} currentStatus={alert.status} />
     </div>
   )
 }

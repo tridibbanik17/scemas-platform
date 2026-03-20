@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 
 import { thresholdRules } from '@scemas/db/schema'
 
+import { RuleActions } from '@/components/admin/rule-actions'
 import { getDb } from '@/server/cached'
+import { HydrateClient } from '@/lib/trpc-server'
 
 export default async function RuleDetailPage({
   params,
@@ -22,7 +24,12 @@ export default async function RuleDetailPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-balance">edit rule</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-balance">rule detail</h1>
+        <HydrateClient>
+          <RuleActions ruleId={rule.id} ruleStatus={rule.ruleStatus} />
+        </HydrateClient>
+      </div>
       <div className="rounded-lg border border-border bg-card p-4">
         <dl className="space-y-3 text-sm">
           <div>

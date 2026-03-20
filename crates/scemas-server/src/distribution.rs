@@ -129,8 +129,11 @@ impl DataDistributionManager {
              ON CONFLICT (zone, metric_type, aggregation_type, time) DO UPDATE
              SET sample_count = COALESCE(analytics.sample_count, 0) + 1,
                  sample_sum = COALESCE(analytics.sample_sum, 0) + EXCLUDED.sample_sum,
-                 aggregated_value = (COALESCE(analytics.sample_sum, 0) + EXCLUDED.sample_sum)
-                   / (COALESCE(analytics.sample_count, 0) + 1)",
+                 aggregated_value = ROUND(
+                   ((COALESCE(analytics.sample_sum, 0) + EXCLUDED.sample_sum)
+                    / (COALESCE(analytics.sample_count, 0) + 1))::numeric,
+                   2
+                 )::float8",
         )
         .bind(zone)
         .bind(metric_type)

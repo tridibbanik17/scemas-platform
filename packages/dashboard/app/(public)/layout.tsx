@@ -1,8 +1,3 @@
-// PublicUserAgent: Presentation layer (PAC)
-// minimal layout: no sidebar, no auth, large text for digital signage
-// this agent shares the same view for public users + third-party developers
-// ABSTRACTION: only aggregated, non-sensitive data is shown (ZoneAQI, not raw readings)
-
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 
@@ -20,11 +15,11 @@ export default async function PublicLayout({
   const hasSession = (await cookies()).has(SESSION_COOKIE_NAME)
 
   return (
-    <div className="min-h-dvh bg-foreground text-background">
+    <div className="dark min-h-dvh bg-background text-foreground">
       <header className="flex items-center justify-between px-8 py-4">
         <h1 className="text-2xl font-semibold text-balance">SCEMAS</h1>
         <div className="flex items-center gap-3">
-          <p className="font-mono text-sm opacity-60">hamilton, ON</p>
+          <p className="font-mono text-sm text-muted-foreground">Hamilton, ON</p>
           {hasSession ? (
             <SignOutForm label="sign out" variant="secondary" />
           ) : (

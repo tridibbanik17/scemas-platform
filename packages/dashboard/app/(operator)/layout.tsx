@@ -1,20 +1,28 @@
 import { AgentShell } from '@/components/layout/agent-shell'
+import { SubscriptionDrawer } from '@/components/operator/subscription-drawer'
+import { getDb } from '@/server/cached'
 
 export const dynamic = 'force-dynamic'
 
-export default function OperatorLayout({
+export default async function OperatorLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const db = getDb()
+  const devices = await db.query.devices.findMany({
+    columns: { zone: true },
+  })
+  const availableZones = Array.from(new Set(devices.map(device => device.zone))).sort()
+
   return (
     <AgentShell
       navItems={[
         { href: '/dashboard', label: 'dashboard' },
         { href: '/alerts', label: 'alerts' },
-        { href: '/subscriptions', label: 'subscriptions' },
         { href: '/metrics', label: 'metrics' },
       ]}
+      navExtra={<SubscriptionDrawer availableZones={availableZones} />}
       subtitle="city operator"
       title="SCEMAS"
     >

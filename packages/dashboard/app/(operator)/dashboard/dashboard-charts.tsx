@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { keepPreviousData } from '@tanstack/react-query'
 
 import { ZoneMetricsChart } from '@/components/charts/zone-metrics-chart'
 import { AlertFrequencyChart } from '@/components/charts/alert-frequency-chart'
@@ -10,7 +11,7 @@ export function DashboardChartsPanel({ availableZones }: { availableZones: strin
   const [selectedZone, setSelectedZone] = useState(availableZones[0] ?? '')
   const timeSeriesQuery = trpc.telemetry.getTimeSeries.useQuery(
     { zone: selectedZone, hours: 6 },
-    { enabled: selectedZone.length > 0, refetchInterval: 30_000 },
+    { enabled: selectedZone.length > 0, refetchInterval: 30_000, placeholderData: keepPreviousData },
   )
 
   return (
@@ -29,11 +30,12 @@ export function DashboardChartsPanel({ availableZones }: { availableZones: strin
           ))}
         </select>
       </div>
-      <div className="mt-4">
-        {timeSeriesQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">loading time series...</p>
-        ) : timeSeriesQuery.isError ? (
-          <p className="text-sm text-destructive">{timeSeriesQuery.error.message}</p>
+      <div className="relative mt-4">
+        {timeSeriesQuery.isFetching && (
+          <div className="absolute right-0 top-0 text-xs text-muted-foreground">refreshing...</div>
+        )}
+        {timeSeriesQuery.isError ? (
+          <p className="h-72 text-sm text-destructive">{timeSeriesQuery.error.message}</p>
         ) : (
           <ZoneMetricsChart data={timeSeriesQuery.data ?? []} />
         )}

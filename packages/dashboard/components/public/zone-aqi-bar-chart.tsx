@@ -23,11 +23,22 @@ function aqiColor(aqi: number): string {
   return 'oklch(0.47 0.157 37.304)'
 }
 
+const zoneNameOverrides: Record<string, string> = {
+  mcmaster: 'McMaster',
+}
+
+function formatZoneName(zone: string): string {
+  if (zoneNameOverrides[zone]) {
+    return zoneNameOverrides[zone]
+  }
+  return zone.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
 export function ZoneAqiBarChart({ zones }: { zones: ZoneAQI[] }) {
   if (zones.length === 0) return null
 
   const data = zones.map(z => ({
-    zone: z.zone.replaceAll('_', ' '),
+    zone: formatZoneName(z.zone),
     aqi: z.aqi,
   }))
 

@@ -1,4 +1,7 @@
 @startuml
+' NOTE: This diagram documents the TLS transport layer handled by the
+' reverse proxy (Cloudflare) per SR-INT1, not application-level encryption.
+' All data in transit is encrypted via TLS 1.3 at the infrastructure layer.
 hide empty description
 
 skinparam state {

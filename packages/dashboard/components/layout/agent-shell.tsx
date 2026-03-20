@@ -12,6 +12,7 @@ type AgentShellProps = {
   title: string
   subtitle: string
   navItems: AgentNavItem[]
+  navExtra?: ReactNode
   children: ReactNode
 }
 
@@ -19,6 +20,7 @@ export function AgentShell({
   title,
   subtitle,
   navItems,
+  navExtra,
   children,
 }: AgentShellProps) {
   return (
@@ -30,6 +32,8 @@ export function AgentShell({
         </div>
 
         <NavLinks items={navItems} />
+
+        {navExtra ? <div className="mt-4">{navExtra}</div> : null}
 
         <div className="mt-auto pt-6">
           <SignOutForm className="w-full justify-center" label="sign out" variant="outline" />

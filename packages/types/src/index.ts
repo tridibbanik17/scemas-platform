@@ -28,6 +28,14 @@ export type AlertStatus = z.infer<typeof AlertStatusSchema>
 export const DeviceStatusSchema = z.enum(['active', 'inactive', 'revoked'])
 export type DeviceStatus = z.infer<typeof DeviceStatusSchema>
 
+export const DeviceIdentitySchema = z.object({
+  deviceId: z.string(),
+  deviceType: MetricTypeSchema,
+  zone: z.string(),
+  status: DeviceStatusSchema,
+})
+export type DeviceIdentity = z.infer<typeof DeviceIdentitySchema>
+
 export const RuleStatusSchema = z.enum(['active', 'inactive'])
 export type RuleStatus = z.infer<typeof RuleStatusSchema>
 

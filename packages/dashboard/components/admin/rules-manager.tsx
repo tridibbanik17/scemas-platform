@@ -20,19 +20,18 @@ export function RulesManager() {
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const rulesQuery = trpc.rules.list.useQuery()
   const createRule = trpc.rules.create.useMutation({
-    onSuccess: async createdRule => {
+    onSuccess: createdRule => {
       setSubmissionError(null)
       utils.rules.list.setData(undefined, currentRules =>
         prependRule(currentRules, createdRule),
       )
-      await utils.rules.list.invalidate()
     },
     onError: error => {
       setSubmissionError(error.message)
     },
   })
   const updateRule = trpc.rules.update.useMutation({
-    onSuccess: async (_, variables) => {
+    onSuccess: (_, variables) => {
       setSubmissionError(null)
       utils.rules.list.setData(undefined, currentRules =>
         currentRules?.map(rule =>
@@ -41,19 +40,19 @@ export function RulesManager() {
             : rule,
         ) ?? currentRules,
       )
-      await utils.rules.list.invalidate()
+      void utils.rules.list.invalidate()
     },
     onError: error => {
       setSubmissionError(error.message)
     },
   })
   const deleteRule = trpc.rules.delete.useMutation({
-    onSuccess: async (_, variables) => {
+    onSuccess: (_, variables) => {
       setSubmissionError(null)
       utils.rules.list.setData(undefined, currentRules =>
         currentRules?.filter(rule => rule.id !== variables.id) ?? currentRules,
       )
-      await utils.rules.list.invalidate()
+      void utils.rules.list.invalidate()
     },
     onError: error => {
       setSubmissionError(error.message)

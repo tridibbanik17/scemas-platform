@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { ListPagination } from '@/components/list-pagination'
 import { Button } from '@/components/ui/button'
+import { SeverityBadge } from '@/components/ui/severity-badge'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
 
@@ -82,8 +83,8 @@ export function AlertsManager() {
                       {alert.triggeredValue}
                     </span>
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    severity {alert.severity} | status {alert.status} | opened{' '}
+                  <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <SeverityBadge severity={alert.severity} /> {alert.status} | opened{' '}
                     {alert.createdAt.toLocaleString()}
                   </p>
                 </div>

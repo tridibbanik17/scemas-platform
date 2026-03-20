@@ -160,6 +160,22 @@ pub struct PlatformStatus {
     pub time: DateTime<Utc>,
 }
 
+// ─── IngestionFailure (ingestion_failures table) ───
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IngestionFailure {
+    pub id: i64,
+    pub stage: String,
+    pub sensor_id: String,
+    pub metric_type: MetricType,
+    pub zone: String,
+    pub payload: serde_json::Value,
+    pub error: String,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub resolved_at: Option<DateTime<Utc>>,
+}
+
 // ─── Innovative feature: alert subscriptions ───
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

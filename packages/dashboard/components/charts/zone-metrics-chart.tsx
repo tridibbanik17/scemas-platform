@@ -34,9 +34,11 @@ function formatTime(isoString: string) {
 export function ZoneMetricsChart({ data }: { data: TimeSeriesPoint[] }) {
   if (data.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        no analytics data available for this zone yet
-      </p>
+      <div className="flex h-72 items-center justify-center">
+        <p className="text-sm text-muted-foreground">
+          no analytics data available for this zone yet
+        </p>
+      </div>
     )
   }
 
