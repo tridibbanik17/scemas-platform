@@ -252,6 +252,29 @@ class SCEMASPlatformStatusDB {
   + store(status : String) : void
 }
 
+class ApiTokenRegistry {
+  - String tokenHash
+  - String prefix
+  - String label
+  - String accountId
+  - Date expiresAt
+  - Date revokedAt
+  - Date lastUsedAt
+  --
+  + validate(tokenHash : String) : Boolean
+  + revoke(tokenId : String) : void
+}
+
+class AlertSubscriptionDB {
+  - String accountId
+  - String zone
+  - String metricType
+  - int minSeverity
+  - String webhookUrl
+  --
+  + matchesAlert(alert : AlertAndAuditLogDB) : Boolean
+}
+
 ' ─────────────────────────────────────────
 ' TELEMETRY RELATIONSHIPS
 ' ─────────────────────────────────────────
@@ -277,6 +300,7 @@ AccessManager --> DeviceIdentityRegistry
 AccessManager --> ModifyAccountDetails
 AccessManager --> MonitorAccessStatus
 AccessManager --> ManageSecurityPermissions
+AccessManager --> ApiTokenRegistry
 
 ' ─────────────────────────────────────────
 ' ALERTING RELATIONSHIPS
@@ -290,6 +314,8 @@ AlertingManager --> AlertAndAuditLogDB
 AlertingManager --> IndividualSensorReading
 AlertingManager --> UserInformation
 AlertingManager --> ManageAlertSubscriptions
+ManageAlertSubscriptions --> AlertSubscriptionDB
+DispatchAlertNotifications ..> AlertSubscriptionDB : reads
 
 ' ─────────────────────────────────────────
 ' DATA DISTRIBUTION RELATIONSHIPS
@@ -310,5 +336,6 @@ DataDistributionManager --> AccessManagement
 
 TimeSeriesTelemetryDB --> IndividualSensorReading
 AccountDB --> UserInformation
+ApiTokenRegistry --> AccountDB
 
 @enduml

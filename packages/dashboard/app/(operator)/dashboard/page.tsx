@@ -156,7 +156,7 @@ async function SensorCoveragePanel() {
                 <p className="truncate text-foreground">
                   {sensor?.display_name ?? reading.sensorId}
                 </p>
-                <p className="truncate text-[11px] text-muted-foreground">
+                <p className="truncate text-xs text-muted-foreground">
                   {sensor?.region_label ?? formatZoneName(reading.zone)} ·{' '}
                   {sensor?.ward_label ?? 'ward n/a'}
                 </p>

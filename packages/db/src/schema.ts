@@ -147,6 +147,7 @@ export const alertSubscriptions = pgTable('alert_subscriptions', {
   metricTypes: text('metric_types').array(),
   zones: text('zones').array(),
   minSeverity: integer('min_severity').default(1),
+  webhookUrl: text('webhook_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })

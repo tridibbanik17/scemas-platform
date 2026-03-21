@@ -1,9 +1,9 @@
 // ManageSecurityPermissions + ModifyAccountDetails boundaries (admin-only)
 
-import { accounts, auditLogs } from '@scemas/db/schema'
+import { accounts, activeSessionTokens, auditLogs } from '@scemas/db/schema'
 import { CreateAccountSchema, RoleSchema, UpdateAccountDetailsSchema } from '@scemas/types'
 import { TRPCError } from '@trpc/server'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, gt } from 'drizzle-orm'
 import { z } from 'zod'
 import { callRustEndpoint, extractRustErrorMessage } from '../rust-client'
 import { router, adminProcedure } from '../trpc'
@@ -148,6 +148,49 @@ export const usersRouter = router({
           action: 'user.password_reset',
           details: { targetUserId: input.userId },
         })
+
+      return { success: true }
+    }),
+
+  activeSessions: adminProcedure.query(async ({ ctx }) => {
+    const sessions = await ctx.db
+      .select({
+        tokenValue: activeSessionTokens.tokenValue,
+        userId: activeSessionTokens.userId,
+        role: activeSessionTokens.role,
+        expiry: activeSessionTokens.expiry,
+        createdAt: activeSessionTokens.createdAt,
+        username: accounts.username,
+      })
+      .from(activeSessionTokens)
+      .innerJoin(accounts, eq(activeSessionTokens.userId, accounts.id))
+      .where(gt(activeSessionTokens.expiry, new Date()))
+      .orderBy(desc(activeSessionTokens.createdAt))
+
+    return sessions
+  }),
+
+  revokeSession: adminProcedure
+    .input(z.object({ tokenValue: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      const session = await ctx.db.query.activeSessionTokens.findFirst({
+        where: eq(activeSessionTokens.tokenValue, input.tokenValue),
+        columns: { userId: true },
+      })
+
+      if (!session) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'session not found' })
+      }
+
+      await ctx.db
+        .delete(activeSessionTokens)
+        .where(eq(activeSessionTokens.tokenValue, input.tokenValue))
+
+      await ctx.db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: 'session.revoked',
+        details: { targetUserId: session.userId },
+      })
 
       return { success: true }
     }),

@@ -29,9 +29,10 @@ export function MetricSubagentPanels({
               {panel.averageValue}{' '}
               <span className="text-sm text-muted-foreground">{panel.unit}</span>
             </p>
-            <p className="text-xs text-muted-foreground">
-              latest reading window: {panel.latestTime}
-            </p>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>{panel.sensorCount} sensors</span>
+              <span>{panel.latestTime}</span>
+            </div>
           </div>
 
           <ZoneList

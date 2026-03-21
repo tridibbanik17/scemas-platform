@@ -37,7 +37,7 @@ export function AlertActions({ alertId, currentStatus }: AlertActionsProps) {
   return (
     <div className="flex items-center gap-2">
       <span
-        className={`rounded px-1.5 py-px text-[10px]/4 font-medium ${statusStyles[status] ?? statusStyles.active}`}
+        className={`rounded px-1.5 py-px text-xs font-medium ${statusStyles[status] ?? statusStyles.active}`}
       >
         {status}
       </span>

@@ -66,10 +66,15 @@ export function SubscriptionManager({ availableZones, onSaved }: SubscriptionMan
       return
     }
 
+    const webhookUrl = formData.get('webhookUrl')
+    const parsedWebhookUrl =
+      typeof webhookUrl === 'string' && webhookUrl.trim().length > 0 ? webhookUrl.trim() : null
+
     updateSubscription.mutate({
       metricTypes: formData.getAll('metricTypes').filter(isMetricType),
       zones: formData.getAll('zones').filter(isString),
       minSeverity: parsedMinSeverity,
+      webhookUrl: parsedWebhookUrl,
     })
   }
 
@@ -125,6 +130,23 @@ export function SubscriptionManager({ availableZones, onSaved }: SubscriptionMan
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="webhookUrl">
+          webhook url
+        </label>
+        <input
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground/50"
+          defaultValue={subscription?.webhookUrl ?? ''}
+          id="webhookUrl"
+          name="webhookUrl"
+          placeholder="https://teams.webhook.office.com/..."
+          type="url"
+        />
+        <p className="text-xs text-muted-foreground">
+          receives a JSON POST when a matching alert fires. leave empty to disable.
+        </p>
       </div>
 
       {submissionError ? (

@@ -128,7 +128,7 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
             ))}
           </select>
           <select
-            className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+            className="h-7 rounded-md border border-input bg-background px-2 text-sm"
             onChange={e => setSortMode(e.target.value as SortMode)}
             value={sortMode}
           >
@@ -167,12 +167,12 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
                         </span>
                         <SeverityBadge severity={alert.severity} />
                       </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground/60">
+                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground/60">
                         <span>{alert.createdAt.toLocaleString()}</span>
-                        <span className="rounded bg-muted px-1 py-px text-[10px]">
+                        <span className="rounded bg-muted px-1 py-px text-xs">
                           {alert.metricType.replaceAll('_', ' ')}
                         </span>
-                        <span className="rounded bg-muted px-1 py-px text-[10px]">
+                        <span className="rounded bg-muted px-1 py-px text-xs">
                           {formatZoneName(alert.zone)}
                         </span>
                       </div>

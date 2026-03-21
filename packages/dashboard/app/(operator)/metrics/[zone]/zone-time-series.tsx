@@ -33,7 +33,7 @@ export function ZoneTimeSeriesPanel({ zone }: { zone: string }) {
           <div className="flex gap-0.5">
             {PERIODS.map(p => (
               <button
-                className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                className={`rounded px-1.5 py-0.5 text-xs font-medium transition-colors ${
                   hours === p.hours
                     ? 'bg-muted text-foreground'
                     : 'text-muted-foreground/50 hover:text-muted-foreground'

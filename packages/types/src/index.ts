@@ -100,6 +100,7 @@ export const AlertSubscriptionSchema = z.object({
   metricTypes: z.array(MetricTypeSchema),
   zones: z.array(z.string()),
   minSeverity: SeveritySchema,
+  webhookUrl: z.string().url().nullable().optional(),
 })
 export type AlertSubscription = z.infer<typeof AlertSubscriptionSchema>
 
@@ -107,6 +108,7 @@ export const UpdateAlertSubscriptionSchema = z.object({
   metricTypes: z.array(MetricTypeSchema).optional(),
   zones: z.array(z.string()).optional(),
   minSeverity: SeveritySchema.optional(),
+  webhookUrl: z.string().url().nullable().optional(),
 })
 export type UpdateAlertSubscription = z.infer<typeof UpdateAlertSubscriptionSchema>
 

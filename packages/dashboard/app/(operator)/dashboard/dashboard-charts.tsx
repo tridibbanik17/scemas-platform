@@ -103,7 +103,7 @@ function PeriodSelector({
     <div className="flex gap-0.5">
       {periods.map(p => (
         <button
-          className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+          className={`rounded px-1.5 py-0.5 text-xs font-medium transition-colors ${
             value === p.hours
               ? 'bg-muted text-foreground'
               : 'text-muted-foreground/50 hover:text-muted-foreground'

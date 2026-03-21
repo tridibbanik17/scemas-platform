@@ -7,6 +7,7 @@ export type MetricPanelData = {
   unit: string
   averageValue: string
   latestTime: string
+  sensorCount: number
   zones: Array<{ zone: string; averageValue: string; latestValue: string; sensorCount: number }>
 }
 
@@ -38,6 +39,7 @@ export function buildMetricSubagentPanels(readings: LatestSensorReading[]): Metr
       unit: metricConfig[metricType].unit,
       averageValue: formatAverage(metricReadings),
       latestTime: latestTimestamp ? latestTimestamp.toLocaleString() : '--',
+      sensorCount: new Set(metricReadings.map(r => r.sensorId)).size,
       zones: Array.from(zones.entries())
         .map(([zone, zoneReadings]) => ({
           zone,

@@ -25,6 +25,7 @@ use crate::lifecycle;
 pub struct AlertingManager {
     db: PgPool,
     blackboard: RwLock<Blackboard>,
+    http_client: reqwest::Client,
 }
 
 impl AlertingManager {
@@ -32,6 +33,7 @@ impl AlertingManager {
         Self {
             db,
             blackboard: RwLock::new(Blackboard::new()),
+            http_client: reqwest::Client::new(),
         }
     }
 
@@ -334,7 +336,7 @@ impl AlertingManager {
 
     async fn load_subscriptions(&self) -> Result<Vec<AlertSubscription>> {
         let rows: Vec<AlertSubscriptionRow> = sqlx::query_as(
-            "SELECT id, user_id, metric_types, zones, min_severity FROM alert_subscriptions",
+            "SELECT id, user_id, metric_types, zones, min_severity, webhook_url FROM alert_subscriptions",
         )
         .fetch_all(&self.db)
         .await?;
@@ -363,6 +365,28 @@ impl AlertingManager {
                 )
                 .await
                 .ok();
+
+                if let Some(url) = &sub.webhook_url {
+                    let payload = serde_json::json!({
+                        "type": "alert.triggered",
+                        "alert": {
+                            "id": alert.id,
+                            "zone": &alert.zone,
+                            "metricType": alert.metric_type.to_string(),
+                            "severity": alert.severity as i32,
+                            "triggeredValue": alert.triggered_value,
+                            "sensorId": &alert.sensor_id,
+                            "createdAt": alert.created_at.to_rfc3339(),
+                        }
+                    });
+                    let client = self.http_client.clone();
+                    let url = url.clone();
+                    tokio::spawn(async move {
+                        if let Err(e) = client.post(&url).json(&payload).send().await {
+                            tracing::warn!(webhook_url = %url, error = %e, "webhook dispatch failed");
+                        }
+                    });
+                }
             }
         }
         Ok(())
@@ -448,6 +472,7 @@ struct AlertSubscriptionRow {
     metric_types: Option<Vec<String>>,
     zones: Option<Vec<String>>,
     min_severity: Option<i32>,
+    webhook_url: Option<String>,
 }
 
 impl TryFrom<AlertSubscriptionRow> for AlertSubscription {
@@ -484,6 +509,7 @@ impl TryFrom<AlertSubscriptionRow> for AlertSubscription {
                 .map(|zone| regions::normalize_zone_id(&zone, None))
                 .collect(),
             min_severity,
+            webhook_url: row.webhook_url,
         })
     }
 }

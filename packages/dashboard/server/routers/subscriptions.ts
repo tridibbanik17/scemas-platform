@@ -33,6 +33,7 @@ export const subscriptionsRouter = router({
             metricTypes: input.metricTypes,
             zones: normalizedZones,
             minSeverity: input.minSeverity,
+            webhookUrl: input.webhookUrl,
             updatedAt: new Date(),
           })
           .where(eq(alertSubscriptions.userId, ctx.user.id))
@@ -44,6 +45,7 @@ export const subscriptionsRouter = router({
             metricTypes: input.metricTypes ?? [],
             zones: normalizedZones ?? [],
             minSeverity: input.minSeverity ?? 1,
+            webhookUrl: input.webhookUrl ?? null,
           })
       }
 

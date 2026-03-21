@@ -22,6 +22,7 @@ import { trpc } from '@/lib/trpc'
 
 const roles = ['operator', 'admin', 'viewer'] as const
 const PAGE_SIZE = 10
+const ONE_HOUR_MS = 3_600_000
 
 function isRole(value: string): value is Role {
   return roles.some(r => r === value)
@@ -125,6 +126,8 @@ export function UsersManager() {
 
   return (
     <div className="space-y-6">
+      <ActiveSessionsPanel />
+
       <form
         className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-5"
         onSubmit={handleSubmit}
@@ -241,6 +244,103 @@ export function UsersManager() {
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+const SESSIONS_PAGE_SIZE = 4
+
+function ActiveSessionsPanel() {
+  const utils = trpc.useUtils()
+  const [page, setPage] = useState(0)
+  const sessionsQuery = trpc.users.activeSessions.useQuery()
+  const revokeSession = trpc.users.revokeSession.useMutation({
+    onSuccess: async () => {
+      await utils.users.activeSessions.invalidate()
+    },
+  })
+
+  if (sessionsQuery.isLoading) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-2">
+          <Spinner />
+          loading sessions
+        </span>
+      </div>
+    )
+  }
+
+  if (sessionsQuery.isError) {
+    return (
+      <div className="rounded-lg border border-destructive/20 bg-card p-4 text-sm text-destructive">
+        {sessionsQuery.error.message}
+      </div>
+    )
+  }
+
+  const sessions = sessionsQuery.data ?? []
+  const expiringCount = sessions.filter(
+    s => s.expiry.getTime() - Date.now() < ONE_HOUR_MS,
+  ).length
+  const totalPages = Math.ceil(sessions.length / SESSIONS_PAGE_SIZE)
+  const safePage = Math.min(page, Math.max(0, totalPages - 1))
+  const pageSessions = sessions.slice(
+    safePage * SESSIONS_PAGE_SIZE,
+    (safePage + 1) * SESSIONS_PAGE_SIZE,
+  )
+
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-medium">active sessions</span>
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {sessions.length}
+          </span>
+        </div>
+        {expiringCount > 0 ? (
+          <span className="text-xs text-amber-600 dark:text-amber-400">
+            {expiringCount} expiring within 1h
+          </span>
+        ) : null}
+      </div>
+      {sessions.length === 0 ? (
+        <p className="px-4 py-8 text-center text-sm text-muted-foreground">no active sessions</p>
+      ) : (
+        <>
+          <div className="divide-y divide-border">
+            {pageSessions.map(session => (
+              <div
+                className="flex items-center justify-between px-4 py-3"
+                key={session.tokenValue}
+              >
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">{session.username}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {session.role} · expires {session.expiry.toLocaleString()}
+                  </p>
+                </div>
+                <Button
+                  disabled={revokeSession.isPending}
+                  onClick={() => revokeSession.mutate({ tokenValue: session.tokenValue })}
+                  size="sm"
+                  variant="outline"
+                >
+                  {revokeSession.isPending ? <Spinner /> : 'revoke'}
+                </Button>
+              </div>
+            ))}
+          </div>
+          <ListPagination
+            onPageChange={setPage}
+            page={safePage}
+            pageSize={SESSIONS_PAGE_SIZE}
+            totalItems={sessions.length}
+            totalPages={totalPages}
+          />
+        </>
+      )}
     </div>
   )
 }

@@ -117,7 +117,16 @@ export function ZoneMap({ sensors, alertCounts }: ZoneMapProps) {
                     }}
                   >
                     <div
-                      className="size-3 cursor-pointer rounded-full border-2 border-white shadow-sm"
+                      className="size-3 cursor-pointer rounded-full border-2 border-white shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`${sensor.displayName}: ${sensor.value} ${sensor.telemetryUnit}`}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          setSelected(sensor)
+                        }
+                      }}
                       style={{
                         backgroundColor:
                           zoneAlerts > 0
@@ -138,7 +147,7 @@ export function ZoneMap({ sensors, alertCounts }: ZoneMapProps) {
               closeOnClick={false}
               className="sensor-popup"
             >
-              <div className="space-y-1 pr-4 text-xs">
+              <div className="space-y-1 pr-4 text-xs" role="dialog" aria-label={`${selected.displayName} sensor details`}>
                 <p className="font-medium">{selected.displayName}</p>
                 <p className="font-mono text-[11px] text-muted-foreground">
                   {selected.sensorId} · {selected.assetId}
@@ -175,7 +184,8 @@ export function ZoneMap({ sensors, alertCounts }: ZoneMapProps) {
 
         {layers.zones && projectedOverlay ? (
           <svg
-            aria-hidden="true"
+            role="group"
+            aria-label="hamilton monitoring regions"
             className="absolute inset-0"
             viewBox={`0 0 ${projectedOverlay.width} ${projectedOverlay.height}`}
             preserveAspectRatio="none"
@@ -200,6 +210,9 @@ export function ZoneMap({ sensors, alertCounts }: ZoneMapProps) {
                     strokeLinejoin="round"
                     strokeOpacity={isHovered ? 1 : 0.8}
                     strokeWidth={isHovered ? 2.5 : 1.5}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={region.label}
                     style={{
                       pointerEvents: 'fill',
                       cursor: 'pointer',
@@ -208,6 +221,14 @@ export function ZoneMap({ sensors, alertCounts }: ZoneMapProps) {
                     }}
                     onMouseEnter={() => setHoveredZone(region.zoneId)}
                     onMouseLeave={() => setHoveredZone(null)}
+                    onFocus={() => setHoveredZone(region.zoneId)}
+                    onBlur={() => setHoveredZone(null)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setHoveredZone(region.zoneId)
+                      }
+                    }}
                   />
                   <g
                     opacity={isHovered ? 1 : 0}
@@ -280,7 +301,7 @@ function LayerToggle({
 }) {
   return (
     <button
-      className={`rounded-md border px-2 py-1 text-[10px] font-medium transition-colors ${
+      className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
         active
           ? 'border-border bg-card text-foreground shadow-sm'
           : 'border-transparent bg-card/60 text-muted-foreground'

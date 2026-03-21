@@ -17,7 +17,7 @@ export function ZoneAqiGrid() {
   if (regionAqi.isLoading) {
     return (
       <div className="flex min-h-64 items-center justify-center">
-        <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-2 text-xl text-muted-foreground">
           <Spinner />
           loading monitoring region data
         </span>
@@ -27,7 +27,7 @@ export function ZoneAqiGrid() {
 
   if (regionAqi.isError) {
     return (
-      <div className="rounded-xl bg-card p-6 text-sm text-muted-foreground">
+      <div className="rounded-xl bg-card p-6 text-xl text-muted-foreground">
         unable to load public monitoring region air quality data right now
       </div>
     )
@@ -35,7 +35,7 @@ export function ZoneAqiGrid() {
 
   if (!regions.length) {
     return (
-      <div className="rounded-xl bg-card p-6 text-sm text-muted-foreground">
+      <div className="rounded-xl bg-card p-6 text-xl text-muted-foreground">
         no aggregated telemetry is available yet. run the seed flow and wait for the analytics
         windows to fill.
       </div>
@@ -50,9 +50,9 @@ export function ZoneAqiGrid() {
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-border/30 bg-card/60 p-4">
-        <p className="text-xs text-muted-foreground/60">monitoring regions</p>
-        <p className="mt-2 font-mono text-2xl tabular-nums text-foreground/80">{regions.length}</p>
-        <p className="mt-1 text-xs text-muted-foreground/60 text-pretty">
+        <p className="text-lg text-muted-foreground/60">monitoring regions</p>
+        <p className="mt-2 font-mono text-4xl tabular-nums text-foreground/80">{regions.length}</p>
+        <p className="mt-1 text-lg text-muted-foreground/60 text-pretty">
           public rollup across named hamilton monitoring regions
         </p>
       </div>
@@ -61,10 +61,10 @@ export function ZoneAqiGrid() {
         <div className="flex flex-wrap gap-4">
           {pageRegions.map(region => (
             <article
-              className="min-w-56 flex-1 rounded-xl border border-border/50 bg-card py-3"
+              className="min-w-72 flex-1 rounded-xl border border-border/50 bg-card py-3"
               key={region.zone}
             >
-              <div className="grid grid-cols-[4.5rem_1fr]">
+              <div className="grid grid-cols-[7rem_1fr]">
                 <Row label="region" value={region.zoneName} />
                 <Row label="aqi" value={`${region.aqi}`} color={aqiColor(region.aqi)} />
                 <Row label="status" value={region.aqiLabel} />
@@ -79,7 +79,7 @@ export function ZoneAqiGrid() {
           ))}
           {emptySlots > 0
             ? Array.from({ length: emptySlots }, (_, i) => (
-                <div className="min-h-48 min-w-56 flex-1 rounded-xl" key={`empty-${i}`} />
+                <div className="min-h-48 min-w-72 flex-1 rounded-xl" key={`empty-${i}`} />
               ))
             : null}
         </div>
@@ -128,9 +128,9 @@ function Row({
 }) {
   return (
     <>
-      <span className="px-3 py-1 text-[10px] text-muted-foreground/50">{label}</span>
+      <span className="px-3 py-1 text-base text-muted-foreground/50">{label}</span>
       <span
-        className={cn('px-3 py-1 text-xs text-foreground/80', mono && 'font-mono tabular-nums')}
+        className={cn('px-3 py-1 text-2xl text-foreground/80', mono && 'font-mono tabular-nums')}
         style={color ? { color } : undefined}
       >
         {value}

@@ -185,4 +185,5 @@ pub struct AlertSubscription {
     pub metric_types: Vec<MetricType>,
     pub zones: Vec<String>,
     pub min_severity: Severity,
+    pub webhook_url: Option<String>,
 }
