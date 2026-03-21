@@ -70,7 +70,14 @@ export function ReportsManager() {
       </div>
 
       {!reports || reports.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">no reports found</p>
+        <div className="flex flex-col items-center gap-2 py-8 text-center">
+          <p className="text-sm text-muted-foreground">no reports found</p>
+          {statusFilter !== 'all' && (
+            <Button variant="ghost" size="sm" onClick={() => setStatusFilter('all')}>
+              view all reports
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="space-y-2">
           {reports.map(report => (
@@ -78,7 +85,10 @@ export function ReportsManager() {
               <button
                 type="button"
                 className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-                onClick={() => setExpandedId(expandedId === report.id ? null : report.id)}
+                onClick={() => {
+                  setExpandedId(expandedId === report.id ? null : report.id)
+                  setReviewNote('')
+                }}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <Badge variant="outline" className={statusColors[report.status]}>
@@ -98,7 +108,7 @@ export function ReportsManager() {
 
               {expandedId === report.id && (
                 <div className="border-t border-border px-4 py-3 space-y-3">
-                  <p className="text-sm">{report.description}</p>
+                  <p className="text-sm text-pretty">{report.description}</p>
 
                   {report.contactEmail && (
                     <p className="text-xs text-muted-foreground">

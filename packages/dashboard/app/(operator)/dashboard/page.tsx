@@ -6,12 +6,12 @@ import { alerts, hazardReports } from '@scemas/db/schema'
 import { count, desc, eq } from 'drizzle-orm'
 import { Suspense } from 'react'
 import { ZoneMap, type SensorPin } from '@/components/map/zone-map'
-import { SeverityBadge } from '@/components/ui/severity-badge'
 import { Spinner } from '@/components/ui/spinner'
 import { sensorCatalog, type SensorCatalogEntry } from '@/lib/sensor-catalog'
 import { formatZoneName, normalizeZoneId } from '@/lib/zones'
 import { getDb, getManager } from '@/server/cached'
 import { DashboardChartsPanel, AlertFrequencyPanel } from './dashboard-charts'
+import { PaginatedSensorFeed, PaginatedAlertFeed } from './dashboard-lists'
 
 const LATEST_SENSOR_LIMIT = Math.max(200, sensorCatalog.length)
 const sensorCatalogById = new Map(sensorCatalog.map(sensor => [sensor.sensor_id, sensor]))
@@ -130,49 +130,43 @@ async function SensorCoveragePanel() {
   const coveredRegions = new Set(
     latestReadings.map(reading => normalizeZoneId(reading.zone, reading.sensorId)),
   ).size
-  const stationCount = new Set(sensorCatalog.map(sensor => sensor.station_id)).size
-  const wardCount = new Set(sensorCatalog.map(sensor => sensor.ward_id)).size
-  const planningUnitCount = new Set(sensorCatalog.map(sensor => sensor.host_planning_unit_id)).size
+  const stations = new Set<string>()
+  const wards = new Set<string>()
+  const planningUnits = new Set<string>()
+  for (const sensor of sensorCatalog) {
+    stations.add(sensor.station_id)
+    wards.add(sensor.ward_id)
+    planningUnits.add(sensor.host_planning_unit_id)
+  }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <h2 className="text-sm font-medium">live sensor feed</h2>
-      <p className="mt-1 text-xs text-muted-foreground">
-        <span className="font-mono tabular-nums">{latestReadings.length}</span> streams across{' '}
-        <span className="font-mono tabular-nums">{coveredRegions}</span> regions
-      </p>
-      <p className="text-xs text-muted-foreground">
-        network catalog: <span className="font-mono tabular-nums">{sensorCatalog.length}</span>{' '}
-        sensors, <span className="font-mono tabular-nums">{stationCount}</span> stations,{' '}
-        <span className="font-mono tabular-nums">{wardCount}</span> wards,{' '}
-        <span className="font-mono tabular-nums">{planningUnitCount}</span> planning units
-      </p>
-      <div className="mt-4 max-h-80 space-y-1.5 overflow-y-auto text-sm text-muted-foreground">
-        {latestReadings.slice(0, 12).map(reading => {
-          const sensor = sensorCatalogById.get(reading.sensorId)
-
-          return (
-            <div
-              className="flex items-start justify-between gap-3"
-              key={`${reading.sensorId}-${reading.time.toISOString()}`}
-            >
-              <div className="min-w-0">
-                <p className="truncate text-foreground">
-                  {sensor?.display_name ?? reading.sensorId}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {sensor?.region_label ?? formatZoneName(reading.zone)} ·{' '}
-                  {sensor?.ward_label ?? 'ward n/a'}
-                </p>
-              </div>
-              <span className="shrink-0 font-mono tabular-nums">
-                {reading.metricType.replaceAll('_', ' ')}{' '}
-                <span className="text-foreground">{reading.value}</span>
-              </span>
-            </div>
-          )
-        })}
+    <div className="rounded-lg border border-border bg-card">
+      <div className="px-4 pt-4 pb-2">
+        <h2 className="text-sm font-medium">live sensor feed</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          <span className="font-mono tabular-nums">{latestReadings.length}</span> streams across{' '}
+          <span className="font-mono tabular-nums">{coveredRegions}</span> regions
+        </p>
+        <p className="text-xs text-muted-foreground">
+          network catalog: <span className="font-mono tabular-nums">{sensorCatalog.length}</span>{' '}
+          sensors, <span className="font-mono tabular-nums">{stations.size}</span> stations,{' '}
+          <span className="font-mono tabular-nums">{wards.size}</span> wards,{' '}
+          <span className="font-mono tabular-nums">{planningUnits.size}</span> planning units
+        </p>
       </div>
+      <PaginatedSensorFeed
+        items={latestReadings.slice(0, 12).map(reading => {
+          const sensor = sensorCatalogById.get(reading.sensorId)
+          return {
+            key: `${reading.sensorId}-${reading.time.toISOString()}`,
+            displayName: sensor?.display_name ?? reading.sensorId,
+            regionLabel: sensor?.region_label ?? formatZoneName(reading.zone),
+            wardLabel: sensor?.ward_label ?? 'ward n/a',
+            metricType: reading.metricType,
+            value: reading.value,
+          }
+        })}
+      />
     </div>
   )
 }
@@ -199,38 +193,26 @@ async function ActiveAlertsPanel() {
   const activeAlerts = await db.query.alerts.findMany({
     where: eq(alerts.status, 'active'),
     orderBy: [desc(alerts.createdAt)],
-    limit: 8,
+    limit: 16,
   })
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <h2 className="text-sm font-medium">active alerts</h2>
-      <p className="mt-1 text-xs text-muted-foreground">
-        <span className="font-mono tabular-nums">{activeAlerts.length}</span> unresolved
-      </p>
-      {activeAlerts.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">no active alerts right now</p>
-      ) : (
-        <div className="mt-4 max-h-80 space-y-1.5 overflow-y-auto text-sm">
-          {activeAlerts.map(alert => (
-            <div
-              className="flex items-center justify-between gap-2 rounded-md border border-border/60 px-3 py-2"
-              key={alert.id}
-            >
-              <span className="flex items-center gap-2">
-                <SeverityBadge severity={alert.severity} />
-                <span className="truncate font-medium">
-                  {formatZoneName(alert.zone, 'lower', alert.sensorId)}
-                </span>
-              </span>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {alert.metricType.replaceAll('_', ' ')} at{' '}
-                <span className="font-mono tabular-nums">{alert.triggeredValue}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="flex h-full flex-col rounded-lg border border-border bg-card">
+      <div className="px-4 pt-4 pb-2">
+        <h2 className="text-sm font-medium">active alerts</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          <span className="font-mono tabular-nums">{activeAlerts.length}</span> unresolved
+        </p>
+      </div>
+      <PaginatedAlertFeed
+        items={activeAlerts.map(alert => ({
+          id: alert.id,
+          severity: alert.severity,
+          zone: formatZoneName(alert.zone, 'lower', alert.sensorId),
+          metricType: alert.metricType,
+          triggeredValue: alert.triggeredValue,
+        }))}
+      />
     </div>
   )
 }

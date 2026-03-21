@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { type FormEvent, startTransition, useState } from 'react'
+import { type FormEvent, startTransition, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
@@ -14,11 +14,16 @@ export function DisplayNameForm() {
   const [saved, setSaved] = useState(false)
 
   const meQuery = trpc.auth.me.useQuery()
+  useEffect(() => {
+    if (!saved) return
+    const id = setTimeout(() => setSaved(false), 2000)
+    return () => clearTimeout(id)
+  }, [saved])
+
   const updateName = trpc.auth.updateDisplayName.useMutation({
     onSuccess: () => {
       setError(null)
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
       utils.auth.me.invalidate()
       startTransition(() => router.refresh())
     },

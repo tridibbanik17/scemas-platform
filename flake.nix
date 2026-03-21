@@ -139,6 +139,10 @@
         ${findRoot}
         cd "$SCEMAS_ROOT" && exec bun run scripts/seed.ts "$@"
       '';
+      scemas-webhook = pkgs.writeShellScriptBin "scemas-webhook" ''
+        ${findRoot}
+        cd "$SCEMAS_ROOT" && exec bun run scripts/webhook-echo.ts "$@"
+      '';
       scemas-check = pkgs.writeShellScriptBin "scemas-check" ''
         ${findRoot}
         echo "[scemas] cargo fmt"
@@ -164,7 +168,7 @@
           postgresql_16 pg_init pg_start pg_stop
           pkg-config openssl python3
           scemas-db scemas-db-stop scemas-engine scemas-dash
-          scemas-dev scemas-seed scemas-check scemas-nuke
+          scemas-dev scemas-seed scemas-webhook scemas-check scemas-nuke
         ];
         env = {
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";

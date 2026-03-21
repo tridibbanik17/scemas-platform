@@ -201,3 +201,67 @@ these are server-to-server routes used by the next/tRPC layer and seed scripts, 
 | validation | zod (typescript), thiserror (rust) |
 | deployment | cloudflare workers via opennext |
 | runtime | bun (typescript), tokio (rust) |
+
+## webhook dispatch
+
+the alert subscription system supports outbound webhooks. when a matching alert fires, the rust engine POSTs a JSON payload to the configured URL.
+
+### 1. start the echo server
+
+```sh
+bun run scripts/webhook-echo.ts
+# webhook echo listening on http://localhost:9999
+# paste http://localhost:9999/webhook into subscription settings
+```
+
+optional: `--port 8888` to use a different port.
+
+### 2. configure a subscription
+
+1. log in as operator (`operator@example.com` / `1234`)
+2. open the alert subscription settings (drawer on the alerts page)
+3. check the metric types and zones you want
+4. paste `http://localhost:9999/webhook` in the webhook URL field
+5. save
+
+### 3. ensure a threshold rule exists
+
+log in as admin (`admin@example.com` / `1234`), go to `/rules`, create a rule:
+
+- metric: `temperature`, comparison: `gt`, threshold: `30`
+- leave zone blank for global, or pick a specific zone
+
+### 4. spike the seed
+
+```sh
+bun run scripts/seed.ts --spike
+```
+
+`--spike` forces extreme values that exceed thresholds. the echo server terminal should print:
+
+```
+2026-03-21T15:30:00.000Z  POST /webhook
+  CRITICAL — temperature at 45.2 in downtown_core (sensor hamilton-aqhi-001)
+  alert id: a1b2c3d4-...
+  created:  2026-03-21T15:30:00.000Z
+```
+
+### webhook payload format
+
+```json
+{
+  "type": "alert.triggered",
+  "alert": {
+    "id": "uuid",
+    "zone": "downtown_core",
+    "metricType": "temperature",
+    "severity": 3,
+    "triggeredValue": 45.2,
+    "sensorId": "hamilton-aqhi-001",
+    "createdAt": "2026-03-21T15:30:00.000Z"
+  }
+}
+```
+
+severity: 1 = low, 2 = warning, 3 = critical. the webhook fires best-effort (fire-and-forget via `tokio::spawn`). failures are logged server-side but don't block the alert pipeline.
+

@@ -2,7 +2,7 @@
 
 // ReportEnvironmentalHazard boundary: public submission dialog (SRS CP-C3)
 
-import { useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -31,22 +31,24 @@ const categories = [
   { value: 'other', label: 'other' },
 ] as const
 
+type HazardCategory = (typeof categories)[number]['value']
+
 export function HazardReportForm({ zones }: { zones: { zone: string; zoneName: string }[] }) {
   const [open, setOpen] = useState(false)
   const [zone, setZone] = useState('')
-  const [category, setCategory] = useState<string>('')
+  const [category, setCategory] = useState<HazardCategory | ''>('')
   const [description, setDescription] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const trimmedDescription = description.trim()
+  const descriptionLength = description.length
+  const isSubmitDisabled = submitIsDisabled(zone, category, trimmedDescription, submitted)
 
   const submit = trpc.reports.submit.useMutation({
     onSuccess: () => {
+      setError(null)
       setSubmitted(true)
-      setTimeout(() => {
-        setOpen(false)
-        resetForm()
-      }, 2000)
     },
     onError: err => {
       setError(err.message)
@@ -62,50 +64,60 @@ export function HazardReportForm({ zones }: { zones: { zone: string; zoneName: s
     setSubmitted(false)
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-
-    if (!zone || !category || description.length < 10) {
-      setError('please fill in all required fields (description must be at least 10 characters)')
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (isSubmitDisabled || submitted || !category) {
       return
     }
 
+    setError(null)
+
     submit.mutate({
       zone,
-      category: category as 'environmental_hazard' | 'system_misuse' | 'inappropriate_content' | 'other',
-      description,
+      category,
+      description: trimmedDescription,
       contactEmail: contactEmail.trim() || null,
     })
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen)
+    if (!nextOpen) {
+      resetForm()
+    }
+  }
+
+  function handleCloseSuccess() {
+    setOpen(false)
+    resetForm()
+  }
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={v => {
-        setOpen(v)
-        if (!v) resetForm()
-      }}
-    >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button size="sm" variant="outline">
           report hazard
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>report an environmental hazard</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-balance">report an environmental hazard</DialogTitle>
+          <DialogDescription className="text-pretty">
             submit a report about environmental hazards, system misuse, or inappropriate content.
             your report will be reviewed by an administrator.
           </DialogDescription>
         </DialogHeader>
         {submitted ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            report submitted successfully. thank you.
-          </p>
+          <div className="space-y-4 py-2">
+            <p aria-live="polite" className="text-pretty text-sm text-muted-foreground">
+              report submitted successfully. thank you.
+            </p>
+            <Button className="w-full" onClick={handleCloseSuccess} type="button">
+              close
+            </Button>
+          </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="zone">zone</Label>
               <Select value={zone} onValueChange={setZone}>
@@ -113,9 +125,9 @@ export function HazardReportForm({ zones }: { zones: { zone: string; zoneName: s
                   <SelectValue placeholder="select a zone" />
                 </SelectTrigger>
                 <SelectContent>
-                  {zones.map(z => (
-                    <SelectItem key={z.zone} value={z.zone}>
-                      {z.zoneName}
+                  {zones.map(zoneOption => (
+                    <SelectItem key={zoneOption.zone} value={zoneOption.zone}>
+                      {zoneOption.zoneName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -124,14 +136,21 @@ export function HazardReportForm({ zones }: { zones: { zone: string; zoneName: s
 
             <div className="space-y-2">
               <Label htmlFor="category">category</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select
+                value={category}
+                onValueChange={value => {
+                  if (isHazardCategory(value)) {
+                    setCategory(value)
+                  }
+                }}
+              >
                 <SelectTrigger id="category">
                   <SelectValue placeholder="select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map(c => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
+                  {categories.map(categoryOption => (
+                    <SelectItem key={categoryOption.value} value={categoryOption.value}>
+                      {categoryOption.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -142,31 +161,37 @@ export function HazardReportForm({ zones }: { zones: { zone: string; zoneName: s
               <Label htmlFor="description">description</Label>
               <Textarea
                 id="description"
-                value={description}
+                maxLength={500}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="describe the issue (10-500 characters)"
                 rows={4}
-                maxLength={500}
+                value={description}
               />
-              <p className="text-xs text-muted-foreground">
-                {description.length}/500
-              </p>
+              <p className="text-xs text-muted-foreground tabular-nums">{descriptionLength}/500</p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">contact email (optional)</Label>
               <Input
                 id="email"
-                type="email"
-                value={contactEmail}
                 onChange={e => setContactEmail(e.target.value)}
                 placeholder="for follow-up only"
+                type="email"
+                value={contactEmail}
               />
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error ? (
+              <p aria-live="polite" className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            ) : null}
 
-            <Button type="submit" className="w-full" disabled={submit.isPending}>
+            <Button
+              className="w-full"
+              disabled={submit.isPending || isSubmitDisabled}
+              type="submit"
+            >
               {submit.isPending ? 'submitting...' : 'submit report'}
             </Button>
           </form>
@@ -174,4 +199,17 @@ export function HazardReportForm({ zones }: { zones: { zone: string; zoneName: s
       </DialogContent>
     </Dialog>
   )
+}
+
+function submitIsDisabled(
+  zone: string,
+  category: HazardCategory | '',
+  description: string,
+  submitted: boolean,
+): boolean {
+  return submitted || !zone || !category || description.length < 10
+}
+
+function isHazardCategory(value: string): value is HazardCategory {
+  return categories.some(category => category.value === value)
 }

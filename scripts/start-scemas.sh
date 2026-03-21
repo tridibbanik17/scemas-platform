@@ -13,6 +13,7 @@
 #   scemas-dash     start next.js dashboard on :3000
 #   scemas-dev      start everything (db + engine + dashboard)
 #   scemas-seed     seed sample sensor data
+#   scemas-webhook  start webhook echo server for testing alert dispatch
 #   scemas-check    run all lints (cargo fmt + clippy + tsc)
 #   scemas-nuke     stop everything and clean up
 ##===----------------------------------------------------------------------===##
@@ -137,6 +138,10 @@ scemas-dev() {
 
 scemas-seed() {
   (cd "$SCEMAS_ROOT" && bun run scripts/seed.ts "$@")
+}
+
+scemas-webhook() {
+  (cd "$SCEMAS_ROOT" && bun run scripts/webhook-echo.ts "$@")
 }
 
 scemas-check() {

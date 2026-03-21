@@ -14,7 +14,7 @@ export function HazardReportSection() {
     <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
       <div>
         <p className="text-sm font-medium">see something concerning?</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground text-pretty">
           report environmental hazards, system misuse, or inappropriate content
         </p>
       </div>
