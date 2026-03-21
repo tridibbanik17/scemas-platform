@@ -9,7 +9,7 @@
 # functions:
 #   scemas-db       start postgres (nix or docker, whichever is available)
 #   scemas-db-stop  stop postgres
-#   scemas-engine   start rust engine on :3001
+#   scemas-engine   start rust engine on :3001 with hot reload when watchexec is available
 #   scemas-dash     start next.js dashboard on :3000
 #   scemas-dev      start everything (db + engine + dashboard)
 #   scemas-seed     seed sample sensor data
@@ -61,6 +61,22 @@ export DATABASE_URL="${DATABASE_URL:-postgres://scemas:scemas@localhost:5432/sce
 # detect whether we're in a nix shell (pg_start available) or need docker
 _scemas_has_nix_pg() { command -v pg_start >/dev/null 2>&1; }
 _scemas_has_docker() { command -v docker >/dev/null 2>&1; }
+_scemas_has_watchexec() { command -v watchexec >/dev/null 2>&1; }
+
+_scemas_engine_cmd() {
+  if _scemas_has_watchexec; then
+    watchexec \
+      --restart \
+      --watch crates \
+      --watch data \
+      --watch Cargo.toml \
+      --watch Cargo.lock \
+      --exts rs,toml,json,lock \
+      -- cargo run -p scemas-server
+  else
+    cargo run -p scemas-server
+  fi
+}
 
 scemas-db() {
   if _scemas_has_nix_pg; then
@@ -86,7 +102,7 @@ scemas-db-stop() {
 }
 
 scemas-engine() {
-  (cd "$SCEMAS_ROOT" && cargo run -p scemas-server)
+  (cd "$SCEMAS_ROOT" && _scemas_engine_cmd)
 }
 
 scemas-dash() {
@@ -111,7 +127,7 @@ scemas-dev() {
   trap cleanup INT TERM
 
   cd "$SCEMAS_ROOT"
-  cargo run -p scemas-server &
+  _scemas_engine_cmd &
   ENGINE_PID=$!
   bun --filter @scemas/dashboard dev &
   DASH_PID=$!

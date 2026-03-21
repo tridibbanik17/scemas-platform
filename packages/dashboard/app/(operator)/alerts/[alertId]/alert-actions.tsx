@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { startTransition, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
@@ -20,17 +20,17 @@ export function AlertActions({ alertId, currentStatus }: AlertActionsProps) {
   const [status, setStatus] = useState(currentStatus)
 
   const acknowledgeAlert = trpc.alerts.acknowledge.useMutation({
-    onSuccess: async () => {
+    onSuccess: () => {
       setStatus('acknowledged')
-      await utils.alerts.list.invalidate()
-      router.refresh()
+      void utils.alerts.list.invalidate()
+      startTransition(() => router.refresh())
     },
   })
   const resolveAlert = trpc.alerts.resolve.useMutation({
-    onSuccess: async () => {
+    onSuccess: () => {
       setStatus('resolved')
-      await utils.alerts.list.invalidate()
-      router.refresh()
+      void utils.alerts.list.invalidate()
+      startTransition(() => router.refresh())
     },
   })
 
@@ -57,6 +57,7 @@ export function AlertActions({ alertId, currentStatus }: AlertActionsProps) {
             )}
           </Button>
           <Button
+            className="bg-emerald-600 text-white hover:bg-emerald-600/80 dark:bg-emerald-600 dark:hover:bg-emerald-600/80"
             disabled={resolveAlert.isPending}
             onClick={() => resolveAlert.mutate({ id: alertId })}
           >

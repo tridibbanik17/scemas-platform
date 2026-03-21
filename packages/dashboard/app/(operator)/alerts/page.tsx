@@ -8,7 +8,7 @@ import { getDb } from '@/server/cached'
 export default async function AlertsPage() {
   const db = getDb()
   const [, deviceRows] = await Promise.all([
-    serverTrpc.alerts.list.prefetch({ limit: 50 }),
+    serverTrpc.alerts.list.prefetch({ limit: 200 }),
     db.query.devices.findMany({ columns: { zone: true } }),
   ])
   const availableZones = normalizeZoneIds(deviceRows.map(d => d.zone))

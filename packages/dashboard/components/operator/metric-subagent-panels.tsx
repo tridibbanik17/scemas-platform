@@ -76,36 +76,39 @@ function ZoneList({
   return (
     <div className="flex flex-col">
       <div>
-        {pageZones.map(zone => (
-          <div
-            className={`flex items-center justify-between border-b border-border/40 px-3 text-sm ${ZONE_ROW_HEIGHT}`}
-            key={`${metricType}-${zone.zone}`}
-          >
-            <div className="min-w-0 space-y-0.5">
-              {showZoneLinks ? (
-                <Link
-                  className="font-medium underline-offset-4 hover:underline"
-                  href={`/metrics/${zone.zone}`}
-                >
-                  {formatZoneName(zone.zone)}
-                </Link>
-              ) : (
-                <p className="truncate font-medium">{formatZoneName(zone.zone)}</p>
-              )}
+        {pageZones.map((zone, i) => {
+          const row = (
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <p className="truncate font-medium">{formatZoneName(zone.zone)}</p>
               <p className="text-xs text-muted-foreground">{zone.sensorCount} sensors</p>
             </div>
+          )
+          const value = (
             <div className="shrink-0 text-right">
               <p className="font-mono tabular-nums">
                 {zone.averageValue} {unit}
               </p>
               <p className="text-xs text-muted-foreground">latest {zone.latestValue}</p>
             </div>
-          </div>
-        ))}
+          )
+          const cls = `flex items-center justify-between px-3 text-sm transition-colors hover:bg-muted/50 ${ZONE_ROW_HEIGHT} ${i < pageZones.length - 1 ? 'border-b border-border/40' : ''}`
+
+          return showZoneLinks ? (
+            <Link className={cls} href={`/metrics/${zone.zone}`} key={`${metricType}-${zone.zone}`}>
+              {row}
+              {value}
+            </Link>
+          ) : (
+            <div className={cls} key={`${metricType}-${zone.zone}`}>
+              {row}
+              {value}
+            </div>
+          )
+        })}
         {emptySlots > 0
           ? Array.from({ length: emptySlots }, (_, i) => (
               <div
-                className={`border-b border-border/40 last:border-b-0 ${ZONE_ROW_HEIGHT}`}
+                className={`${i < emptySlots - 1 ? 'border-b border-border/40' : ''} ${ZONE_ROW_HEIGHT}`}
                 key={`empty-${i}`}
               />
             ))

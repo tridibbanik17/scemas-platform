@@ -3,7 +3,7 @@
 import type { Comparison, MetricType } from '@scemas/types'
 import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { startTransition, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
@@ -51,13 +51,13 @@ export function RuleActions({
     onSuccess: () => {
       setEditing(false)
       void utils.rules.list.invalidate()
-      router.refresh()
+      startTransition(() => router.refresh())
     },
   })
 
   const updateRule = trpc.rules.update.useMutation({
     onSuccess: () => {
-      router.refresh()
+      startTransition(() => router.refresh())
       void utils.rules.list.invalidate()
     },
   })
@@ -65,7 +65,7 @@ export function RuleActions({
   const deleteRule = trpc.rules.delete.useMutation({
     onSuccess: () => {
       void utils.rules.list.invalidate()
-      router.push('/rules')
+      startTransition(() => router.push('/rules'))
     },
   })
 

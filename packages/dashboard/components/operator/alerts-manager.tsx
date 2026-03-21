@@ -1,17 +1,18 @@
 'use client'
 
+import { Tick02Icon, TickDouble02Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { keepPreviousData } from '@tanstack/react-query'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import Link from 'next/link'
-import { useState } from 'react'
-import { ListPagination } from '@/components/list-pagination'
-import { Button } from '@/components/ui/button'
+import { useMemo, useRef, useState } from 'react'
 import { SeverityBadge } from '@/components/ui/severity-badge'
 import { Spinner } from '@/components/ui/spinner'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { trpc } from '@/lib/trpc'
 import { formatZoneName } from '@/lib/zones'
 
-const ALERTS_PER_METRIC = 5
-const ROW_HEIGHT = 'h-14'
+const ROW_HEIGHT = 56
 
 type Alert = {
   id: string
@@ -24,8 +25,6 @@ type Alert = {
 }
 
 type SortMode = 'latest' | 'severity' | 'oldest'
-
-type ZoneNode = { zone: string; metrics: Map<string, Alert[]>; activeCount: number }
 
 function sortAlerts(alerts: Alert[], mode: SortMode): Alert[] {
   switch (mode) {
@@ -41,56 +40,19 @@ function sortAlerts(alerts: Alert[], mode: SortMode): Alert[] {
   }
 }
 
-function buildTree(alerts: Alert[], sortMode: SortMode, allZones: string[]): ZoneNode[] {
-  const zones = new Map<string, Map<string, Alert[]>>()
-
-  for (const zone of allZones) {
-    zones.set(zone, new Map())
-  }
-
-  for (const alert of alerts) {
-    let metrics = zones.get(alert.zone)
-    if (!metrics) {
-      metrics = new Map()
-      zones.set(alert.zone, metrics)
-    }
-    let list = metrics.get(alert.metricType)
-    if (!list) {
-      list = []
-      metrics.set(alert.metricType, list)
-    }
-    list.push(alert)
-  }
-
-  for (const metrics of zones.values()) {
-    for (const [key, list] of metrics.entries()) {
-      metrics.set(key, sortAlerts(list, sortMode))
-    }
-  }
-
-  return Array.from(zones.entries())
-    .map(([zone, metrics]) => ({
-      zone,
-      metrics,
-      activeCount: Array.from(metrics.values())
-        .flat()
-        .filter(a => a.status === 'active').length,
-    }))
-    .toSorted((a, b) => a.zone.localeCompare(b.zone))
-}
-
 export function AlertsManager({ availableZones }: { availableZones: string[] }) {
   const utils = trpc.useUtils()
   const alertsQuery = trpc.alerts.list.useQuery(
-    { limit: 50 },
+    { limit: 200 },
     { placeholderData: keepPreviousData },
   )
   const [inflightId, setInflightId] = useState<string | null>(null)
   const [sortMode, setSortMode] = useState<SortMode>('latest')
-  const [openZone, setOpenZone] = useState<string | null | undefined>(undefined)
+  const [zoneFilter, setZoneFilter] = useState<string>('all')
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   function optimisticallyRemove(id: string) {
-    utils.alerts.list.setData({ limit: 50 }, old => {
+    utils.alerts.list.setData({ limit: 200 }, old => {
       if (!old) return old
       return old.filter(a => a.id !== id)
     })
@@ -108,6 +70,19 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
     },
     onSuccess: () => utils.alerts.list.invalidate(),
     onSettled: () => setInflightId(null),
+  })
+
+  const filtered = useMemo(() => {
+    const all = alertsQuery.data ?? []
+    const byZone = zoneFilter === 'all' ? all : all.filter(a => a.zone === zoneFilter)
+    return sortAlerts(byZone, sortMode)
+  }, [alertsQuery.data, zoneFilter, sortMode])
+
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 10,
   })
 
   if (alertsQuery.isLoading) {
@@ -129,226 +104,201 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
     )
   }
 
-  const alerts = alertsQuery.data ?? []
-  const tree = buildTree(alerts, sortMode, availableZones)
-  const firstActiveZone = tree.find(n => n.activeCount > 0)?.zone ?? tree[0]?.zone ?? null
-  const effectiveOpenZone = openZone === undefined ? firstActiveZone : openZone
-
   return (
     <div className="rounded-lg border border-border bg-card">
+      {/* header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <span className="text-sm font-medium">operator alert queue</span>
-        <select
-          className="h-7 rounded-md border border-input bg-background px-2 text-xs"
-          onChange={e => setSortMode(e.target.value as SortMode)}
-          value={sortMode}
-        >
-          <option value="latest">latest first</option>
-          <option value="severity">severity</option>
-          <option value="oldest">oldest first</option>
-        </select>
-      </div>
-      <div className="divide-y divide-border">
-        {tree.map(node => (
-          <ZoneBranch
-            acknowledgeAlert={acknowledgeAlert}
-            expanded={effectiveOpenZone === node.zone}
-            inflightId={inflightId}
-            key={node.zone}
-            node={node}
-            onToggle={() =>
-              setOpenZone(prev => {
-                const current = prev === undefined ? firstActiveZone : prev
-                return current === node.zone ? null : node.zone
-              })
-            }
-            resolveAlert={resolveAlert}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ZoneBranch({
-  node,
-  acknowledgeAlert,
-  resolveAlert,
-  inflightId,
-  expanded,
-  onToggle,
-}: {
-  node: ZoneNode
-  acknowledgeAlert: ReturnType<typeof trpc.alerts.acknowledge.useMutation>
-  resolveAlert: ReturnType<typeof trpc.alerts.resolve.useMutation>
-  inflightId: string | null
-  expanded: boolean
-  onToggle: () => void
-}) {
-  const metricEntries = Array.from(node.metrics.entries()).toSorted(([a], [b]) =>
-    a.localeCompare(b),
-  )
-  const [openMetric, setOpenMetric] = useState<string | null>(metricEntries[0]?.[0] ?? null)
-
-  return (
-    <div>
-      <button
-        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-muted/50 transition-colors"
-        onClick={onToggle}
-        type="button"
-      >
-        <span
-          className={`text-muted-foreground transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
-        >
-          ▸
-        </span>
-        <span className="font-medium">{formatZoneName(node.zone)}</span>
-        <span
-          className={`rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums ${
-            node.activeCount > 0 ? 'bg-destructive/10 text-destructive' : 'text-muted-foreground'
-          }`}
-        >
-          {node.activeCount} active
-        </span>
-      </button>
-
-      <div
-        className={`grid transition-[grid-template-rows] duration-200 ease-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
-      >
-        <div className="overflow-hidden">
-          {metricEntries.length === 0 ? (
-            <div className="ml-6 border-l border-border/50">
-              <div className="ml-5 border-l border-border/30">
-                <p className={`flex items-center px-3 text-xs text-muted-foreground ${ROW_HEIGHT}`}>
-                  no active alerts
-                </p>
-                {Array.from({ length: ALERTS_PER_METRIC - 1 }, (_, i) => (
-                  <div className={ROW_HEIGHT} key={`empty-${i}`} />
-                ))}
-              </div>
-            </div>
-          ) : (
-            metricEntries.map(([metricType, metricAlerts]) => (
-              <MetricBranch
-                acknowledgeAlert={acknowledgeAlert}
-                alerts={metricAlerts}
-                expanded={openMetric === metricType}
-                inflightId={inflightId}
-                key={metricType}
-                metricType={metricType}
-                onToggle={() => setOpenMetric(prev => (prev === metricType ? null : metricType))}
-                resolveAlert={resolveAlert}
-              />
-            ))
-          )}
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-medium">alert queue</span>
+          <span className="font-mono text-[11px] tabular-nums text-muted-foreground/50">
+            {filtered.length}
+          </span>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function MetricBranch({
-  metricType,
-  alerts,
-  acknowledgeAlert,
-  resolveAlert,
-  inflightId,
-  expanded,
-  onToggle,
-}: {
-  metricType: string
-  alerts: Alert[]
-  acknowledgeAlert: ReturnType<typeof trpc.alerts.acknowledge.useMutation>
-  resolveAlert: ReturnType<typeof trpc.alerts.resolve.useMutation>
-  inflightId: string | null
-  expanded: boolean
-  onToggle: () => void
-}) {
-  const [page, setPage] = useState(0)
-  const totalPages = Math.ceil(alerts.length / ALERTS_PER_METRIC)
-  const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageAlerts = alerts.slice(safePage * ALERTS_PER_METRIC, (safePage + 1) * ALERTS_PER_METRIC)
-  const emptySlots = ALERTS_PER_METRIC - pageAlerts.length
-
-  return (
-    <div className="ml-6 border-l border-border/50">
-      <button
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-muted/30 transition-colors"
-        onClick={onToggle}
-        type="button"
-      >
-        <span
-          className={`text-muted-foreground transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
-        >
-          ▸
-        </span>
-        <span className="font-medium">{metricType.replaceAll('_', ' ')}</span>
-        <span className="text-muted-foreground tabular-nums">({alerts.length})</span>
-      </button>
-
-      <div
-        className={`grid transition-[grid-template-rows] duration-200 ease-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
-      >
-        <div className="overflow-hidden">
-          <div className="ml-5 border-l border-border/30">
-            {pageAlerts.map(alert => (
-              <div
-                className={`flex items-center justify-between gap-2 px-3 ${ROW_HEIGHT}`}
-                key={alert.id}
-              >
-                <div className="min-w-0 space-y-0.5">
-                  <span className="flex items-center gap-1.5 text-sm">
-                    <Link
-                      className="underline-offset-4 hover:underline"
-                      href={`/alerts/${alert.id}`}
-                    >
-                      <span className="font-mono tabular-nums">{alert.triggeredValue}</span>
-                    </Link>
-                    <SeverityBadge severity={alert.severity} />
-                  </span>
-                  <p className="text-xs text-muted-foreground">
-                    {alert.createdAt.toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Button
-                    disabled={inflightId === alert.id || alert.status !== 'active'}
-                    onClick={() => acknowledgeAlert.mutate({ id: alert.id })}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    {inflightId === alert.id && acknowledgeAlert.isPending ? <Spinner /> : 'ack'}
-                  </Button>
-                  <Button
-                    disabled={inflightId === alert.id || alert.status === 'resolved'}
-                    onClick={() => resolveAlert.mutate({ id: alert.id })}
-                    size="sm"
-                    type="button"
-                  >
-                    {inflightId === alert.id && resolveAlert.isPending ? <Spinner /> : 'resolve'}
-                  </Button>
-                </div>
-              </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+            onChange={e => setZoneFilter(e.target.value)}
+            value={zoneFilter}
+          >
+            <option value="all">all zones</option>
+            {availableZones.map(zone => (
+              <option key={zone} value={zone}>
+                {formatZoneName(zone)}
+              </option>
             ))}
-            {emptySlots > 0
-              ? Array.from({ length: emptySlots }, (_, i) => (
-                  <div className={ROW_HEIGHT} key={`empty-${i}`} />
-                ))
-              : null}
-          </div>
-          <div className="ml-5">
-            <ListPagination
-              onPageChange={setPage}
-              page={safePage}
-              pageSize={ALERTS_PER_METRIC}
-              totalItems={alerts.length}
-              totalPages={totalPages}
-            />
-          </div>
+          </select>
+          <select
+            className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+            onChange={e => setSortMode(e.target.value as SortMode)}
+            value={sortMode}
+          >
+            <option value="latest">latest first</option>
+            <option value="severity">severity</option>
+            <option value="oldest">oldest first</option>
+          </select>
         </div>
       </div>
+
+      {/* virtualized list */}
+      {filtered.length === 0 ? (
+        <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+          {zoneFilter === 'all' ? 'no alerts' : `no alerts in ${formatZoneName(zoneFilter)}`}
+        </p>
+      ) : (
+        <div className="h-[400px] overflow-y-auto md:h-[600px]" ref={scrollRef}>
+          <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+            {virtualizer.getVirtualItems().map(virtualRow => {
+              const alert = filtered[virtualRow.index]
+              const isResolved = alert.status === 'resolved'
+              return (
+                <div
+                  className="absolute left-0 top-0 w-full"
+                  key={alert.id}
+                  style={{ height: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
+                >
+                  <Link
+                    className={`flex size-full items-center justify-between gap-2 border-b border-border px-4 transition-colors ${isResolved ? 'bg-emerald-500/5' : 'hover:bg-muted/50'}`}
+                    href={`/alerts/${alert.id}`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm tabular-nums">
+                          {alert.triggeredValue}
+                        </span>
+                        <SeverityBadge severity={alert.severity} />
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground/60">
+                        <span>{alert.createdAt.toLocaleString()}</span>
+                        <span className="rounded bg-muted px-1 py-px text-[10px]">
+                          {alert.metricType.replaceAll('_', ' ')}
+                        </span>
+                        <span className="rounded bg-muted px-1 py-px text-[10px]">
+                          {formatZoneName(alert.zone)}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                  <div
+                    className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <AckIcon
+                      alert={alert}
+                      inflightId={inflightId}
+                      isPending={acknowledgeAlert.isPending}
+                      onAck={() => acknowledgeAlert.mutate({ id: alert.id })}
+                    />
+                    <ResolveIcon
+                      alert={alert}
+                      inflightId={inflightId}
+                      isPending={resolveAlert.isPending}
+                      onResolve={() => resolveAlert.mutate({ id: alert.id })}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function AckIcon({
+  alert,
+  inflightId,
+  isPending,
+  onAck,
+}: {
+  alert: Alert
+  inflightId: string | null
+  isPending: boolean
+  onAck: () => void
+}) {
+  const isLoading = inflightId === alert.id && isPending
+  const isAcked = alert.status === 'acknowledged' || alert.status === 'resolved'
+
+  if (isAcked) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="flex size-7 items-center justify-center rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400">
+              <HugeiconsIcon icon={Tick02Icon} size={14} strokeWidth={2} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={4}>acknowledged</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            aria-label="acknowledge alert"
+            className="flex size-7 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground active:scale-[0.96] disabled:opacity-50"
+            disabled={isLoading}
+            onClick={onAck}
+            type="button"
+          >
+            {isLoading ? <Spinner /> : <HugeiconsIcon icon={Tick02Icon} size={14} strokeWidth={2} />}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={4}>acknowledge</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
+function ResolveIcon({
+  alert,
+  inflightId,
+  isPending,
+  onResolve,
+}: {
+  alert: Alert
+  inflightId: string | null
+  isPending: boolean
+  onResolve: () => void
+}) {
+  const isLoading = inflightId === alert.id && isPending
+  const isResolved = alert.status === 'resolved'
+
+  if (isResolved) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="flex size-7 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+              <HugeiconsIcon icon={TickDouble02Icon} size={14} strokeWidth={2} />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={4}>resolved</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            aria-label="resolve alert"
+            className="flex size-7 items-center justify-center rounded-md bg-blue-500/10 text-blue-600 transition-colors hover:bg-blue-500/20 active:scale-[0.96] disabled:opacity-50 dark:text-blue-400"
+            disabled={isLoading}
+            onClick={onResolve}
+            type="button"
+          >
+            {isLoading ? <Spinner /> : <HugeiconsIcon icon={TickDouble02Icon} size={14} strokeWidth={2} />}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={4}>resolve</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

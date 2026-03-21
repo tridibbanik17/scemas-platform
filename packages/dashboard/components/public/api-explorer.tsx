@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useCallback, useState } from 'react'
+import { Fragment, useCallback, useRef, useState } from 'react'
 import { CopyButton } from '@/components/copy-button'
 
 type EndpointParam = {
@@ -330,6 +330,7 @@ export function ApiExplorer() {
 
 function EndpointSection({ endpoint, token }: { endpoint: EndpointDef; token: string }) {
   const [response, setResponse] = useState<ResponseState>({ status: 'idle' })
+  const abortRef = useRef<AbortController | null>(null)
   const [paramValues, setParamValues] = useState<Record<string, string>>(() => {
     const defaults: Record<string, string> = {}
     for (const param of endpoint.params) {
@@ -350,13 +351,16 @@ function EndpointSection({ endpoint, token }: { endpoint: EndpointDef; token: st
   const fullUrl = queryParams ? `${resolvedPath}?${queryParams}` : resolvedPath
 
   const sendRequest = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setResponse({ status: 'loading' })
     try {
       const headers: Record<string, string> = {}
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
       }
-      const res = await fetch(fullUrl, { headers })
+      const res = await fetch(fullUrl, { headers, signal: controller.signal })
       const text = await res.text()
       const bytes = new Blob([text]).size
 

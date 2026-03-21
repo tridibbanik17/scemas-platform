@@ -43,7 +43,7 @@ export function buildMetricSubagentPanels(readings: LatestSensorReading[]): Metr
           zone,
           averageValue: formatAverage(zoneReadings),
           latestValue: formatValue(zoneReadings[0]?.value),
-          sensorCount: zoneReadings.length,
+          sensorCount: new Set(zoneReadings.map(r => r.sensorId)).size,
         }))
         .toSorted((left, right) => left.zone.localeCompare(right.zone)),
     }

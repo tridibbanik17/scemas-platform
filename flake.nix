@@ -80,7 +80,18 @@
       '';
       scemas-engine = pkgs.writeShellScriptBin "scemas-engine" ''
         ${findRoot}
-        cd "$SCEMAS_ROOT" && exec cargo run -p scemas-server
+        cd "$SCEMAS_ROOT"
+        if command -v watchexec >/dev/null 2>&1; then
+          exec watchexec \
+            --restart \
+            --watch crates \
+            --watch data \
+            --watch Cargo.toml \
+            --watch Cargo.lock \
+            --exts rs,toml,json,lock \
+            -- cargo run -p scemas-server
+        fi
+        exec cargo run -p scemas-server
       '';
       scemas-dash = pkgs.writeShellScriptBin "scemas-dash" ''
         ${findRoot}
@@ -106,7 +117,18 @@
         trap cleanup INT TERM
 
         cd "$SCEMAS_ROOT"
-        cargo run -p scemas-server &
+        if command -v watchexec >/dev/null 2>&1; then
+          watchexec \
+            --restart \
+            --watch crates \
+            --watch data \
+            --watch Cargo.toml \
+            --watch Cargo.lock \
+            --exts rs,toml,json,lock \
+            -- cargo run -p scemas-server &
+        else
+          cargo run -p scemas-server &
+        fi
         ENGINE_PID=$!
         bun --filter @scemas/dashboard dev &
         DASH_PID=$!
@@ -137,6 +159,7 @@
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
           cargo clippy rustc rustfmt rust-analyzer
+          watchexec
           bun nodejs_22
           postgresql_16 pg_init pg_start pg_stop
           pkg-config openssl python3

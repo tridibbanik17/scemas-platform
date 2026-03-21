@@ -27,6 +27,10 @@ function getWorkerDatabaseUrl(): string | null {
   }
 }
 
+function isCloudflareWorker(): boolean {
+  return typeof globalThis.caches !== 'undefined'
+}
+
 function isCloudflareRuntimeContext(value: unknown): value is CloudflareRuntimeContext {
   return typeof value === 'object' && value !== null
 }
@@ -47,7 +51,13 @@ export const getDb = cache(() => {
     return createDbWorker(workerDatabaseUrl)
   }
 
-  return createDb(getDatabaseUrl())
+  const databaseUrl = getDatabaseUrl()
+
+  if (isCloudflareWorker()) {
+    return createDbWorker(databaseUrl)
+  }
+
+  return createDb(databaseUrl)
 })
 
 export const getManager = cache(() => createDataDistributionManager(getDb()))

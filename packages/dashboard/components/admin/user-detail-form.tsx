@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, startTransition, useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +44,7 @@ export function UserDetailForm({
     onSuccess: () => {
       setDetailsError(null)
       setDetailsSuccess(true)
-      router.refresh()
+      startTransition(() => router.refresh())
       void utils.users.list.invalidate()
     },
     onError: error => {
@@ -68,7 +68,7 @@ export function UserDetailForm({
   const deleteUser = trpc.users.delete.useMutation({
     onSuccess: () => {
       void utils.users.list.invalidate()
-      router.push('/users')
+      startTransition(() => router.push('/users'))
     },
   })
 

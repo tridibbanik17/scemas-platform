@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, startTransition, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
@@ -20,7 +20,7 @@ export function DisplayNameForm() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
       utils.auth.me.invalidate()
-      router.refresh()
+      startTransition(() => router.refresh())
     },
     onError: err => setError(err.message),
   })
