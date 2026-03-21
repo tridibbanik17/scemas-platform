@@ -34,41 +34,26 @@ const spec = {
     title: 'SCEMAS Public API',
     version: '1.0.0',
     description:
-      'read-only public endpoints for hamilton environmental monitoring data. no authentication required.',
+      'read-only endpoints for hamilton environmental monitoring data. authenticate with a bearer token generated from the SCEMAS dashboard.',
   },
   servers: [{ url: '/' }],
-  paths: {
-    '/api/v1/zones/summary': {
-      get: {
-        summary: 'zone summary',
+  components: {
+    securitySchemes: {
+      apiToken: {
+        type: 'http',
+        scheme: 'bearer',
         description:
-          'full snapshot per monitoring region, including noise level and data freshness.',
-        responses: {
-          '200': {
-            description: 'array of zone summaries',
-            headers: {
-              'Cache-Control': {
-                schema: { type: 'string' },
-                description: 'public, max-age=30, stale-while-revalidate=30',
-              },
-            },
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'array',
-                  items: { type: 'object', properties: zoneSummaryProperties },
-                },
-              },
-            },
-          },
-        },
+          'API token generated from the SCEMAS dashboard. tokens are prefixed with sk-scemas- and valid for 90 days.',
       },
     },
+  },
+  security: [{ apiToken: [] }],
+  paths: {
     '/api/v1/zones/aqi': {
       get: {
-        summary: 'zone AQI (slim)',
-        description:
-          'slim AQI-only view per monitoring region. lighter payload for embedded displays.',
+        summary: 'zone AQI',
+        description: 'aggregated AQI per monitoring region. no authentication required.',
+        security: [],
         responses: {
           '200': {
             description: 'array of zone AQI entries',
@@ -90,6 +75,38 @@ const spec = {
                       label: { type: 'string', description: 'AQI category label' },
                       temperature: { type: 'number', description: 'celsius (5m avg)' },
                       humidity: { type: 'number', description: 'percentage (5m avg)' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/zones/list': {
+      get: {
+        summary: 'zone list',
+        description: 'list all monitoring regions available through the public API.',
+        security: [],
+        responses: {
+          '200': {
+            description: 'array of available zones',
+            headers: {
+              'Cache-Control': {
+                schema: { type: 'string' },
+                description: 'public, max-age=3600, stale-while-revalidate=86400',
+              },
+            },
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      zone: { type: 'string', description: 'monitoring region id' },
+                      zoneName: { type: 'string', description: 'human readable region name' },
                     },
                   },
                 },

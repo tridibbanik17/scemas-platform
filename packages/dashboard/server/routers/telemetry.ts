@@ -65,7 +65,7 @@ export const telemetryRouter = router({
 
   // time series from analytics table (5m_avg buckets, pivoted by metric type)
   getTimeSeries: protectedProcedure
-    .input(z.object({ zone: z.string(), hours: z.number().min(1).max(168).default(6) }))
+    .input(z.object({ zone: z.string(), hours: z.number().min(1).max(720).default(6) }))
     .query(async ({ input, ctx }) => {
       const rows = await ctx.db.query.analytics.findMany({
         where: and(

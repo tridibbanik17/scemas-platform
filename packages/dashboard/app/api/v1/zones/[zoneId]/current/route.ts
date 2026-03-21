@@ -1,16 +1,22 @@
 import { getManager } from '@/server/cached'
-import { createPublicApiNotFoundResponse, createPublicApiResponse } from '@/server/public-api'
+import {
+  createPublicApiNotFoundResponse,
+  createPublicApiResponse,
+  withApiTokenAuth,
+} from '@/server/public-api'
 
 type ZoneRouteContext = { params: Promise<{ zoneId: string }> }
 
-export async function GET(_request: Request, { params }: ZoneRouteContext): Promise<Response> {
-  const { zoneId } = await params
-  const manager = getManager()
-  const zone = await manager.getPublicZoneCurrent(zoneId)
+export async function GET(request: Request, { params }: ZoneRouteContext): Promise<Response> {
+  return withApiTokenAuth(request, async () => {
+    const { zoneId } = await params
+    const manager = getManager()
+    const zone = await manager.getPublicZoneCurrent(zoneId)
 
-  if (!zone) {
-    return createPublicApiNotFoundResponse(`unknown zone: ${zoneId}`)
-  }
+    if (!zone) {
+      return createPublicApiNotFoundResponse(`unknown zone: ${zoneId}`)
+    }
 
-  return createPublicApiResponse(zone, 'live')
+    return createPublicApiResponse(zone, 'live')
+  })
 }

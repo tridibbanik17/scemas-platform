@@ -40,6 +40,11 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # config
 dotenvy = "0.15"
 
+# crypto
+sha2 = "0.10"
+rand = { version = "0.9", features = ["os_rng"] }
+base64 = "0.22"
+
 # misc
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }

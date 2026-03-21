@@ -7,7 +7,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <AgentShell
       navItems={[
         { href: '/display', label: 'air quality' },
-        { href: '/api-explorer', label: 'api' },
+        { href: '/api-explorer', label: 'public api' },
       ]}
       title="SCEMAS"
     >

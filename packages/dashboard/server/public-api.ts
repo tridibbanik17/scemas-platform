@@ -1,5 +1,7 @@
 import type { ZodTypeAny } from 'zod'
 import { z } from 'zod'
+import { validateToken } from './api-tokens'
+import { getDb } from './cached'
 
 type PublicCachePolicy = 'live' | 'trend' | 'metadata'
 
@@ -44,4 +46,15 @@ export function parsePublicApiInput<TSchema extends ZodTypeAny>(
     .join('; ')
 
   return { success: false, error: errorMessage || 'invalid request parameters' }
+}
+
+export async function withApiTokenAuth(
+  request: Request,
+  handler: () => Promise<Response>,
+): Promise<Response> {
+  const result = await validateToken(getDb(), request.headers.get('authorization'))
+  if (!result.valid) {
+    return Response.json({ error: result.error }, { status: result.status })
+  }
+  return handler()
 }

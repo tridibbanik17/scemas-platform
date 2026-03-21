@@ -14,13 +14,13 @@ export default function ApiExplorerPage() {
           </p>
         </div>
         <div>
-        <Link
-          className="shrink-0 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          href="/api/v1/openapi"
-          target="_blank"
-        >
-          openapi spec
-        </Link>
+          <Link
+            className="shrink-0 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            href="/api/v1/openapi"
+            target="_blank"
+          >
+            openapi spec
+          </Link>
         </div>
       </div>
       <Separator />

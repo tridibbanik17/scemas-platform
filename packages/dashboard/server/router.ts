@@ -3,6 +3,7 @@
 // each router below maps to a controller or boundary from the UML class diagram
 
 import { alertsRouter } from './routers/alerts'
+import { apiTokensRouter } from './routers/api-tokens'
 import { auditRouter } from './routers/audit'
 import { authRouter } from './routers/auth'
 import { healthRouter } from './routers/health'
@@ -14,6 +15,7 @@ import { usersRouter } from './routers/users'
 import { router } from './trpc'
 
 export const appRouter = router({
+  apiTokens: apiTokensRouter, // API token management for public endpoints
   auth: authRouter, // AccessManager (repository pattern)
   telemetry: telemetryRouter, // TelemetryManager (pipe-and-filter, proxies to rust)
   alerts: alertsRouter, // AlertingManager read operations

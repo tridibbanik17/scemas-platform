@@ -7,29 +7,32 @@ import {
   createPublicApiResponse,
   getRequestSearchParams,
   parsePublicApiInput,
+  withApiTokenAuth,
 } from '@/server/public-api'
 
 type ZoneRouteContext = { params: Promise<{ zoneId: string }> }
 
 export async function GET(request: Request, { params }: ZoneRouteContext): Promise<Response> {
-  const { zoneId } = await params
-  const normalizedZoneId = normalizeZoneId(zoneId)
+  return withApiTokenAuth(request, async () => {
+    const { zoneId } = await params
+    const normalizedZoneId = normalizeZoneId(zoneId)
 
-  if (!isKnownZoneId(normalizedZoneId)) {
-    return createPublicApiNotFoundResponse(`unknown zone: ${zoneId}`)
-  }
+    if (!isKnownZoneId(normalizedZoneId)) {
+      return createPublicApiNotFoundResponse(`unknown zone: ${zoneId}`)
+    }
 
-  const parsedInput = parsePublicApiInput(PublicZoneHistoryQuerySchema, {
-    zoneId: normalizedZoneId,
-    ...getRequestSearchParams(request),
+    const parsedInput = parsePublicApiInput(PublicZoneHistoryQuerySchema, {
+      zoneId: normalizedZoneId,
+      ...getRequestSearchParams(request),
+    })
+
+    if (!parsedInput.success) {
+      return createPublicApiBadRequestResponse(parsedInput.error)
+    }
+
+    const manager = getManager()
+    const history = await manager.getPublicZoneHistory(parsedInput.data)
+
+    return createPublicApiResponse(history, 'trend')
   })
-
-  if (!parsedInput.success) {
-    return createPublicApiBadRequestResponse(parsedInput.error)
-  }
-
-  const manager = getManager()
-  const history = await manager.getPublicZoneHistory(parsedInput.data)
-
-  return createPublicApiResponse(history, 'trend')
 }

@@ -2,13 +2,22 @@ use argon2::Argon2;
 use argon2::password_hash::{
     PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng,
 };
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header};
+use rand::Rng;
 use scemas_core::error::{Error, Result};
 use scemas_core::models::{DeviceIdentity, DeviceStatus, MetricType, Role, UserInformation};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
+
+const TOKEN_PREFIX: &str = "sk-scemas-";
+const TOKEN_RANDOM_BYTES: usize = 32;
+const TOKEN_EXPIRY_DAYS: i64 = 90;
+const MAX_ACTIVE_TOKENS_PER_USER: i64 = 5;
 
 pub struct AccessManager {
     db: PgPool,
@@ -222,6 +231,58 @@ impl AccessManager {
         Ok(device)
     }
 
+    pub async fn create_api_token(
+        &self,
+        account_id: Uuid,
+        label: &str,
+    ) -> Result<CreateApiTokenResponse> {
+        let active_count =
+            sqlx::query_scalar::<_, i64>(
+                "SELECT COUNT(*) FROM api_tokens WHERE account_id = $1 AND revoked_at IS NULL AND expires_at > NOW()",
+            )
+            .bind(account_id)
+            .fetch_one(&self.db)
+            .await?;
+
+        if active_count >= MAX_ACTIVE_TOKENS_PER_USER {
+            return Err(Error::Validation(format!(
+                "maximum {MAX_ACTIVE_TOKENS_PER_USER} active tokens per account"
+            )));
+        }
+
+        let token = generate_api_token();
+        let token_hash = sha256_hex(&token);
+        let last4 = &token[token.len() - 4..];
+        let prefix = format!("sk-scemas-...{last4}");
+        let expires_at = Utc::now() + Duration::days(TOKEN_EXPIRY_DAYS);
+
+        let id = sqlx::query_scalar::<_, Uuid>(
+            "INSERT INTO api_tokens (account_id, token_hash, label, prefix, expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        )
+        .bind(account_id)
+        .bind(&token_hash)
+        .bind(label)
+        .bind(&prefix)
+        .bind(expires_at)
+        .fetch_one(&self.db)
+        .await?;
+
+        self.insert_audit_log(
+            Some(account_id),
+            "api_token.created",
+            serde_json::json!({ "tokenId": id.to_string(), "label": label, "prefix": prefix }),
+        )
+        .await?;
+
+        Ok(CreateApiTokenResponse {
+            id: id.to_string(),
+            token,
+            prefix,
+            label: label.to_owned(),
+            expires_at,
+        })
+    }
+
     async fn issue_session(&self, user: &UserInformation) -> Result<AuthSessionResponse> {
         let expiry_hours = i64::try_from(self.jwt_expiry_hours)
             .map_err(|_| Error::Internal("JWT_EXPIRY_HOURS exceeded i64 bounds".into()))?;
@@ -372,6 +433,44 @@ impl DeviceRow {
             device_type: parse_metric_type(&self.device_type)?,
             zone: self.zone,
             status: parse_device_status(&self.status)?,
+        })
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateApiTokenRequest {
+    pub account_id: String,
+    pub label: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateApiTokenResponse {
+    pub id: String,
+    pub token: String,
+    pub prefix: String,
+    pub label: String,
+    pub expires_at: DateTime<Utc>,
+}
+
+fn generate_api_token() -> String {
+    let mut bytes = [0u8; TOKEN_RANDOM_BYTES];
+    rand::rng().fill(&mut bytes);
+    format!("{}{}", TOKEN_PREFIX, URL_SAFE_NO_PAD.encode(bytes))
+}
+
+fn sha256_hex(input: &str) -> String {
+    let digest = Sha256::digest(input.as_bytes());
+    hex::encode(digest)
+}
+
+mod hex {
+    pub fn encode(bytes: impl AsRef<[u8]>) -> String {
+        bytes.as_ref().iter().fold(String::new(), |mut acc, byte| {
+            use std::fmt::Write;
+            write!(acc, "{byte:02x}").expect("hex encoding failed");
+            acc
         })
     }
 }

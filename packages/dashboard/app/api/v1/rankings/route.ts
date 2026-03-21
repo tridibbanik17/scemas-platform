@@ -5,20 +5,21 @@ import {
   createPublicApiResponse,
   getRequestSearchParams,
   parsePublicApiInput,
+  withApiTokenAuth,
 } from '@/server/public-api'
 
 export async function GET(request: Request): Promise<Response> {
-  const parsedInput = parsePublicApiInput(
-    PublicRankingsQuerySchema,
-    getRequestSearchParams(request),
-  )
+  return withApiTokenAuth(request, async () => {
+    const parsedInput = parsePublicApiInput(
+      PublicRankingsQuerySchema,
+      getRequestSearchParams(request),
+    )
 
-  if (!parsedInput.success) {
-    return createPublicApiBadRequestResponse(parsedInput.error)
-  }
+    if (!parsedInput.success) {
+      return createPublicApiBadRequestResponse(parsedInput.error)
+    }
 
-  const manager = getManager()
-  const rankings = await manager.getPublicRankings(parsedInput.data)
-
-  return createPublicApiResponse(rankings, 'trend')
+    const manager = getManager()
+    return createPublicApiResponse(await manager.getPublicRankings(parsedInput.data), 'trend')
+  })
 }

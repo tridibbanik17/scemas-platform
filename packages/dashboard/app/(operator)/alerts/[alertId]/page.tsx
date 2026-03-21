@@ -22,14 +22,6 @@ export default async function AlertDetailPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-          href="/alerts"
-        >
-          back to alerts
-        </Link>
-      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-balance">alert detail</h1>

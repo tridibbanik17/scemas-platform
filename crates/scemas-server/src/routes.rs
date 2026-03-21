@@ -15,7 +15,10 @@ use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
 
-use crate::access::{AuthSessionResponse, DeviceAuthorizationRequest, LoginRequest, SignupRequest};
+use crate::access::{
+    AuthSessionResponse, CreateApiTokenRequest, CreateApiTokenResponse, DeviceAuthorizationRequest,
+    LoginRequest, SignupRequest,
+};
 use crate::state::AppState;
 
 pub fn create_router(state: AppState) -> Router {
@@ -41,6 +44,7 @@ pub fn create_router(state: AppState) -> Router {
             post(resolve_alert),
         )
         .route("/internal/auth/reset-password", post(reset_password))
+        .route("/internal/tokens", post(create_api_token))
         // internal API (called by tRPC, not by browser)
         .route("/internal/telemetry/ingest", post(ingest_telemetry))
         .route("/internal/health", get(health))
@@ -74,6 +78,19 @@ async fn reset_password(
         .reset_password(request.user_id, &request.new_password)
         .await?;
     Ok(Json(serde_json::json!({ "success": true })))
+}
+
+async fn create_api_token(
+    State(state): State<AppState>,
+    Json(request): Json<CreateApiTokenRequest>,
+) -> Result<Json<CreateApiTokenResponse>> {
+    let account_id = Uuid::parse_str(&request.account_id)
+        .map_err(|_| scemas_core::error::Error::Validation("invalid account_id".into()))?;
+    let response = state
+        .access
+        .create_api_token(account_id, &request.label)
+        .await?;
+    Ok(Json(response))
 }
 
 async fn create_rule(

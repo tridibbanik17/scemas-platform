@@ -165,6 +165,9 @@ export type PublicZoneSummary = z.infer<typeof PublicZoneSummarySchema>
 export const PublicZoneCurrentSchema = PublicZoneSummarySchema
 export type PublicZoneCurrent = z.infer<typeof PublicZoneCurrentSchema>
 
+export const PublicZoneListItemSchema = z.object({ zone: z.string(), zoneName: z.string() })
+export type PublicZoneListItem = z.infer<typeof PublicZoneListItemSchema>
+
 export const PublicZoneCurrentQuerySchema = z.object({ zoneId: z.string().min(1) })
 export type PublicZoneCurrentQuery = z.infer<typeof PublicZoneCurrentQuerySchema>
 
@@ -183,7 +186,7 @@ export const PublicZoneHistoryQuerySchema = z.object({
   zoneId: z.string().min(1),
   metricType: MetricTypeSchema,
   bucket: PublicAggregationTypeSchema.default('5m_avg'),
-  windowHours: z.coerce.number().int().min(1).max(168).default(24),
+  windowHours: z.coerce.number().int().min(1).max(720).default(24),
 })
 export type PublicZoneHistoryQuery = z.infer<typeof PublicZoneHistoryQuerySchema>
 
@@ -202,7 +205,7 @@ export type PublicRankingRow = z.infer<typeof PublicRankingRowSchema>
 export const PublicRankingsQuerySchema = z.object({
   metricType: MetricTypeSchema,
   bucket: PublicAggregationTypeSchema.default('5m_avg'),
-  periodHours: z.coerce.number().int().min(1).max(168).default(24),
+  periodHours: z.coerce.number().int().min(1).max(720).default(24),
   stat: PublicRankingStatSchema.default('current'),
   limit: z.coerce.number().int().min(1).max(50).default(10),
 })
@@ -228,6 +231,31 @@ export const PublicFeedStatusSchema = z.object({
   oldestAggregateAt: z.string().datetime().nullable(),
 })
 export type PublicFeedStatus = z.infer<typeof PublicFeedStatusSchema>
+
+export const CreateApiTokenSchema = z.object({ label: z.string().min(1).max(100) })
+export type CreateApiToken = z.infer<typeof CreateApiTokenSchema>
+
+export const ApiTokenSchema = z.object({
+  id: z.string().uuid(),
+  prefix: z.string(),
+  label: z.string(),
+  accountId: z.string().uuid(),
+  accountUsername: z.string().optional(),
+  expiresAt: z.string().datetime(),
+  revokedAt: z.string().datetime().nullable(),
+  lastUsedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+})
+export type ApiToken = z.infer<typeof ApiTokenSchema>
+
+export const CreateApiTokenResponseSchema = z.object({
+  id: z.string().uuid(),
+  token: z.string(),
+  prefix: z.string(),
+  label: z.string(),
+  expiresAt: z.string().datetime(),
+})
+export type CreateApiTokenResponse = z.infer<typeof CreateApiTokenResponseSchema>
 
 export const ZoneAQISchema = z.object({
   zone: z.string(),

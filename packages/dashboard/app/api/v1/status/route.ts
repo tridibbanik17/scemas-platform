@@ -1,9 +1,9 @@
 import { getManager } from '@/server/cached'
-import { createPublicApiResponse } from '@/server/public-api'
+import { createPublicApiResponse, withApiTokenAuth } from '@/server/public-api'
 
-export async function GET(): Promise<Response> {
-  const manager = getManager()
-  const status = await manager.getPublicFeedStatus()
-
-  return createPublicApiResponse(status, 'live')
+export async function GET(request: Request): Promise<Response> {
+  return withApiTokenAuth(request, async () => {
+    const manager = getManager()
+    return createPublicApiResponse(await manager.getPublicFeedStatus(), 'live')
+  })
 }

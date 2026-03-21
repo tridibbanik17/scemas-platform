@@ -1,21 +1,16 @@
 'use client'
 
-import { PublicZoneSummarySchema, type PublicZoneSummary } from '@scemas/types'
-import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ListPagination } from '@/components/list-pagination'
 import { Spinner } from '@/components/ui/spinner'
+import { trpc } from '@/lib/trpc'
 import { cn } from '@/lib/utils'
 import { ZoneAqiBarChart } from './zone-aqi-bar-chart'
 
 const ZONES_PER_PAGE = 4
 
 export function ZoneAqiGrid() {
-  const regionAqi = useQuery({
-    queryKey: ['public-zone-summary'],
-    queryFn: fetchZoneSummary,
-    refetchInterval: 10_000,
-  })
+  const regionAqi = trpc.public.getZoneSummary.useQuery(undefined, { refetchInterval: 10_000 })
   const regions = regionAqi.data ?? []
   const [page, setPage] = useState(0)
 
@@ -102,16 +97,6 @@ export function ZoneAqiGrid() {
       </div>
     </div>
   )
-}
-
-async function fetchZoneSummary(): Promise<PublicZoneSummary[]> {
-  const response = await fetch('/api/v1/zones/summary')
-  if (!response.ok) {
-    throw new Error('public API request failed')
-  }
-
-  const payload = await response.json()
-  return PublicZoneSummarySchema.array().parse(payload)
 }
 
 function formatNullableMetric(value: number | null, label: string): string {

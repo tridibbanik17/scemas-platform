@@ -1,10 +1,19 @@
 'use client'
 
 import type { PublicZoneSummary } from '@scemas/types'
-import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, Cell, XAxis, YAxis, Tooltip } from 'recharts'
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 
 const chartConfig = { aqi: { label: 'AQI', color: '#a692c3' } } satisfies ChartConfig
+
+type ChartEntry = {
+  region: string
+  aqi: number
+  temperature: number | null
+  humidity: number | null
+  noiseLevel: number | null
+  aqiLabel: string
+}
 
 function aqiColor(aqi: number): string {
   if (aqi <= 50) return 'oklch(0.837 0.128 66.29)'
@@ -15,10 +24,21 @@ function aqiColor(aqi: number): string {
   return 'oklch(0.47 0.157 37.304)'
 }
 
+function formatMetric(value: number | null): string {
+  return value === null ? '--' : `${value}`
+}
+
 export function ZoneAqiBarChart({ zones }: { zones: PublicZoneSummary[] }) {
   if (zones.length === 0) return null
 
-  const data = zones.map(zone => ({ region: zone.zoneName, aqi: zone.aqi }))
+  const data: ChartEntry[] = zones.map(zone => ({
+    region: zone.zoneName,
+    aqi: zone.aqi,
+    temperature: zone.temperature,
+    humidity: zone.humidity,
+    noiseLevel: zone.noiseLevel,
+    aqiLabel: zone.aqiLabel,
+  }))
 
   return (
     <ChartContainer className="h-48 w-full" config={chartConfig}>
@@ -35,6 +55,7 @@ export function ZoneAqiBarChart({ zones }: { zones: PublicZoneSummary[] }) {
           type="category"
           width={132}
         />
+        <Tooltip content={<AqiTooltip />} cursor={{ fill: 'var(--color-muted)', opacity: 0.3 }} />
         <Bar dataKey="aqi" radius={[0, 3, 3, 0]}>
           {data.map(entry => (
             <Cell fill={aqiColor(entry.aqi)} key={entry.region} />
@@ -42,5 +63,28 @@ export function ZoneAqiBarChart({ zones }: { zones: PublicZoneSummary[] }) {
         </Bar>
       </BarChart>
     </ChartContainer>
+  )
+}
+
+function AqiTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean
+  payload?: Array<{ payload: ChartEntry }>
+}) {
+  if (!active || !payload?.length) return null
+
+  const entry = payload[0].payload
+
+  return (
+    <div className="rounded-lg border border-border/50 bg-background px-2 py-1 shadow-xl">
+      <span
+        className="font-mono text-xs font-medium tabular-nums"
+        style={{ color: aqiColor(entry.aqi) }}
+      >
+        {entry.aqi}
+      </span>
+    </div>
   )
 }

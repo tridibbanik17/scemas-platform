@@ -9,6 +9,7 @@ import type {
   PublicRankingStat,
   PublicZoneHistoryPoint,
   PublicZoneHistoryQuery,
+  PublicZoneListItem,
   PublicZoneSummary,
   ZoneAQI,
 } from '@scemas/types'
@@ -199,6 +200,11 @@ export class DataDistributionManager {
 
     const zones = await this.getPublicZoneSummary()
     return zones.find(zone => zone.zone === normalizedZoneId) ?? null
+  }
+
+  async getPublicZoneList(): Promise<PublicZoneListItem[]> {
+    const zoneIds = await this.getPublicDeviceZoneIds()
+    return zoneIds.map(zoneId => ({ zone: zoneId, zoneName: formatZoneName(zoneId, 'title') }))
   }
 
   async getPublicZoneHistory(query: PublicZoneHistoryQuery): Promise<PublicZoneHistoryPoint[]> {

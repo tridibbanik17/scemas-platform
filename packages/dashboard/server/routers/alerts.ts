@@ -80,7 +80,7 @@ export const alertsRouter = router({
 
   // alert frequency: count by hour grouped by severity (for charts)
   frequency: protectedProcedure
-    .input(z.object({ hours: z.number().min(1).max(168).default(24) }))
+    .input(z.object({ hours: z.number().min(1).max(720).default(24) }))
     .query(async ({ input, ctx }) => {
       const rows = await ctx.db.$client`
         SELECT

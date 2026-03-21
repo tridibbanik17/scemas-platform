@@ -213,6 +213,27 @@ export const ingestionCounters = pgTable('ingestion_counters', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+export const apiTokens = pgTable(
+  'api_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    accountId: uuid('account_id')
+      .references(() => accounts.id, { onDelete: 'cascade' })
+      .notNull(),
+    tokenHash: text('token_hash').notNull(),
+    label: text('label').notNull(),
+    prefix: text('prefix').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    tokenHashIdx: uniqueIndex('api_tokens_token_hash_idx').on(table.tokenHash),
+    accountExpiresIdx: index('api_tokens_account_expires_idx').on(table.accountId, table.expiresAt),
+  }),
+)
+
 export const platformStatus = pgTable(
   'platform_status',
   {

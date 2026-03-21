@@ -4,7 +4,6 @@
 // ABSTRACTION: raw sensor data, device IDs, operator metadata are stripped
 // public users and third-party developers see this same view
 
-import { MonitoringRegionDirectory } from '@/components/public/monitoring-region-directory'
 import { ZoneAqiGrid } from '@/components/public/zone-aqi-grid'
 
 export default function PublicDisplayPage() {
@@ -18,7 +17,6 @@ export default function PublicDisplayPage() {
         </p>
       </div>
       <ZoneAqiGrid />
-      <MonitoringRegionDirectory />
     </div>
   )
 }

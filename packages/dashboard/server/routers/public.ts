@@ -20,6 +20,11 @@ export const publicRouter = router({
     return manager.getPublicZoneAqi()
   }),
 
+  getZoneList: publicProcedure.query(async ({ ctx }) => {
+    const manager = createDataDistributionManager(ctx.db)
+    return manager.getPublicZoneList()
+  }),
+
   getZoneSummary: publicProcedure.query(async ({ ctx }) => {
     const manager = createDataDistributionManager(ctx.db)
     return manager.getPublicZoneSummary()
