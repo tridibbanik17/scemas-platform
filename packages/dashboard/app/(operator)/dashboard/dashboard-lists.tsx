@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { ListPagination } from '@/components/list-pagination'
+import { usePageSize } from '@/lib/settings'
 import { SeverityBadge } from '@/components/ui/severity-badge'
-
-const PAGE_SIZE = 4
 
 type SensorFeedItem = {
   key: string
@@ -16,10 +15,11 @@ type SensorFeedItem = {
 }
 
 export function PaginatedSensorFeed({ items }: { items: SensorFeedItem[] }) {
+  const pageSize = usePageSize()
   const [page, setPage] = useState(0)
-  const totalPages = Math.ceil(items.length / PAGE_SIZE)
+  const totalPages = Math.ceil(items.length / pageSize)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageItems = items.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+  const pageItems = items.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
   return (
     <>
@@ -45,7 +45,7 @@ export function PaginatedSensorFeed({ items }: { items: SensorFeedItem[] }) {
       <ListPagination
         onPageChange={setPage}
         page={safePage}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         totalItems={items.length}
         totalPages={totalPages}
       />
@@ -66,7 +66,7 @@ export function PaginatedAlertFeed({ items }: { items: AlertFeedItem[] }) {
     return <p className="px-4 pb-4 text-sm text-muted-foreground">no active alerts right now</p>
   }
 
-  const scrollable = items.length > PAGE_SIZE
+  const scrollable = items.length > 8
 
   return (
     <div className="relative min-h-0 flex-1">

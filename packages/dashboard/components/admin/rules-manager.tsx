@@ -6,16 +6,18 @@ import { type FormEvent, useState } from 'react'
 import { ListPagination } from '@/components/list-pagination'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Spinner } from '@/components/ui/spinner'
+import { usePageSize } from '@/lib/settings'
 import { trpc } from '@/lib/trpc'
 import { formatZoneName, zoneOptions } from '@/lib/zones'
 
 const metricTypes = ['temperature', 'humidity', 'air_quality', 'noise_level'] as const
 const comparisons = ['gt', 'gte', 'lt', 'lte'] as const
-const PAGE_SIZE = 10
 
 export function RulesManager() {
   const utils = trpc.useUtils()
+  const pageSize = usePageSize()
   const [page, setPage] = useState(0)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -79,20 +81,10 @@ export function RulesManager() {
     setSubmissionError(null)
 
     const formData = new FormData(event.currentTarget)
-    const metricType = formData.get('metricType')
-    const thresholdValue = formData.get('thresholdValue')
-    const comparison = formData.get('comparison')
-    const zone = formData.get('zone')
-
-    if (
-      typeof metricType !== 'string' ||
-      typeof thresholdValue !== 'string' ||
-      typeof comparison !== 'string' ||
-      typeof zone !== 'string'
-    ) {
-      setSubmissionError('rule submission was malformed')
-      return
-    }
+    const metricType = formData.get('metricType') as string
+    const thresholdValue = formData.get('thresholdValue') as string
+    const comparison = formData.get('comparison') as string
+    const zone = formData.get('zone') as string
 
     if (!isMetricType(metricType) || !isComparison(comparison)) {
       setSubmissionError('rule form contained an invalid metric or comparison')
@@ -135,9 +127,9 @@ export function RulesManager() {
   }
 
   const rules = rulesQuery.data ?? []
-  const totalPages = Math.ceil(rules.length / PAGE_SIZE)
+  const totalPages = Math.ceil(rules.length / pageSize)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageRules = rules.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+  const pageRules = rules.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
   return (
     <div className="space-y-6">
@@ -145,21 +137,21 @@ export function RulesManager() {
         className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-5"
         onSubmit={handleSubmit}
       >
-        <select className={selectClass} defaultValue="temperature" name="metricType">
-          {metricTypes.map(metricType => (
-            <option key={metricType} value={metricType}>
-              {metricType.replaceAll('_', ' ')}
-            </option>
+        <NativeSelect className="w-full" defaultValue="temperature" name="metricType">
+          {metricTypes.map(mt => (
+            <NativeSelectOption key={mt} value={mt}>
+              {mt.replaceAll('_', ' ')}
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
 
-        <select className={selectClass} defaultValue="gt" name="comparison">
-          {comparisons.map(comparison => (
-            <option key={comparison} value={comparison}>
-              {comparison}
-            </option>
+        <NativeSelect className="w-full" defaultValue="gt" name="comparison">
+          {comparisons.map(c => (
+            <NativeSelectOption key={c} value={c}>
+              {c}
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
 
         <Input
           min="1"
@@ -168,14 +160,14 @@ export function RulesManager() {
           step="0.1"
           type="number"
         />
-        <select className={selectClass} defaultValue="" name="zone">
-          <option value="">all regions</option>
-          {zoneOptions.map(zone => (
-            <option key={zone.id} value={zone.id}>
-              {zone.label}
-            </option>
+        <NativeSelect className="w-full" defaultValue="" name="zone">
+          <NativeSelectOption value="">all regions</NativeSelectOption>
+          {zoneOptions.map(z => (
+            <NativeSelectOption key={z.id} value={z.id}>
+              {z.label}
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
         <Button disabled={createRule.isPending} type="submit">
           {createRule.isPending ? <Spinner /> : 'create rule'}
         </Button>
@@ -260,7 +252,7 @@ export function RulesManager() {
             <ListPagination
               onPageChange={setPage}
               page={safePage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               totalItems={rules.length}
               totalPages={totalPages}
             />
@@ -270,9 +262,6 @@ export function RulesManager() {
     </div>
   )
 }
-
-const selectClass =
-  'h-7 w-full rounded-md border border-input bg-input/20 px-2 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 md:text-xs/relaxed dark:bg-input/30'
 
 function RuleEditRow({
   rule,
@@ -304,28 +293,28 @@ function RuleEditRow({
 
   return (
     <div className="grid gap-3 px-4 py-4 md:grid-cols-6">
-      <select
-        className={selectClass}
-        onChange={e => setMetricType(e.target.value as MetricType)}
+      <NativeSelect
+        className="w-full"
         value={metricType}
+        onChange={e => setMetricType(e.target.value as MetricType)}
       >
         {metricTypes.map(mt => (
-          <option key={mt} value={mt}>
+          <NativeSelectOption key={mt} value={mt}>
             {mt.replaceAll('_', ' ')}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
-      <select
-        className={selectClass}
-        onChange={e => setComparison(e.target.value as Comparison)}
+      </NativeSelect>
+      <NativeSelect
+        className="w-full"
         value={comparison}
+        onChange={e => setComparison(e.target.value as Comparison)}
       >
         {comparisons.map(c => (
-          <option key={c} value={c}>
+          <NativeSelectOption key={c} value={c}>
             {c}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
+      </NativeSelect>
       <Input
         min="1"
         onChange={e => setThresholdValue(e.target.value)}
@@ -333,14 +322,14 @@ function RuleEditRow({
         type="number"
         value={thresholdValue}
       />
-      <select className={selectClass} onChange={e => setZone(e.target.value)} value={zone}>
-        <option value="">all regions</option>
+      <NativeSelect className="w-full" value={zone} onChange={e => setZone(e.target.value)}>
+        <NativeSelectOption value="">all regions</NativeSelectOption>
         {zoneOptions.map(z => (
-          <option key={z.id} value={z.id}>
+          <NativeSelectOption key={z.id} value={z.id}>
             {z.label}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
+      </NativeSelect>
       <Button disabled={saving} onClick={handleSave} type="button">
         {saving ? <Spinner /> : 'save'}
       </Button>

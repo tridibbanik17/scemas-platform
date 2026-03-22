@@ -1,9 +1,12 @@
 'use client'
 
 import type { Role } from '@scemas/types'
+import { MoreHorizontalCircle01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import Link from 'next/link'
 import { type FormEvent, useState } from 'react'
 import { ListPagination } from '@/components/list-pagination'
+import { usePageSize } from '@/lib/settings'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,15 +16,25 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
 
 const roles = ['operator', 'admin', 'viewer'] as const
-const PAGE_SIZE = 10
 const ONE_HOUR_MS = 3_600_000
 
 function isRole(value: string): value is Role {
@@ -30,6 +43,7 @@ function isRole(value: string): value is Role {
 
 export function UsersManager() {
   const utils = trpc.useUtils()
+  const pageSize = usePageSize()
   const [page, setPage] = useState(0)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
 
@@ -66,20 +80,10 @@ export function UsersManager() {
     setSubmissionError(null)
 
     const formData = new FormData(event.currentTarget)
-    const email = formData.get('email')
-    const username = formData.get('username')
-    const password = formData.get('password')
-    const role = formData.get('role')
-
-    if (
-      typeof email !== 'string' ||
-      typeof username !== 'string' ||
-      typeof password !== 'string' ||
-      typeof role !== 'string'
-    ) {
-      setSubmissionError('form submission was malformed')
-      return
-    }
+    const email = formData.get('email') as string
+    const username = formData.get('username') as string
+    const password = formData.get('password') as string
+    const role = formData.get('role') as string
 
     if (!isRole(role)) {
       setSubmissionError('invalid role selected')
@@ -120,9 +124,9 @@ export function UsersManager() {
   }
 
   const users = usersQuery.data ?? []
-  const totalPages = Math.ceil(users.length / PAGE_SIZE)
+  const totalPages = Math.ceil(users.length / pageSize)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageUsers = users.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+  const pageUsers = users.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
   return (
     <div className="space-y-6">
@@ -140,17 +144,13 @@ export function UsersManager() {
           <Input name="email" placeholder="email" type="email" required />
           <Input name="username" placeholder="username" minLength={3} required />
           <Input name="password" placeholder="password" type="password" minLength={8} required />
-          <select
-            className="h-7 w-full rounded-md border border-input bg-input/20 px-2 text-sm md:text-xs/relaxed dark:bg-input/30"
-            defaultValue="operator"
-            name="role"
-          >
-            {roles.map(role => (
-              <option key={role} value={role}>
-                {role}
-              </option>
+          <NativeSelect className="w-full" defaultValue="operator" name="role">
+            {roles.map(r => (
+              <NativeSelectOption key={r} value={r}>
+                {r}
+              </NativeSelectOption>
             ))}
-          </select>
+          </NativeSelect>
           <Button disabled={createUser.isPending} type="submit">
             {createUser.isPending ? <Spinner /> : 'create account'}
           </Button>
@@ -170,75 +170,18 @@ export function UsersManager() {
           <>
             <div className="divide-y divide-border">
               {pageUsers.map(account => (
-                <div
-                  className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between"
+                <AccountRow
                   key={account.id}
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">
-                      <Link
-                        className="underline-offset-4 hover:underline"
-                        href={`/users/${account.id}`}
-                      >
-                        {account.username}
-                      </Link>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {account.email} | created {account.createdAt.toLocaleString()}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {roles.map(role => (
-                      <Button
-                        disabled={updateRole.isPending}
-                        key={role}
-                        onClick={() => updateRole.mutate({ userId: account.id, role })}
-                        size="sm"
-                        type="button"
-                        variant={account.role === role ? 'default' : 'outline'}
-                      >
-                        {role}
-                      </Button>
-                    ))}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          disabled={deleteUser.isPending}
-                          size="sm"
-                          type="button"
-                          variant="destructive"
-                        >
-                          delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>delete account</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            this will permanently remove {account.username}&apos;s account and
-                            cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            variant="destructive"
-                            onClick={() => deleteUser.mutate({ userId: account.id })}
-                          >
-                            {deleteUser.isPending ? <Spinner /> : 'delete'}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
+                  account={account}
+                  deleteUser={deleteUser}
+                  updateRole={updateRole}
+                />
               ))}
             </div>
             <ListPagination
               onPageChange={setPage}
               page={safePage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               totalItems={users.length}
               totalPages={totalPages}
             />
@@ -249,10 +192,90 @@ export function UsersManager() {
   )
 }
 
-const SESSIONS_PAGE_SIZE = 4
+type AccountData = { id: string; email: string; username: string; role: string; createdAt: Date }
+
+function AccountRow({
+  account,
+  deleteUser,
+  updateRole,
+}: {
+  account: AccountData
+  deleteUser: ReturnType<typeof trpc.users.delete.useMutation>
+  updateRole: ReturnType<typeof trpc.users.updateRole.useMutation>
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium">
+          <Link className="underline-offset-4 hover:underline" href={`/users/${account.id}`}>
+            {account.username}
+          </Link>
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {account.email} · {account.role} · created {account.createdAt.toLocaleString()}
+        </p>
+      </div>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button aria-label="account actions" size="sm" variant="ghost">
+            <HugeiconsIcon icon={MoreHorizontalCircle01Icon} size={16} strokeWidth={1.5} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>role</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={account.role}
+            onValueChange={value => {
+              if (isRole(value)) updateRole.mutate({ userId: account.id, role: value })
+            }}
+          >
+            {roles.map(role => (
+              <DropdownMenuRadioItem key={role} value={role}>
+                {role}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => setConfirmDelete(true)}
+            >
+              delete account
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-balance">delete account</AlertDialogTitle>
+            <AlertDialogDescription className="text-pretty">
+              this will permanently remove {account.username}&apos;s account and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => deleteUser.mutate({ userId: account.id })}
+            >
+              {deleteUser.isPending ? <Spinner /> : 'delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
 
 function ActiveSessionsPanel() {
   const utils = trpc.useUtils()
+  const pageSize = usePageSize()
   const [page, setPage] = useState(0)
   const sessionsQuery = trpc.users.activeSessions.useQuery()
   const revokeSession = trpc.users.revokeSession.useMutation({
@@ -284,11 +307,11 @@ function ActiveSessionsPanel() {
   const expiringCount = sessions.filter(
     s => s.expiry.getTime() - Date.now() < ONE_HOUR_MS,
   ).length
-  const totalPages = Math.ceil(sessions.length / SESSIONS_PAGE_SIZE)
+  const totalPages = Math.ceil(sessions.length / pageSize)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
   const pageSessions = sessions.slice(
-    safePage * SESSIONS_PAGE_SIZE,
-    (safePage + 1) * SESSIONS_PAGE_SIZE,
+    safePage * pageSize,
+    (safePage + 1) * pageSize,
   )
 
   return (
@@ -310,7 +333,7 @@ function ActiveSessionsPanel() {
         <p className="px-4 py-8 text-center text-sm text-muted-foreground">no active sessions</p>
       ) : (
         <>
-          <div className={`min-h-[calc(theme(spacing.14)*${SESSIONS_PAGE_SIZE})] divide-y divide-border`}>
+          <div className={`min-h-[calc(theme(spacing.14)*${pageSize})] divide-y divide-border`}>
             {pageSessions.map(session => (
               <div
                 className="flex h-14 items-center justify-between px-4"
@@ -336,7 +359,7 @@ function ActiveSessionsPanel() {
           <ListPagination
             onPageChange={setPage}
             page={safePage}
-            pageSize={SESSIONS_PAGE_SIZE}
+            pageSize={pageSize}
             totalItems={sessions.length}
             totalPages={totalPages}
           />

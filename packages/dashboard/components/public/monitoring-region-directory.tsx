@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import { ListPagination } from '@/components/list-pagination'
+import { usePageSize } from '@/lib/settings'
 import { sensorCatalog } from '@/lib/sensor-catalog'
 import { hamiltonMonitoringRegions } from '@/lib/zones'
-
-const REGIONS_PER_PAGE = 4
 
 type MonitoringRegionSummary = {
   zoneId: string
@@ -44,12 +43,13 @@ const planningUnitCount = new Set(
 const stationCount = new Set(sensorCatalog.map(sensor => sensor.station_id)).size
 
 export function MonitoringRegionDirectory() {
+  const pageSize = usePageSize()
   const [page, setPage] = useState(0)
-  const totalPages = Math.ceil(monitoringRegions.length / REGIONS_PER_PAGE)
+  const totalPages = Math.ceil(monitoringRegions.length / pageSize)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
   const pageRegions = monitoringRegions.slice(
-    safePage * REGIONS_PER_PAGE,
-    (safePage + 1) * REGIONS_PER_PAGE,
+    safePage * pageSize,
+    (safePage + 1) * pageSize,
   )
 
   return (
@@ -118,7 +118,7 @@ export function MonitoringRegionDirectory() {
       <ListPagination
         onPageChange={setPage}
         page={safePage}
-        pageSize={REGIONS_PER_PAGE}
+        pageSize={pageSize}
         totalItems={monitoringRegions.length}
         totalPages={totalPages}
       />

@@ -15,8 +15,11 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
+
+const roles = ['operator', 'admin', 'viewer'] as const
 
 type UserDetailFormProps = {
   userId: string
@@ -62,6 +65,13 @@ export function UserDetailForm({
     onError: error => {
       setPasswordSuccess(false)
       setPasswordError(error.message)
+    },
+  })
+
+  const updateRole = trpc.users.updateRole.useMutation({
+    onSuccess: () => {
+      startTransition(() => router.refresh())
+      void Promise.all([utils.users.list.invalidate(), utils.audit.list.invalidate()])
     },
   })
 
@@ -147,16 +157,34 @@ export function UserDetailForm({
               <Input defaultValue={initialEmail} id="email" name="email" type="email" required />
             </div>
           </div>
-          <dl className="grid gap-4 text-sm md:grid-cols-2">
-            <div>
-              <dt className="text-muted-foreground">role</dt>
-              <dd>{role}</dd>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground" htmlFor="role">
+                role
+              </label>
+              <NativeSelect
+                defaultValue={role}
+                disabled={updateRole.isPending}
+                id="role"
+                onChange={e => {
+                  const value = e.target.value
+                  if (roles.includes(value as (typeof roles)[number])) {
+                    updateRole.mutate({ userId, role: value as (typeof roles)[number] })
+                  }
+                }}
+              >
+                {roles.map(r => (
+                  <NativeSelectOption key={r} value={r}>
+                    {r}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
             </div>
-            <div>
-              <dt className="text-muted-foreground">created</dt>
-              <dd>{createdAt}</dd>
+            <div className="space-y-1.5">
+              <span className="text-xs text-muted-foreground">created</span>
+              <p className="text-sm">{createdAt}</p>
             </div>
-          </dl>
+          </div>
           {detailsError ? (
             <p className="text-sm text-destructive" role="alert">
               {detailsError}

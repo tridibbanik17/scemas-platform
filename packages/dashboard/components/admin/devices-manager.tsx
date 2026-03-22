@@ -4,6 +4,7 @@
 
 import { useState } from 'react'
 import { ListPagination } from '@/components/list-pagination'
+import { usePageSize } from '@/lib/settings'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +31,6 @@ import { cn } from '@/lib/utils'
 import { trpc } from '@/lib/trpc'
 
 const metricTypes = ['temperature', 'humidity', 'air_quality', 'noise_level'] as const
-const PAGE_SIZE = 5
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-500/15 text-green-700 dark:text-green-400',
@@ -46,6 +46,7 @@ const metricUnits: Record<string, string> = {
 }
 
 export function DevicesManager() {
+  const pageSize = usePageSize()
   const [showRegister, setShowRegister] = useState(false)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
   const [page, setPage] = useState(0)
@@ -79,9 +80,9 @@ export function DevicesManager() {
 
   // derived state, no effects needed
   const allDevices = devices ?? []
-  const totalPages = Math.ceil(allDevices.length / PAGE_SIZE)
+  const totalPages = Math.ceil(allDevices.length / pageSize)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageDevices = allDevices.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+  const pageDevices = allDevices.slice(safePage * pageSize, (safePage + 1) * pageSize)
   const selectedDevice = selectedDeviceId
     ? allDevices.find(d => d.deviceId === selectedDeviceId)
     : null
@@ -153,17 +154,26 @@ export function DevicesManager() {
         <div className="rounded-lg border border-border bg-card">
           <div className="min-h-[calc(theme(spacing.12)*5)] divide-y divide-border">
             {pageDevices.map(device => (
-              <button
+              <div
                 key={device.deviceId}
-                type="button"
+                role="button"
+                tabIndex={0}
                 className={cn(
-                  'flex w-full items-center justify-between gap-3 px-4 py-3 text-left',
+                  'flex w-full cursor-default items-center justify-between gap-3 px-4 py-3 text-left',
                   selectedDeviceId === device.deviceId ? 'bg-accent/50' : '',
                 )}
                 onClick={() => {
                   setSelectedDeviceId(
                     selectedDeviceId === device.deviceId ? null : device.deviceId,
                   )
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setSelectedDeviceId(
+                      selectedDeviceId === device.deviceId ? null : device.deviceId,
+                    )
+                  }
                 }}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -208,13 +218,13 @@ export function DevicesManager() {
                     </AlertDialogContent>
                   </AlertDialog>
                 ) : null}
-              </button>
+              </div>
             ))}
           </div>
           <ListPagination
             onPageChange={setPage}
             page={safePage}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             totalItems={allDevices.length}
             totalPages={totalPages}
           />

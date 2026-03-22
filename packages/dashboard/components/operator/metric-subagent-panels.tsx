@@ -4,12 +4,11 @@ import Link from 'next/link'
 import { useState } from 'react'
 import type { MetricPanelData } from '@/lib/metric-panels'
 import { ListPagination } from '@/components/list-pagination'
+import { usePageSize } from '@/lib/settings'
 import { formatZoneName } from '@/lib/zones'
 
 export { buildMetricSubagentPanels } from '@/lib/metric-panels'
 export type { MetricPanelData } from '@/lib/metric-panels'
-
-const ZONES_PER_PAGE = 5
 const ZONE_ROW_HEIGHT = 'h-14'
 
 export function MetricSubagentPanels({
@@ -58,6 +57,7 @@ function ZoneList({
   unit: string
   showZoneLinks: boolean
 }) {
+  const pageSize = usePageSize()
   const [page, setPage] = useState(0)
 
   if (zones.length === 0) {
@@ -68,11 +68,11 @@ function ZoneList({
     )
   }
 
-  const totalPages = Math.ceil(zones.length / ZONES_PER_PAGE)
+  const totalPages = Math.ceil(zones.length / pageSize)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageZones = zones.slice(safePage * ZONES_PER_PAGE, (safePage + 1) * ZONES_PER_PAGE)
+  const pageZones = zones.slice(safePage * pageSize, (safePage + 1) * pageSize)
 
-  const emptySlots = ZONES_PER_PAGE - pageZones.length
+  const emptySlots = pageSize - pageZones.length
 
   return (
     <div className="flex flex-col">
@@ -118,7 +118,7 @@ function ZoneList({
       <ListPagination
         onPageChange={setPage}
         page={safePage}
-        pageSize={ZONES_PER_PAGE}
+        pageSize={pageSize}
         totalItems={zones.length}
         totalPages={totalPages}
       />

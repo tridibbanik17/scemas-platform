@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import { ListPagination } from '@/components/list-pagination'
+import { usePageSize } from '@/lib/settings'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
 import { cn } from '@/lib/utils'
 import { ZoneAqiBarChart } from './zone-aqi-bar-chart'
 
-const ZONES_PER_PAGE = 4
-
 export function ZoneAqiGrid() {
+  const pageSize = usePageSize()
   const regionAqi = trpc.public.getZoneSummary.useQuery(undefined, { refetchInterval: 10_000 })
   const regions = regionAqi.data ?? []
   const [page, setPage] = useState(0)
@@ -42,10 +42,10 @@ export function ZoneAqiGrid() {
     )
   }
 
-  const totalPages = Math.ceil(regions.length / ZONES_PER_PAGE)
+  const totalPages = Math.ceil(regions.length / pageSize)
   const safePage = Math.min(page, Math.max(0, totalPages - 1))
-  const pageRegions = regions.slice(safePage * ZONES_PER_PAGE, (safePage + 1) * ZONES_PER_PAGE)
-  const emptySlots = ZONES_PER_PAGE - pageRegions.length
+  const pageRegions = regions.slice(safePage * pageSize, (safePage + 1) * pageSize)
+  const emptySlots = pageSize - pageRegions.length
 
   return (
     <div className="space-y-6">
@@ -86,7 +86,7 @@ export function ZoneAqiGrid() {
         <ListPagination
           onPageChange={setPage}
           page={safePage}
-          pageSize={ZONES_PER_PAGE}
+          pageSize={pageSize}
           totalItems={regions.length}
           totalPages={totalPages}
         />
