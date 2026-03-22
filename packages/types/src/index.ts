@@ -26,6 +26,21 @@ export const DeviceIdentitySchema = z.object({
 })
 export type DeviceIdentity = z.infer<typeof DeviceIdentitySchema>
 
+export const RegisterDeviceSchema = z.object({
+  deviceId: z.string().min(1),
+  deviceType: MetricTypeSchema,
+  zone: z.string().min(1),
+})
+export type RegisterDevice = z.infer<typeof RegisterDeviceSchema>
+
+export const UpdateDeviceSchema = z.object({
+  deviceId: z.string().min(1),
+  deviceType: MetricTypeSchema.optional(),
+  zone: z.string().min(1).optional(),
+  status: DeviceStatusSchema.optional(),
+})
+export type UpdateDevice = z.infer<typeof UpdateDeviceSchema>
+
 export const RuleStatusSchema = z.enum(['active', 'inactive'])
 export type RuleStatus = z.infer<typeof RuleStatusSchema>
 

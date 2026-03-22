@@ -10,7 +10,7 @@ import { SESSION_COOKIE_NAME, sessionLandingPath, verifySessionToken } from '@/l
 const protectedPaths = ['/dashboard', '/alerts', '/subscriptions', '/metrics']
 
 // routes that require admin role
-const adminPaths = ['/rules', '/users', '/reports', '/health', '/audit']
+const adminPaths = ['/rules', '/users', '/devices', '/reports', '/health', '/audit']
 
 const publicPaths = ['/sign-in', '/sign-up', '/display', '/api']
 const authPaths = ['/sign-in', '/sign-up']

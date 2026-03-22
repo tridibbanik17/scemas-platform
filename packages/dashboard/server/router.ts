@@ -4,6 +4,7 @@
 
 import { alertsRouter } from './routers/alerts'
 import { apiTokensRouter } from './routers/api-tokens'
+import { devicesRouter } from './routers/devices'
 import { auditRouter } from './routers/audit'
 import { authRouter } from './routers/auth'
 import { healthRouter } from './routers/health'
@@ -23,6 +24,7 @@ export const appRouter = router({
   rules: rulesRouter, // DefineThresholdRules boundary
   subscriptions: subscriptionsRouter, // ManageAlertSubscriptions boundary (innovative feature)
   users: usersRouter, // ManageSecurityPermissions boundary
+  devices: devicesRouter, // AuthorizeIoTDevices boundary (admin device CRUD)
   reports: reportsRouter, // ReportEnvironmentalHazard boundary (SRS CP-C3)
   public: publicRouter, // ProvidePublicAPI boundary (abstraction: filtered data)
   health: healthRouter, // MonitorSCEMASPlatformStatus boundary

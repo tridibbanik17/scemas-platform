@@ -17,7 +17,7 @@ use uuid::Uuid;
 
 use crate::access::{
     AuthSessionResponse, CreateApiTokenRequest, CreateApiTokenResponse, DeviceAuthorizationRequest,
-    LoginRequest, SignupRequest,
+    LoginRequest, RegisterDeviceRequest, RevokeDeviceRequest, SignupRequest, UpdateDeviceRequest,
 };
 use crate::state::AppState;
 
@@ -45,6 +45,15 @@ pub fn create_router(state: AppState) -> Router {
         )
         .route("/internal/auth/reset-password", post(reset_password))
         .route("/internal/tokens", post(create_api_token))
+        .route("/internal/devices/register", post(register_device))
+        .route(
+            "/internal/devices/{device_id}/update",
+            post(update_device),
+        )
+        .route(
+            "/internal/devices/{device_id}/revoke",
+            post(revoke_device),
+        )
         // internal API (called by tRPC, not by browser)
         .route("/internal/telemetry/ingest", post(ingest_telemetry))
         .route("/internal/health", get(health))
@@ -91,6 +100,38 @@ async fn create_api_token(
         .create_api_token(account_id, &request.label)
         .await?;
     Ok(Json(response))
+}
+
+async fn register_device(
+    State(state): State<AppState>,
+    Json(request): Json<RegisterDeviceRequest>,
+) -> Result<Json<serde_json::Value>> {
+    let admin_id = request.admin_id;
+    let device = state.access.register_device(request, admin_id).await?;
+    Ok(Json(serde_json::json!(device)))
+}
+
+async fn update_device(
+    State(state): State<AppState>,
+    Path(device_id): Path<String>,
+    Json(mut request): Json<UpdateDeviceRequest>,
+) -> Result<Json<serde_json::Value>> {
+    request.device_id = device_id;
+    let admin_id = request.admin_id;
+    let device = state.access.update_device(request, admin_id).await?;
+    Ok(Json(serde_json::json!(device)))
+}
+
+async fn revoke_device(
+    State(state): State<AppState>,
+    Path(device_id): Path<String>,
+    Json(request): Json<RevokeDeviceRequest>,
+) -> Result<Json<serde_json::Value>> {
+    state
+        .access
+        .revoke_device(&device_id, request.admin_id)
+        .await?;
+    Ok(Json(serde_json::json!({ "success": true })))
 }
 
 async fn create_rule(

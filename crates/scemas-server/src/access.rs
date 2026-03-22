@@ -231,6 +231,91 @@ impl AccessManager {
         Ok(device)
     }
 
+    pub async fn register_device(
+        &self,
+        request: RegisterDeviceRequest,
+        admin_id: Uuid,
+    ) -> Result<DeviceIdentity> {
+        let row: DeviceRow = sqlx::query_as(
+            "INSERT INTO devices (device_id, device_type, zone, status) VALUES ($1, $2, $3, 'active')
+             ON CONFLICT (device_id) DO UPDATE SET device_type = EXCLUDED.device_type, zone = EXCLUDED.zone
+             RETURNING device_id, device_type, zone, status",
+        )
+        .bind(&request.device_id)
+        .bind(&request.device_type)
+        .bind(&request.zone)
+        .fetch_one(&self.db)
+        .await?;
+
+        let device = row.try_into_identity()?;
+
+        self.insert_audit_log(
+            Some(admin_id),
+            "device.registered",
+            serde_json::json!({
+                "deviceId": request.device_id,
+                "deviceType": request.device_type,
+                "zone": request.zone,
+            }),
+        )
+        .await?;
+
+        Ok(device)
+    }
+
+    pub async fn update_device(
+        &self,
+        request: UpdateDeviceRequest,
+        admin_id: Uuid,
+    ) -> Result<DeviceIdentity> {
+        let row: DeviceRow = sqlx::query_as(
+            "UPDATE devices SET device_type = COALESCE($1, device_type), zone = COALESCE($2, zone), status = COALESCE($3, status) WHERE device_id = $4 RETURNING device_id, device_type, zone, status",
+        )
+        .bind(&request.device_type)
+        .bind(&request.zone)
+        .bind(&request.status)
+        .fetch_optional(&self.db)
+        .await?
+        .ok_or_else(|| Error::NotFound(format!("device {} not found", request.device_id)))?;
+
+        let device = row.try_into_identity()?;
+
+        self.insert_audit_log(
+            Some(admin_id),
+            "device.updated",
+            serde_json::json!({
+                "deviceId": request.device_id,
+                "deviceType": request.device_type,
+                "zone": request.zone,
+                "status": request.status,
+            }),
+        )
+        .await?;
+
+        Ok(device)
+    }
+
+    pub async fn revoke_device(&self, device_id: &str, admin_id: Uuid) -> Result<()> {
+        let rows = sqlx::query("UPDATE devices SET status = 'revoked' WHERE device_id = $1")
+            .bind(device_id)
+            .execute(&self.db)
+            .await?
+            .rows_affected();
+
+        if rows == 0 {
+            return Err(Error::NotFound(format!("device {device_id} not found")));
+        }
+
+        self.insert_audit_log(
+            Some(admin_id),
+            "device.revoked",
+            serde_json::json!({ "deviceId": device_id }),
+        )
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn create_api_token(
         &self,
         account_id: Uuid,
@@ -375,6 +460,31 @@ pub struct AuthSessionResponse {
     pub token: String,
     pub expires_at: DateTime<Utc>,
     pub user: UserInformation,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RegisterDeviceRequest {
+    pub device_id: String,
+    pub device_type: String,
+    pub zone: String,
+    pub admin_id: Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateDeviceRequest {
+    pub device_id: String,
+    pub device_type: Option<String>,
+    pub zone: Option<String>,
+    pub status: Option<String>,
+    pub admin_id: Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RevokeDeviceRequest {
+    pub admin_id: Uuid,
 }
 
 pub struct DeviceAuthorizationRequest {

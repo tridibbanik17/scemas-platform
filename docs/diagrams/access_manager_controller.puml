@@ -1,0 +1,138 @@
+@startuml access_management_controller
+hide empty description
+
+' AccessManager controller statechart (repository pattern)
+' models the actual implemented auth + device management flows
+
+skinparam state {
+  BackgroundColor<<idle>> #F2F4F4
+  BorderColor<<idle>> #7F8C8D
+  FontColor<<idle>> #2C3E50
+
+  BackgroundColor<<auth>> #FCEAE8
+  BorderColor<<auth>> #ea9a97
+  FontColor<<auth>> #6B3A38
+
+  BackgroundColor<<session>> #D6EAF8
+  BorderColor<<session>> #2980B9
+  FontColor<<session>> #1A5276
+
+  BackgroundColor<<admin>> #EDE8F5
+  BorderColor<<admin>> #a692c3
+  FontColor<<admin>> #4A3767
+
+  BackgroundColor<<device>> #D5F5E3
+  BorderColor<<device>> #27AE60
+  FontColor<<device>> #1E8449
+
+  BackgroundColor<<error>> #FDEBD0
+  BorderColor<<error>> #E67E22
+  FontColor<<error>> #7E5109
+
+  StartColor black
+  EndColor black
+}
+
+' ──────────────────────────────────
+' REPOSITORY: ACCOUNT DB
+' ──────────────────────────────────
+
+state "Idle" as IDLE <<idle>>
+note right of IDLE
+  Server running.
+  Account DB connected.
+  Device registry loaded
+  from JSON catalog (bulk sync).
+end note
+
+' ──────────────────────────────────
+' AUTHENTICATION (signup + login)
+' ──────────────────────────────────
+
+state "SignUp" as SU <<auth>> {
+  state "CollectUserInfo" as CUI <<auth>>
+  state "HashPassword" as HP <<auth>>
+  state "StoreAccount" as SA <<auth>>
+  CUI --> HP : email, username, password
+  HP --> SA : argon2 hash
+  SA --> ISS : account created (role=operator)
+}
+
+state "Login" as LOG <<auth>> {
+  state "FetchByEmail" as FE <<auth>>
+  state "VerifyHash" as VH <<auth>>
+  FE --> VH : account found
+}
+
+state "IssueSession" as ISS <<session>> {
+  state "SignJWT" as SJ <<session>>
+  state "PersistToken" as PT <<session>>
+  state "SetCookie" as SC <<session>>
+  SJ --> PT : HS256 + claims(sub, role, exp)
+  PT --> SC : active_session_tokens row
+}
+
+' ──────────────────────────────────
+' AUTHORIZED (role-based routing)
+' ──────────────────────────────────
+
+state "Authorized" as AUTH <<session>>
+note right of AUTH
+  Middleware validates JWT,
+  extracts role, gates routes:
+  operator -> /dashboard
+  admin -> /rules
+  viewer -> /display
+end note
+
+' ──────────────────────────────────
+' ADMIN: ACCOUNT MANAGEMENT
+' ──────────────────────────────────
+
+state "ManageAccounts" as MA <<admin>> {
+  state "UpdateDetails" as UD <<admin>>
+  state "UpdateRole" as UR <<admin>>
+  state "ResetPassword" as RP <<admin>>
+  state "RevokeSession" as RS <<admin>>
+  state "ManageApiTokens" as MAT <<admin>>
+}
+
+' ──────────────────────────────────
+' ADMIN: DEVICE MANAGEMENT
+' ──────────────────────────────────
+
+state "ManageDevices" as MD <<device>> {
+  state "RegisterDevice" as RD <<device>>
+  state "UpdateDevice" as UPD <<device>>
+  state "RevokeDevice" as RVD <<device>>
+  RD : insert into devices table
+  UPD : update zone, type, status
+  RVD : set status = 'revoked'
+}
+
+' ──────────────────────────────────
+' TRANSITIONS
+' ──────────────────────────────────
+
+[*] --> IDLE : server startup\n(sync_device_registry)
+
+IDLE --> SU : user visits /sign-up
+IDLE --> LOG : user visits /sign-in
+
+SU --> ISS : account stored
+LOG --> ISS : password verified
+VH --> ISS : hash matches
+
+ISS --> AUTH : cookie set
+
+AUTH --> MA : admin action
+AUTH --> MD : admin action
+AUTH --> IDLE : logout (clear cookie)
+
+MA --> AUTH : action complete
+MD --> AUTH : action complete
+
+LOG --> IDLE : invalid credentials\n(audit: auth.login.failure)
+SU --> IDLE : duplicate email/username\n(audit: auth.signup.failure)
+
+@enduml

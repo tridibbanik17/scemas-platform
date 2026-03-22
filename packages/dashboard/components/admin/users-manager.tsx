@@ -128,39 +128,40 @@ export function UsersManager() {
     <div className="space-y-6">
       <ActiveSessionsPanel />
 
-      <form
-        className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-5"
-        onSubmit={handleSubmit}
-      >
-        <Input name="email" placeholder="email" type="email" required />
-        <Input name="username" placeholder="username" minLength={3} required />
-        <Input name="password" placeholder="password" type="password" minLength={8} required />
-        <select
-          className="h-7 w-full rounded-md border border-input bg-input/20 px-2 text-sm md:text-xs/relaxed dark:bg-input/30"
-          defaultValue="operator"
-          name="role"
-        >
-          {roles.map(role => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
-        </select>
-        <Button disabled={createUser.isPending} type="submit">
-          {createUser.isPending ? <Spinner /> : 'create account'}
-        </Button>
-      </form>
-
-      {submissionError ? (
-        <p className="text-sm text-destructive" role="alert">
-          {submissionError}
-        </p>
-      ) : null}
-
       <div className="rounded-lg border border-border bg-card">
         <div className="border-b border-border px-4 py-3 text-sm font-medium">
           accounts and permissions
         </div>
+
+        <form
+          className="grid gap-3 border-b border-border px-4 py-4 md:grid-cols-5"
+          onSubmit={handleSubmit}
+        >
+          <Input name="email" placeholder="email" type="email" required />
+          <Input name="username" placeholder="username" minLength={3} required />
+          <Input name="password" placeholder="password" type="password" minLength={8} required />
+          <select
+            className="h-7 w-full rounded-md border border-input bg-input/20 px-2 text-sm md:text-xs/relaxed dark:bg-input/30"
+            defaultValue="operator"
+            name="role"
+          >
+            {roles.map(role => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+          <Button disabled={createUser.isPending} type="submit">
+            {createUser.isPending ? <Spinner /> : 'create account'}
+          </Button>
+        </form>
+
+        {submissionError ? (
+          <p className="px-4 py-2 text-sm text-destructive" role="alert">
+            {submissionError}
+          </p>
+        ) : null}
+
         {users.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground text-pretty">
             no accounts exist yet. use the form above to create one.
@@ -309,7 +310,7 @@ function ActiveSessionsPanel() {
         <p className="px-4 py-8 text-center text-sm text-muted-foreground">no active sessions</p>
       ) : (
         <>
-          <div className="min-h-[calc(theme(spacing.14)*4)] divide-y divide-border">
+          <div className={`min-h-[calc(theme(spacing.14)*${SESSIONS_PAGE_SIZE})] divide-y divide-border`}>
             {pageSessions.map(session => (
               <div
                 className="flex h-14 items-center justify-between px-4"

@@ -25,14 +25,6 @@ export default async function UserDetailPage({ params }: { params: Promise<{ use
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-          href="/users"
-        >
-          back to users
-        </Link>
-      </div>
-      <div>
         <h1 className="text-xl font-semibold text-balance">{account.username}</h1>
         <p className="text-sm text-muted-foreground text-pretty">
           edit account details, reset password, or remove this account

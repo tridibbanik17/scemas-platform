@@ -8,6 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       navItems={[
         { href: '/rules', label: 'threshold rules' },
         { href: '/users', label: 'users' },
+        { href: '/devices', label: 'devices' },
         { href: '/reports', label: 'hazard reports' },
         { href: '/health', label: 'platform health' },
         { href: '/audit', label: 'audit logs' },

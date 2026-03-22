@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { CopyButton } from '@/components/copy-button'
 import { Spinner } from '@/components/ui/spinner'
+import { cn } from '@/lib/utils'
 import { trpc } from '@/lib/trpc'
 
 const ROW_HEIGHT = 36
@@ -20,9 +21,18 @@ type AuditEntry = {
 export function AuditLogList() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const auditQuery = trpc.audit.list.useQuery({ limit: 200 })
 
-  const logs = (auditQuery.data ?? []) as AuditEntry[]
+  const countQuery = trpc.audit.count.useQuery()
+  const totalCount = countQuery.data ?? 0
+
+  const auditQuery = trpc.audit.list.useInfiniteQuery(
+    { limit: 100 },
+    {
+      getNextPageParam: lastPage => lastPage.nextCursor,
+    },
+  )
+
+  const logs = (auditQuery.data?.pages.flatMap(p => p.items) ?? []) as AuditEntry[]
 
   const virtualizer = useVirtualizer({
     count: logs.length,
@@ -34,6 +44,18 @@ export function AuditLogList() {
   useLayoutEffect(() => {
     virtualizer.measure()
   }, [expandedId])
+
+  // fetch next page when scrolled near bottom
+  const virtualItems = virtualizer.getVirtualItems()
+  const lastItem = virtualItems[virtualItems.length - 1]
+  if (
+    lastItem &&
+    lastItem.index >= logs.length - 20 &&
+    auditQuery.hasNextPage &&
+    !auditQuery.isFetchingNextPage
+  ) {
+    auditQuery.fetchNextPage()
+  }
 
   if (auditQuery.isLoading) {
     return (
@@ -74,7 +96,7 @@ export function AuditLogList() {
       <AuditHeader />
       <div className="h-[400px] overflow-y-auto md:h-[600px]" ref={scrollRef}>
         <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
-          {virtualizer.getVirtualItems().map(virtualRow => {
+          {virtualItems.map(virtualRow => {
             const log = logs[virtualRow.index]
             const isExpanded = expandedId === log.id
 
@@ -85,7 +107,10 @@ export function AuditLogList() {
                 style={{ height: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
               >
                 <button
-                  className={`grid w-full grid-cols-[7rem_1fr_6rem] items-center border-b border-border px-4 text-left text-xs transition-colors hover:bg-muted/50 ${isExpanded ? 'bg-muted/30' : ''}`}
+                  className={cn(
+                    'grid w-full grid-cols-[7rem_1fr_6rem] items-center border-b border-border px-4 text-left text-xs',
+                    isExpanded ? 'bg-muted/30' : '',
+                  )}
                   onClick={() => handleToggle(log)}
                   style={{ height: ROW_HEIGHT }}
                   type="button"
@@ -94,7 +119,7 @@ export function AuditLogList() {
                     {formatTimestamp(log.createdAt)}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className={`size-1.5 shrink-0 rounded-full ${actionColor(log.action)}`} />
+                    <span className={cn('size-1.5 shrink-0 rounded-full', actionColor(log.action))} />
                     <span className="truncate font-medium">{log.action}</span>
                   </span>
                   <span className="truncate text-right font-mono text-muted-foreground">
@@ -120,8 +145,15 @@ export function AuditLogList() {
           })}
         </div>
       </div>
-      <div className="border-t border-border px-4 py-2">
-        <p className="text-xs tabular-nums text-muted-foreground">{logs.length} events</p>
+      <div className="flex items-center justify-between border-t border-border px-4 py-2">
+        <p className="text-xs tabular-nums text-muted-foreground">
+          {logs.length} loaded of {totalCount} events
+        </p>
+        {auditQuery.isFetchingNextPage ? (
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Spinner /> loading more
+          </span>
+        ) : null}
       </div>
     </div>
   )

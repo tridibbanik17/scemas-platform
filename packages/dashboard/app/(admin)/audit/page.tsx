@@ -4,7 +4,8 @@ import { AuditEventPanel } from './audit-event-panel'
 
 // AlertAndAuditLogDB viewer (admin-only)
 export default async function AuditPage() {
-  void serverTrpc.audit.list.prefetch({ limit: 200 })
+  void serverTrpc.audit.list.prefetchInfinite({ limit: 100 })
+  void serverTrpc.audit.count.prefetch()
   void serverTrpc.audit.frequency.prefetch({ hours: 24 })
 
   return (
