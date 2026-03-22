@@ -1,5 +1,13 @@
 @startuml alerting_management_controller
 hide empty description
+skinparam stateFontSize 36
+skinparam stateArrowFontSize 34
+
+skinparam note {
+  FontSize 30
+  BackgroundColor #FFFDE7
+  BorderColor #F9A825
+}
 
 skinparam state {
   BackgroundColor<<idle>> #F2F4F4
@@ -25,6 +33,10 @@ skinparam state {
   BackgroundColor<<rule>> #FFF9C4
   BorderColor<<rule>> #F9A825
   FontColor<<rule>> #5D4037
+
+  BackgroundColor<<error>> #FDEBD0
+  BorderColor<<error>> #E67E22
+  FontColor<<error>> #7E5109
 
   StartColor black
   EndColor black
@@ -90,20 +102,26 @@ state "Lifecycle" as LC <<lifecycle>> {
 }
 
 ' ──────────────────────────────────
-' TRANSITIONS
+' ERROR
 ' ──────────────────────────────────
 
-[*] --> BB : load rules from DB on startup
+state "Error" as ERR <<error>> {
+  state "LogFailure" as LF <<error>>
+  state "NotifyAdmin" as NA <<error>>
+  state "AttemptRecovery" as REC <<error>>
+  LF --> NA : failure logged
+  NA --> REC : admin notified
+}
 
-BB --> EVAL : new sensor reading arrives
-EVAL --> BB : post alert to blackboard
-EVAL --> DISP : alerts created
-DISP --> BB : dispatch results logged
+' ──────────────────────────────────
+' SHUTTING DOWN
+' ──────────────────────────────────
 
-BB --> LC : operator action on alert
-LC --> BB : alert status updated
-
-MAR --> [*] : no rules violated (reading discarded)
+state "ShuttingDown" as SHUT <<idle>> {
+  state "FlushPendingAlerts" as FPA <<idle>>
+  state "PersistState" as PS <<idle>>
+  FPA --> PS : alerts flushed
+}
 
 ' ──────────────────────────────────
 ' RULE MANAGEMENT (admin path)
@@ -115,6 +133,34 @@ state "RuleManagement" as RM <<rule>> {
   state "DeleteRule" as DR <<rule>>
 }
 
-RM --> BB : upsert or remove rule\nfrom blackboard
+' ──────────────────────────────────
+' TRANSITIONS
+' ──────────────────────────────────
+
+[*] --> BB : load rules from DB on startup
+
+BB --> EVAL : new sensor reading arrives
+BB --> RM   : admin creates/modifies/deletes rule
+BB --> LC   : operator action on alert
+BB --> SHUT : shutdown signal received
+
+EVAL --> BB   : post alert to blackboard
+EVAL --> DISP : alerts created
+EVAL --> ERR  : evaluation failure
+
+MAR --> BB : no rules violated (discard reading)
+
+DISP --> BB  : dispatch results logged
+DISP --> ERR : dispatch failure
+
+LC --> BB : alert status updated
+
+RM --> BB : upsert or remove rule from blackboard
+
+ERR --> BB   : recovery: resume
+ERR --> SHUT : unrecoverable failure
+
+SHUT --> [*] : shutdown complete
+SHUT --> [*] : shutdown failed
 
 @enduml
