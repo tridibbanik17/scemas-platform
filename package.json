@@ -16,11 +16,12 @@
     "db:push": "if [ -f .env ]; then set -a && . ./.env && set +a; fi; bun --filter @scemas/db push && bun --filter @scemas/db ensure-users",
     "db:generate": "bun --filter @scemas/db generate",
     "db:studio": "bun --filter @scemas/db studio",
-    "seed": "bun run scripts/seed.ts",
     "cf:types": "bun --filter @scemas/api cf:types && bun --filter @scemas/dashboard cf:types",
     "cf:deploy": "bun --filter @scemas/api cf:deploy && bun --filter @scemas/dashboard cf:deploy"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.11",
+    "@types/node": "^25.5.0",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.56.0",
     "turbo": "^2.8.20",

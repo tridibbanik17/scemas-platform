@@ -1,4 +1,5 @@
 mod reload;
+mod seed;
 
 use chrono::{DateTime, Utc};
 use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
@@ -10,6 +11,7 @@ use scemas_core::models::{
 };
 use scemas_core::regions;
 use scemas_server::{RuntimeError, ScemasRuntime};
+use seed::SeedArgs;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::env;
@@ -34,6 +36,7 @@ const CLI_AFTER_LONG_HELP: &str = "\
 examples:
   scemas dev
   scemas dev --reload
+  scemas dev seed --spike
   scemas health --output json
   scemas rules list --output json
   scemas alerts list --status active
@@ -50,6 +53,7 @@ const DEV_AFTER_LONG_HELP: &str = "\
 examples:
   scemas dev
   scemas dev --reload
+  scemas dev seed --rate 4 --spike-ratio 0.1
   scemas dev engine --reload
   scemas dev check";
 
@@ -117,8 +121,8 @@ enum DevCommands {
     Engine(DevRunArgs),
     /// run only the next.js dashboard dev server
     Dashboard,
-    /// run the repo seed script with passthrough arguments
-    Seed(PassthroughArgs),
+    /// continuously emit simulated sensor readings into the ingest pipeline
+    Seed(SeedArgs),
     /// run the webhook echo script with passthrough arguments
     Webhook(PassthroughArgs),
     /// run formatter, clippy, and dashboard typecheck
@@ -493,26 +497,38 @@ fn handle_completion(args: CompletionArgs) -> Result<(), CliError> {
 }
 
 async fn handle_dev(args: DevCommandArgs, root: &Path, debug: bool) -> Result<(), CliError> {
-    ensure_first_time_setup(root)?;
+    ensure_env_file(root)?;
     load_dotenv(root);
 
     let command = resolve_dev_command(args);
 
     match command {
-        DevCommands::Up(args) => dev_up(root, debug, args).await,
+        DevCommands::Up(args) => {
+            ensure_first_time_setup(root)?;
+            dev_up(root, debug, args).await
+        }
         DevCommands::Engine(args) => run_engine_command(root, args).await,
-        DevCommands::Dashboard => run_checked(
-            root,
-            "bun",
-            &[
-                OsString::from("--filter"),
-                OsString::from("@scemas/dashboard"),
-                OsString::from("dev"),
-            ],
-        ),
-        DevCommands::Seed(args) => run_script(root, "seed.ts", &args.args),
-        DevCommands::Webhook(args) => run_script(root, "webhook-echo.ts", &args.args),
-        DevCommands::Check => dev_check(root),
+        DevCommands::Dashboard => {
+            ensure_first_time_setup(root)?;
+            run_checked(
+                root,
+                "bun",
+                &[
+                    OsString::from("--filter"),
+                    OsString::from("@scemas/dashboard"),
+                    OsString::from("dev"),
+                ],
+            )
+        }
+        DevCommands::Seed(args) => seed::run(root, args).await,
+        DevCommands::Webhook(args) => {
+            ensure_first_time_setup(root)?;
+            run_script(root, "webhook-echo.ts", &args.args)
+        }
+        DevCommands::Check => {
+            ensure_first_time_setup(root)?;
+            dev_check(root)
+        }
     }
 }
 
@@ -524,20 +540,26 @@ fn load_dotenv(root: &Path) {
     let _ = dotenvy::from_path_override(root.join(".env"));
 }
 
-fn ensure_first_time_setup(root: &Path) -> Result<(), CliError> {
-    let sentinel = root.join(".derived");
-    if sentinel.is_file() {
-        return Ok(());
-    }
-
-    tracing::info!("first-time setup");
-
+fn ensure_env_file(root: &Path) -> Result<(), CliError> {
     let env_path = root.join(".env");
     let env_example = root.join(".env.example");
     if !env_path.is_file() && env_example.is_file() {
         fs::copy(&env_example, &env_path)?;
         tracing::info!("created .env from .env.example");
     }
+
+    Ok(())
+}
+
+fn ensure_first_time_setup(root: &Path) -> Result<(), CliError> {
+    ensure_env_file(root)?;
+
+    let sentinel = root.join(".derived");
+    if sentinel.is_file() {
+        return Ok(());
+    }
+
+    tracing::info!("first-time setup");
 
     run_checked(root, "bun", &[OsString::from("install")])?;
     fs::write(sentinel, b"")?;
@@ -1767,5 +1789,40 @@ mod tests {
         };
 
         assert!(engine_args.reload);
+    }
+
+    #[test]
+    fn seed_subcommand_parses_native_flags() {
+        let cli = Cli::try_parse_from([
+            "scemas",
+            "dev",
+            "seed",
+            "--rate",
+            "4",
+            "--spike-ratio",
+            "0.1",
+            "--remote",
+            "http://localhost:3001",
+            "--request-timeout-ms",
+            "12000",
+        ])
+        .expect("seed command should parse");
+
+        let Commands::Dev(args) = cli.command else {
+            panic!("expected dev command");
+        };
+
+        let DevCommands::Seed(seed_args) = resolve_dev_command(args) else {
+            panic!("expected seed command");
+        };
+
+        assert_eq!(seed_args.rate_per_second, 4.0);
+        assert_eq!(seed_args.spike_ratio, Some(0.1));
+        assert_eq!(
+            seed_args.remote_url.as_deref(),
+            Some("http://localhost:3001")
+        );
+        assert_eq!(seed_args.request_timeout_ms, Some(12_000));
+        assert!(!seed_args.spike);
     }
 }

@@ -14,6 +14,9 @@ import { z } from 'zod'
 import { normalizeZoneId } from '@/lib/zones'
 import { getDb, getManager } from './cached'
 import { acknowledgeAlert } from './handlers/alerts'
+import { hasScope } from './api-tokens'
+
+export type McpUserContext = { accountId: string; scopes: string[] }
 
 // zod v4 schemas are runtime-compatible with the MCP SDK, but TS can't unify
 // z4.$ZodType across package boundaries (our zod vs the SDK's bundled copy)
@@ -21,7 +24,7 @@ function schema<T extends Record<string, unknown>>(s: T): T & ZodRawShapeCompat 
   return s as T & ZodRawShapeCompat
 }
 
-export function createMcpServer() {
+export function createMcpServer(ctx?: McpUserContext) {
   const server = new McpServer({ name: 'scemas', version: '0.1.0' })
 
   server.registerTool(
@@ -124,15 +127,19 @@ export function createMcpServer() {
   server.registerTool(
     'acknowledge_alert',
     {
-      description:
-        'acknowledge an environmental alert. pass the accountId of the operator performing the action.',
+      description: 'acknowledge an environmental alert. requires write:operator scope.',
       inputSchema: schema({
         alertId: z.uuid().describe('alert UUID to acknowledge'),
-        accountId: z.uuid().describe('account UUID of the operator'),
       }),
     },
-    async ({ alertId, accountId }) => {
-      const result = await acknowledgeAlert(alertId, accountId)
+    async ({ alertId }) => {
+      if (!ctx) {
+        return { content: [{ type: 'text', text: 'authentication required' }], isError: true }
+      }
+      if (!hasScope(ctx.scopes, 'write:operator')) {
+        return { content: [{ type: 'text', text: 'insufficient scope: write:operator required' }], isError: true }
+      }
+      const result = await acknowledgeAlert(alertId, ctx.accountId)
       if (!result.success) {
         return { content: [{ type: 'text', text: result.error }], isError: true }
       }

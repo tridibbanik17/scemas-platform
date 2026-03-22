@@ -135,7 +135,7 @@ scemas-dev() {
 }
 
 scemas-seed() {
-  (cd "$SCEMAS_ROOT" && bun run scripts/seed.ts "$@")
+  (cd "$SCEMAS_ROOT" && cargo run -p scemas-cli -- dev seed "$@")
 }
 
 scemas-webhook() {

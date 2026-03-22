@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { trpc } from '@/lib/trpc'
 
-export function LoginForm() {
+export function LoginForm({ returnTo }: { returnTo?: string }) {
   const router = useRouter()
   const { ok: backendOk, loading: backendLoading } = useBackendPing()
   const [submissionError, setSubmissionError] = useState<string | null>(null)
@@ -17,7 +17,8 @@ export function LoginForm() {
     onSuccess: result => {
       setSubmissionError(null)
       startTransition(() => {
-        router.replace(result.redirectTo)
+        const dest = returnTo && returnTo.startsWith('/') ? returnTo : result.redirectTo
+        router.replace(dest)
         router.refresh()
       })
     },

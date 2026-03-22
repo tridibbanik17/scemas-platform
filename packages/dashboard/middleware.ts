@@ -12,7 +12,7 @@ const protectedPaths = ['/dashboard', '/alerts', '/subscriptions', '/metrics']
 // routes that require admin role
 const adminPaths = ['/rules', '/users', '/devices', '/reports', '/health', '/audit']
 
-const publicPaths = ['/sign-in', '/sign-up', '/display', '/api']
+const publicPaths = ['/sign-in', '/sign-up', '/display', '/api', '/oauth', '/.well-known', '/mcp']
 const authPaths = ['/sign-in', '/sign-up']
 
 export async function middleware(request: NextRequest) {

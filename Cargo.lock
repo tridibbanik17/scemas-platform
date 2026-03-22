@@ -2070,6 +2070,7 @@ dependencies = [
  "clap",
  "clap_complete",
  "dotenvy",
+ "rand 0.10.0",
  "reqwest",
  "scemas-core",
  "scemas-server",

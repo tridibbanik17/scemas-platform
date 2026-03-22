@@ -6,8 +6,6 @@ import { eq } from 'drizzle-orm'
 import { createDb } from '../src/client'
 import { accounts } from '../src/schema'
 
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://scemas:scemas@localhost:5432/scemas'
-
 const defaultUsers = [
   { email: 'admin@example.com', username: 'admin', password: '1234', role: 'admin' },
   { email: 'operator@example.com', username: 'operator', password: '1234', role: 'operator' },
@@ -15,7 +13,7 @@ const defaultUsers = [
   { email: 'public@example.com', username: 'public', password: '1234', role: 'viewer' },
 ] as const
 
-const db = createDb(DATABASE_URL)
+const db = createDb(process.env.DATABASE_URL ?? 'postgres://scemas:scemas@localhost:5432/scemas')
 
 async function ensureUsers() {
   for (const user of defaultUsers) {

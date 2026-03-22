@@ -265,6 +265,71 @@ export const hazardReports = pgTable(
   }),
 )
 
+export const oauthClients = pgTable(
+  'oauth_clients',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    clientId: text('client_id').notNull(),
+    clientSecretHash: text('client_secret_hash'),
+    clientName: text('client_name').notNull(),
+    redirectUris: text('redirect_uris').array().notNull(),
+    grantTypes: text('grant_types')
+      .array()
+      .notNull()
+      .default(sql`ARRAY['authorization_code','refresh_token']`),
+    scope: text('scope').notNull().default('read'),
+    clientUri: text('client_uri'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    clientIdIdx: uniqueIndex('oauth_clients_client_id_idx').on(table.clientId),
+  }),
+)
+
+export const oauthCodes = pgTable(
+  'oauth_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    codeHash: text('code_hash').notNull(),
+    clientId: text('client_id').notNull(),
+    accountId: uuid('account_id')
+      .references(() => accounts.id, { onDelete: 'cascade' })
+      .notNull(),
+    redirectUri: text('redirect_uri').notNull(),
+    scope: text('scope').notNull(),
+    codeChallenge: text('code_challenge').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    codeHashIdx: uniqueIndex('oauth_codes_code_hash_idx').on(table.codeHash),
+  }),
+)
+
+export const oauthTokens = pgTable(
+  'oauth_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    accessTokenHash: text('access_token_hash').notNull(),
+    refreshTokenHash: text('refresh_token_hash'),
+    clientId: text('client_id').notNull(),
+    accountId: uuid('account_id')
+      .references(() => accounts.id, { onDelete: 'cascade' })
+      .notNull(),
+    scope: text('scope').notNull(),
+    accessExpiresAt: timestamp('access_expires_at', { withTimezone: true }).notNull(),
+    refreshExpiresAt: timestamp('refresh_expires_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    accessTokenHashIdx: uniqueIndex('oauth_tokens_access_hash_idx').on(table.accessTokenHash),
+    refreshTokenHashIdx: uniqueIndex('oauth_tokens_refresh_hash_idx').on(table.refreshTokenHash),
+    accountIdx: index('oauth_tokens_account_idx').on(table.accountId),
+  }),
+)
+
 export const platformStatus = pgTable(
   'platform_status',
   {
