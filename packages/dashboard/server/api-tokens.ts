@@ -20,7 +20,7 @@ async function hashToken(token: string): Promise<string> {
 }
 
 export type TokenValidationResult =
-  | { valid: true; tokenId: string }
+  | { valid: true; tokenId: string; accountId: string; scopes: string[] }
   | { valid: false; status: number; error: string }
 
 export async function validateToken(
@@ -47,7 +47,7 @@ export async function validateToken(
   const hash = await hashToken(parts[1])
   const row = await db.query.apiTokens.findFirst({
     where: eq(apiTokens.tokenHash, hash),
-    columns: { id: true, expiresAt: true, revokedAt: true },
+    columns: { id: true, accountId: true, scopes: true, expiresAt: true, revokedAt: true },
   })
 
   if (!row) {
@@ -68,7 +68,20 @@ export async function validateToken(
     .execute()
     .catch(() => {})
 
-  return { valid: true, tokenId: row.id }
+  return { valid: true, tokenId: row.id, accountId: row.accountId, scopes: row.scopes }
+}
+
+const SCOPE_HIERARCHY: Record<string, string[]> = {
+  'write:admin': ['write:admin', 'write:operator', 'read'],
+  'write:operator': ['write:operator', 'read'],
+  read: ['read'],
+}
+
+export function hasScope(granted: string[], required: string): boolean {
+  return granted.some(scope => {
+    const expanded = SCOPE_HIERARCHY[scope]
+    return expanded ? expanded.includes(required) : false
+  })
 }
 
 export async function countActiveTokens(db: Database, accountId: string): Promise<number> {

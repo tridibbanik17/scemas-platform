@@ -319,6 +319,7 @@ impl AccessManager {
         &self,
         account_id: Uuid,
         label: &str,
+        scopes: Option<Vec<String>>,
     ) -> Result<CreateApiTokenResponse> {
         let active_count =
             sqlx::query_scalar::<_, i64>(
@@ -334,6 +335,7 @@ impl AccessManager {
             )));
         }
 
+        let scopes = expand_token_scopes(scopes.unwrap_or_else(|| vec!["read".to_owned()]));
         let token = generate_api_token();
         let token_hash = sha256_hex(&token);
         let last4 = &token[token.len() - 4..];
@@ -341,20 +343,21 @@ impl AccessManager {
         let expires_at = Utc::now() + Duration::days(TOKEN_EXPIRY_DAYS);
 
         let id = sqlx::query_scalar::<_, Uuid>(
-            "INSERT INTO api_tokens (account_id, token_hash, label, prefix, expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+            "INSERT INTO api_tokens (account_id, token_hash, label, prefix, expires_at, scopes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
         )
         .bind(account_id)
         .bind(&token_hash)
         .bind(label)
         .bind(&prefix)
         .bind(expires_at)
+        .bind(&scopes)
         .fetch_one(&self.db)
         .await?;
 
         self.insert_audit_log(
             Some(account_id),
             "api_token.created",
-            serde_json::json!({ "tokenId": id.to_string(), "label": label, "prefix": prefix }),
+            serde_json::json!({ "tokenId": id.to_string(), "label": label, "prefix": prefix, "scopes": scopes }),
         )
         .await?;
 
@@ -364,6 +367,7 @@ impl AccessManager {
             prefix,
             label: label.to_owned(),
             expires_at,
+            scopes,
         })
     }
 
@@ -551,6 +555,7 @@ impl DeviceRow {
 pub struct CreateApiTokenRequest {
     pub account_id: String,
     pub label: String,
+    pub scopes: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -561,6 +566,7 @@ pub struct CreateApiTokenResponse {
     pub prefix: String,
     pub label: String,
     pub expires_at: DateTime<Utc>,
+    pub scopes: Vec<String>,
 }
 
 fn generate_api_token() -> String {
@@ -643,4 +649,36 @@ fn device_status_label(status: &DeviceStatus) -> &'static str {
         DeviceStatus::Inactive => "inactive",
         DeviceStatus::Revoked => "revoked",
     }
+}
+
+fn expand_token_scopes(scopes: Vec<String>) -> Vec<String> {
+    let mut expanded = Vec::new();
+    for scope in &scopes {
+        match scope.as_str() {
+            "write:admin" => {
+                for s in &["read", "write:operator", "write:admin"] {
+                    if !expanded.contains(&(*s).to_owned()) {
+                        expanded.push((*s).to_owned());
+                    }
+                }
+            }
+            "write:operator" => {
+                for s in &["read", "write:operator"] {
+                    if !expanded.contains(&(*s).to_owned()) {
+                        expanded.push((*s).to_owned());
+                    }
+                }
+            }
+            other => {
+                let owned = other.to_owned();
+                if !expanded.contains(&owned) {
+                    expanded.push(owned);
+                }
+            }
+        }
+    }
+    if expanded.is_empty() {
+        expanded.push("read".to_owned());
+    }
+    expanded
 }

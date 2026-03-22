@@ -1,4 +1,7 @@
+import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi'
 import { z } from 'zod'
+
+extendZodWithOpenApi(z)
 
 export const RoleSchema = z.enum(['operator', 'admin', 'viewer'])
 export type Role = z.infer<typeof RoleSchema>
@@ -249,7 +252,13 @@ export const PublicFeedStatusSchema = z.object({
 })
 export type PublicFeedStatus = z.infer<typeof PublicFeedStatusSchema>
 
-export const CreateApiTokenSchema = z.object({ label: z.string().min(1).max(100) })
+export const TokenScopeSchema = z.enum(['read', 'write:operator', 'write:admin'])
+export type TokenScope = z.infer<typeof TokenScopeSchema>
+
+export const CreateApiTokenSchema = z.object({
+  label: z.string().min(1).max(100),
+  scopes: z.array(TokenScopeSchema).optional(),
+})
 export type CreateApiToken = z.infer<typeof CreateApiTokenSchema>
 
 export const ApiTokenSchema = z.object({
@@ -258,6 +267,7 @@ export const ApiTokenSchema = z.object({
   label: z.string(),
   accountId: z.string().uuid(),
   accountUsername: z.string().optional(),
+  scopes: z.array(TokenScopeSchema),
   expiresAt: z.string().datetime(),
   revokedAt: z.string().datetime().nullable(),
   lastUsedAt: z.string().datetime().nullable(),

@@ -7,10 +7,8 @@ import { TRPCError } from '@trpc/server'
 import { eq, desc, and, ne, inArray, gte, or, lt, count } from 'drizzle-orm'
 import { z } from 'zod'
 import { expandZoneIdSet, expandZoneSensorIdSet, normalizeZoneId } from '@/lib/zones'
-import { callRustEndpoint, extractRustErrorMessage } from '../rust-client'
+import { acknowledgeAlert, resolveAlert } from '../handlers/alerts'
 import { router, protectedProcedure } from '../trpc'
-
-const SuccessResponseSchema = z.object({ success: z.literal(true) })
 
 export const alertsRouter = router({
   // list alerts filtered by the operator's subscription preferences (cursor-based)
@@ -145,54 +143,22 @@ export const alertsRouter = router({
   acknowledge: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input, ctx }) => {
-      const { data, status } = await callRustEndpoint(
-        `/internal/alerting/alerts/${input.id}/acknowledge`,
-        { method: 'POST', body: JSON.stringify({ userId: ctx.user.id }) },
-      )
-
-      if (status >= 400) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: extractRustErrorMessage(data) ?? 'alert acknowledgement failed',
-        })
+      const result = await acknowledgeAlert(input.id, ctx.user.id)
+      if (!result.success) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: result.error })
       }
-
-      const parsed = SuccessResponseSchema.safeParse(data)
-      if (!parsed.success) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'rust alerting manager returned an invalid acknowledge response',
-        })
-      }
-
-      return parsed.data
+      return { success: true as const }
     }),
 
   // resolve an alert (lifecycle: acknowledged → resolved)
   resolve: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input, ctx }) => {
-      const { data, status } = await callRustEndpoint(
-        `/internal/alerting/alerts/${input.id}/resolve`,
-        { method: 'POST', body: JSON.stringify({ userId: ctx.user.id }) },
-      )
-
-      if (status >= 400) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: extractRustErrorMessage(data) ?? 'alert resolution failed',
-        })
+      const result = await resolveAlert(input.id, ctx.user.id)
+      if (!result.success) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: result.error })
       }
-
-      const parsed = SuccessResponseSchema.safeParse(data)
-      if (!parsed.success) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'rust alerting manager returned an invalid resolve response',
-        })
-      }
-
-      return parsed.data
+      return { success: true as const }
     }),
 })
 

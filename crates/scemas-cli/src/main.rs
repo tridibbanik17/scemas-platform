@@ -1,18 +1,21 @@
+mod reload;
+
 use chrono::{DateTime, Utc};
 use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::{Shell, generate};
+use reload::EngineRuntime;
 use scemas_core::config::Config;
 use scemas_core::models::{
     AlertStatus, Comparison, MetricType, ParseModelError, RuleStatus, Severity, ThresholdRule,
 };
 use scemas_core::regions;
 use scemas_server::{RuntimeError, ScemasRuntime};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::env;
 use std::ffi::OsString;
 use std::fs::{self, OpenOptions};
-use std::io::{self, Write};
+use std::io::{self, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::str::FromStr;
@@ -28,16 +31,16 @@ use uuid::Uuid;
     version
 )]
 struct Cli {
+    #[arg(long, global = true)]
+    debug: bool,
+
     #[command(subcommand)]
     command: Commands,
 }
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    Dev {
-        #[command(subcommand)]
-        command: DevCommands,
-    },
+    Dev(DevCommandArgs),
     Completion(CompletionArgs),
     Health(HealthArgs),
     Rules {
@@ -54,16 +57,29 @@ enum Commands {
     },
 }
 
+#[derive(Args, Debug)]
+struct DevCommandArgs {
+    #[command(flatten)]
+    up: DevRunArgs,
+
+    #[command(subcommand)]
+    command: Option<DevCommands>,
+}
+
 #[derive(Subcommand, Debug)]
 enum DevCommands {
-    Up,
-    DbUp,
-    DbDown,
-    Engine,
+    Up(DevRunArgs),
+    Engine(DevRunArgs),
     Dashboard,
     Seed(PassthroughArgs),
     Webhook(PassthroughArgs),
     Check,
+}
+
+#[derive(Args, Debug, Clone, Copy)]
+struct DevRunArgs {
+    #[arg(long, help = "restart scemas-server when rust/data files change")]
+    reload: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -235,6 +251,9 @@ struct CreateTokenArgs {
 
     #[arg(long)]
     label: String,
+
+    #[arg(long, value_delimiter = ',')]
+    scopes: Option<Vec<String>>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -268,11 +287,98 @@ enum CliError {
 
     #[error("{process} exited unexpectedly (exit code: {code})")]
     ChildExited { process: &'static str, code: String },
+
+    #[error("remote API error (status {status}): {body}")]
+    RemoteApi { status: u16, body: String },
+
+    #[error(transparent)]
+    Http(#[from] reqwest::Error),
+}
+
+struct RemoteClient {
+    base_url: String,
+    token: String,
+    client: reqwest::Client,
+}
+
+impl RemoteClient {
+    async fn get_json(&self, path: &str) -> Result<serde_json::Value, CliError> {
+        let response = self
+            .client
+            .get(format!("{}{path}", self.base_url))
+            .bearer_auth(&self.token)
+            .send()
+            .await?;
+
+        let status = response.status();
+        let body = response.text().await?;
+
+        if !status.is_success() {
+            return Err(CliError::RemoteApi {
+                status: status.as_u16(),
+                body,
+            });
+        }
+
+        serde_json::from_str(&body).map_err(CliError::from)
+    }
+
+    async fn post_json(
+        &self,
+        path: &str,
+        body: &impl Serialize,
+    ) -> Result<serde_json::Value, CliError> {
+        let response = self
+            .client
+            .post(format!("{}{path}", self.base_url))
+            .bearer_auth(&self.token)
+            .json(body)
+            .send()
+            .await?;
+
+        let status = response.status();
+        let text = response.text().await?;
+
+        if !status.is_success() {
+            return Err(CliError::RemoteApi {
+                status: status.as_u16(),
+                body: text,
+            });
+        }
+
+        serde_json::from_str(&text).map_err(CliError::from)
+    }
+}
+
+enum Backend {
+    Local(ScemasRuntime),
+    Remote(RemoteClient),
+}
+
+fn load_backend_config() -> Option<(String, String)> {
+    let url = env::var("SCEMAS_API_URL").ok()?;
+    let token = env::var("SCEMAS_API_TOKEN").ok()?;
+    Some((url, token))
+}
+
+async fn load_backend() -> Result<Backend, CliError> {
+    if let Some((base_url, token)) = load_backend_config() {
+        return Ok(Backend::Remote(RemoteClient {
+            base_url,
+            token,
+            client: reqwest::Client::new(),
+        }));
+    }
+
+    let runtime = load_runtime().await?;
+    Ok(Backend::Local(runtime))
 }
 
 #[tokio::main]
 async fn main() -> Result<(), CliError> {
     let cli = Cli::parse();
+    let debug = cli.debug;
+    init_cli_tracing(debug);
 
     match cli.command {
         Commands::Completion(args) => handle_completion(args),
@@ -282,7 +388,7 @@ async fn main() -> Result<(), CliError> {
             load_dotenv(&root);
 
             match command {
-                Commands::Dev { command } => handle_dev(command, &root).await,
+                Commands::Dev(args) => handle_dev(args, &root, debug).await,
                 Commands::Health(args) => handle_health(args).await,
                 Commands::Rules { command } => handle_rules(command).await,
                 Commands::Alerts { command } => handle_alerts(command).await,
@@ -293,6 +399,22 @@ async fn main() -> Result<(), CliError> {
     }
 }
 
+fn init_cli_tracing(debug: bool) {
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
+    let env_filter = if debug {
+        env_filter.add_directive(tracing_subscriber::filter::LevelFilter::DEBUG.into())
+    } else {
+        env_filter
+    };
+
+    tracing_subscriber::fmt()
+        .with_env_filter(env_filter)
+        .with_ansi(io::stderr().is_terminal())
+        .try_init()
+        .ok();
+}
+
 fn handle_completion(args: CompletionArgs) -> Result<(), CliError> {
     let mut command = Cli::command();
     let command_name = command.get_name().to_owned();
@@ -300,23 +422,15 @@ fn handle_completion(args: CompletionArgs) -> Result<(), CliError> {
     Ok(())
 }
 
-async fn handle_dev(command: DevCommands, root: &Path) -> Result<(), CliError> {
+async fn handle_dev(args: DevCommandArgs, root: &Path, debug: bool) -> Result<(), CliError> {
     ensure_first_time_setup(root)?;
     load_dotenv(root);
 
+    let command = resolve_dev_command(args);
+
     match command {
-        DevCommands::Up => dev_up(root).await,
-        DevCommands::DbUp => start_db(root),
-        DevCommands::DbDown => stop_db(root),
-        DevCommands::Engine => run_checked(
-            root,
-            "cargo",
-            &[
-                OsString::from("run"),
-                OsString::from("-p"),
-                OsString::from("scemas-server"),
-            ],
-        ),
+        DevCommands::Up(args) => dev_up(root, debug, args).await,
+        DevCommands::Engine(args) => run_engine_command(root, args).await,
         DevCommands::Dashboard => run_checked(
             root,
             "bun",
@@ -332,6 +446,10 @@ async fn handle_dev(command: DevCommands, root: &Path) -> Result<(), CliError> {
     }
 }
 
+fn resolve_dev_command(args: DevCommandArgs) -> DevCommands {
+    args.command.unwrap_or(DevCommands::Up(args.up))
+}
+
 fn load_dotenv(root: &Path) {
     let _ = dotenvy::from_path_override(root.join(".env"));
 }
@@ -342,91 +460,139 @@ fn ensure_first_time_setup(root: &Path) -> Result<(), CliError> {
         return Ok(());
     }
 
-    eprintln!("[scemas] first-time setup");
+    tracing::info!("first-time setup");
 
     let env_path = root.join(".env");
     let env_example = root.join(".env.example");
     if !env_path.is_file() && env_example.is_file() {
         fs::copy(&env_example, &env_path)?;
-        eprintln!("[scemas] created .env from .env.example");
+        tracing::info!("created .env from .env.example");
     }
 
     run_checked(root, "bun", &[OsString::from("install")])?;
     fs::write(sentinel, b"")?;
-    eprintln!("[scemas] first-time setup complete");
+    tracing::info!("first-time setup complete");
 
     Ok(())
 }
 
 async fn handle_health(args: HealthArgs) -> Result<(), CliError> {
-    let runtime = load_runtime().await?;
-    let (total_received, total_accepted, total_rejected) =
-        runtime.distribution.load_ingestion_counters().await?;
-    let rows: Vec<PlatformStatusRow> = sqlx::query_as(
-        "SELECT subsystem, status, uptime, latency_ms, error_rate, time
-         FROM platform_status
-         ORDER BY time DESC
-         LIMIT $1",
-    )
-    .bind(args.limit)
-    .fetch_all(&runtime.pool)
-    .await?;
+    let backend = load_backend().await?;
 
-    let report = HealthReport {
-        ingestion_counters: IngestionCounters {
-            total_received,
-            total_accepted,
-            total_rejected,
-        },
-        platform_status: rows.into_iter().map(PlatformStatusView::from).collect(),
-    };
-
-    print_output(args.output.output, &report, |value| {
-        let latest_status = value
-            .platform_status
-            .first()
-            .map(|status| {
+    match backend {
+        Backend::Remote(client) => {
+            let status: serde_json::Value = client.get_json("/api/v1/status").await?;
+            print_output(args.output.output, &status, |v| {
                 format!(
-                    "latest {}={} at {}",
-                    status.subsystem, status.status, status.time
+                    "zones reporting={}/{} generated={}",
+                    v.get("zonesReporting")
+                        .and_then(|x| x.as_i64())
+                        .unwrap_or(0),
+                    v.get("zonesTotal").and_then(|x| x.as_i64()).unwrap_or(0),
+                    v.get("generatedAt").and_then(|x| x.as_str()).unwrap_or("?"),
                 )
             })
-            .unwrap_or_else(|| "no platform status rows recorded".to_owned());
-        format!(
-            "ingestion received={} accepted={} rejected={}\n{}",
-            value.ingestion_counters.total_received,
-            value.ingestion_counters.total_accepted,
-            value.ingestion_counters.total_rejected,
-            latest_status,
-        )
-    })
-}
-
-async fn handle_rules(command: RuleCommands) -> Result<(), CliError> {
-    let runtime = load_runtime().await?;
-
-    match command {
-        RuleCommands::List(args) => {
-            let rows: Vec<ThresholdRuleRow> = sqlx::query_as(
-                "SELECT id, metric_type, threshold_value, comparison, zone, rule_status
-                 FROM threshold_rules
-                 ORDER BY created_at DESC
+        }
+        Backend::Local(runtime) => {
+            let (total_received, total_accepted, total_rejected) =
+                runtime.distribution.load_ingestion_counters().await?;
+            let rows: Vec<PlatformStatusRow> = sqlx::query_as(
+                "SELECT subsystem, status, uptime, latency_ms, error_rate, time
+                 FROM platform_status
+                 ORDER BY time DESC
                  LIMIT $1",
             )
             .bind(args.limit)
             .fetch_all(&runtime.pool)
             .await?;
 
-            let rules = rows
-                .into_iter()
-                .map(TryInto::try_into)
-                .collect::<Result<Vec<ThresholdRule>, CliError>>()?;
+            let report = HealthReport {
+                ingestion_counters: IngestionCounters {
+                    total_received,
+                    total_accepted,
+                    total_rejected,
+                },
+                platform_status: rows.into_iter().map(PlatformStatusView::from).collect(),
+            };
 
-            print_output(args.output.output, &rules, |value| {
-                format_rule_list(value.as_slice())
+            print_output(args.output.output, &report, |value| {
+                let latest_status = value
+                    .platform_status
+                    .first()
+                    .map(|status| {
+                        format!(
+                            "latest {}={} at {}",
+                            status.subsystem, status.status, status.time
+                        )
+                    })
+                    .unwrap_or_else(|| "no platform status rows recorded".to_owned());
+                format!(
+                    "ingestion received={} accepted={} rejected={}\n{}",
+                    value.ingestion_counters.total_received,
+                    value.ingestion_counters.total_accepted,
+                    value.ingestion_counters.total_rejected,
+                    latest_status,
+                )
             })
         }
+    }
+}
+
+async fn handle_rules(command: RuleCommands) -> Result<(), CliError> {
+    let backend = load_backend().await?;
+
+    match command {
+        RuleCommands::List(args) => match backend {
+            Backend::Remote(client) => {
+                let rules: Vec<RemoteRule> =
+                    serde_json::from_value(client.get_json("/api/v1/rules").await?)?;
+                print_output(args.output.output, &rules, |value| {
+                    if value.is_empty() {
+                        return "no rules found".to_owned();
+                    }
+                    value
+                        .iter()
+                        .map(|r| {
+                            format!(
+                                "{} {} {} {} zone={} status={}",
+                                r.id,
+                                r.metric_type,
+                                r.comparison,
+                                r.threshold_value,
+                                r.zone.as_deref().unwrap_or("all_zones"),
+                                r.rule_status,
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                })
+            }
+            Backend::Local(runtime) => {
+                let rows: Vec<ThresholdRuleRow> = sqlx::query_as(
+                    "SELECT id, metric_type, threshold_value, comparison, zone, rule_status
+                     FROM threshold_rules
+                     ORDER BY created_at DESC
+                     LIMIT $1",
+                )
+                .bind(args.limit)
+                .fetch_all(&runtime.pool)
+                .await?;
+
+                let rules = rows
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<Vec<ThresholdRule>, CliError>>()?;
+
+                print_output(args.output.output, &rules, |value| {
+                    format_rule_list(value.as_slice())
+                })
+            }
+        },
         RuleCommands::Create(args) => {
+            let Backend::Local(runtime) = backend else {
+                tracing::warn!("rule creation requires local access (no SCEMAS_API_URL)");
+                return Ok(());
+            };
             let rule = runtime
                 .alerting
                 .create_rule(
@@ -450,6 +616,10 @@ async fn handle_rules(command: RuleCommands) -> Result<(), CliError> {
             })
         }
         RuleCommands::Edit(args) => {
+            let Backend::Local(runtime) = backend else {
+                tracing::warn!("rule editing requires local access (no SCEMAS_API_URL)");
+                return Ok(());
+            };
             let rule = runtime
                 .alerting
                 .edit_rule(
@@ -470,6 +640,10 @@ async fn handle_rules(command: RuleCommands) -> Result<(), CliError> {
             })
         }
         RuleCommands::SetStatus(args) => {
+            let Backend::Local(runtime) = backend else {
+                tracing::warn!("rule status change requires local access (no SCEMAS_API_URL)");
+                return Ok(());
+            };
             runtime
                 .alerting
                 .update_rule_status(args.id, args.status.clone(), args.updated_by)
@@ -486,6 +660,10 @@ async fn handle_rules(command: RuleCommands) -> Result<(), CliError> {
             })
         }
         RuleCommands::Delete(args) => {
+            let Backend::Local(runtime) = backend else {
+                tracing::warn!("rule deletion requires local access (no SCEMAS_API_URL)");
+                return Ok(());
+            };
             runtime
                 .alerting
                 .delete_rule(args.id, args.deleted_by)
@@ -505,75 +683,139 @@ async fn handle_rules(command: RuleCommands) -> Result<(), CliError> {
 }
 
 async fn handle_alerts(command: AlertCommands) -> Result<(), CliError> {
-    let runtime = load_runtime().await?;
+    let backend = load_backend().await?;
 
     match command {
-        AlertCommands::List(args) => {
-            let rows = if let Some(status) = args.status {
-                sqlx::query_as::<_, AlertRow>(
-                    "SELECT id, rule_id, sensor_id, severity, status, triggered_value, zone, metric_type, created_at, acknowledged_by, acknowledged_at, resolved_at
-                     FROM alerts
-                     WHERE status = $1
-                     ORDER BY created_at DESC
-                     LIMIT $2",
-                )
-                .bind(status.to_string())
-                .bind(args.limit)
-                .fetch_all(&runtime.pool)
-                .await?
-            } else {
-                sqlx::query_as::<_, AlertRow>(
-                    "SELECT id, rule_id, sensor_id, severity, status, triggered_value, zone, metric_type, created_at, acknowledged_by, acknowledged_at, resolved_at
-                     FROM alerts
-                     ORDER BY created_at DESC
-                     LIMIT $1",
-                )
-                .bind(args.limit)
-                .fetch_all(&runtime.pool)
-                .await?
-            };
+        AlertCommands::List(args) => match backend {
+            Backend::Remote(client) => {
+                let mut query = format!("?limit={}", args.limit);
+                if let Some(ref status) = args.status {
+                    query = format!("{query}&status={status}");
+                }
+                let alerts: Vec<RemoteAlert> = serde_json::from_value(
+                    client.get_json(&format!("/api/v1/alerts{query}")).await?,
+                )?;
+                print_output(args.output.output, &alerts, |value| {
+                    if value.is_empty() {
+                        return "no alerts found".to_owned();
+                    }
+                    value
+                        .iter()
+                        .map(|a| {
+                            format!(
+                                "{} {} sev={} {} value={} zone={} sensor={}",
+                                a.id,
+                                a.status,
+                                a.severity,
+                                a.metric_type,
+                                a.triggered_value,
+                                a.zone,
+                                a.sensor_id,
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                })
+            }
+            Backend::Local(runtime) => {
+                let rows = if let Some(status) = args.status {
+                    sqlx::query_as::<_, AlertRow>(
+                        "SELECT id, rule_id, sensor_id, severity, status, triggered_value, zone, metric_type, created_at, acknowledged_by, acknowledged_at, resolved_at
+                         FROM alerts
+                         WHERE status = $1
+                         ORDER BY created_at DESC
+                         LIMIT $2",
+                    )
+                    .bind(status.to_string())
+                    .bind(args.limit)
+                    .fetch_all(&runtime.pool)
+                    .await?
+                } else {
+                    sqlx::query_as::<_, AlertRow>(
+                        "SELECT id, rule_id, sensor_id, severity, status, triggered_value, zone, metric_type, created_at, acknowledged_by, acknowledged_at, resolved_at
+                         FROM alerts
+                         ORDER BY created_at DESC
+                         LIMIT $1",
+                    )
+                    .bind(args.limit)
+                    .fetch_all(&runtime.pool)
+                    .await?
+                };
 
-            let alerts = rows
-                .into_iter()
-                .map(TryInto::try_into)
-                .collect::<Result<Vec<AlertView>, CliError>>()?;
+                let alerts = rows
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<Vec<AlertView>, CliError>>()?;
 
-            print_output(args.output.output, &alerts, |value| {
-                format_alert_list(value.as_slice())
-            })
-        }
-        AlertCommands::Acknowledge(args) => {
-            runtime
-                .alerting
-                .acknowledge_alert(args.id, args.user_id)
-                .await?;
-
-            let response = SuccessResponse {
-                success: true,
-                id: args.id,
-                action: "acknowledged".to_owned(),
-            };
-
-            print_output(args.output.output, &response, |value| {
-                format!("alert {} {}", value.id, value.action)
-            })
-        }
-        AlertCommands::Resolve(args) => {
-            runtime
-                .alerting
-                .resolve_alert(args.id, args.user_id)
-                .await?;
-
-            let response = SuccessResponse {
-                success: true,
-                id: args.id,
-                action: "resolved".to_owned(),
-            };
-
-            print_output(args.output.output, &response, |value| {
-                format!("alert {} {}", value.id, value.action)
-            })
-        }
+                print_output(args.output.output, &alerts, |value| {
+                    format_alert_list(value.as_slice())
+                })
+            }
+        },
+        AlertCommands::Acknowledge(args) => match backend {
+            Backend::Remote(client) => {
+                let _: serde_json::Value = client
+                    .post_json(
+                        &format!("/api/v1/alerts/{}/acknowledge", args.id),
+                        &serde_json::json!({}),
+                    )
+                    .await?;
+                let response = SuccessResponse {
+                    success: true,
+                    id: args.id,
+                    action: "acknowledged".to_owned(),
+                };
+                print_output(args.output.output, &response, |value| {
+                    format!("alert {} {}", value.id, value.action)
+                })
+            }
+            Backend::Local(runtime) => {
+                runtime
+                    .alerting
+                    .acknowledge_alert(args.id, args.user_id)
+                    .await?;
+                let response = SuccessResponse {
+                    success: true,
+                    id: args.id,
+                    action: "acknowledged".to_owned(),
+                };
+                print_output(args.output.output, &response, |value| {
+                    format!("alert {} {}", value.id, value.action)
+                })
+            }
+        },
+        AlertCommands::Resolve(args) => match backend {
+            Backend::Remote(client) => {
+                let _: serde_json::Value = client
+                    .post_json(
+                        &format!("/api/v1/alerts/{}/resolve", args.id),
+                        &serde_json::json!({}),
+                    )
+                    .await?;
+                let response = SuccessResponse {
+                    success: true,
+                    id: args.id,
+                    action: "resolved".to_owned(),
+                };
+                print_output(args.output.output, &response, |value| {
+                    format!("alert {} {}", value.id, value.action)
+                })
+            }
+            Backend::Local(runtime) => {
+                runtime
+                    .alerting
+                    .resolve_alert(args.id, args.user_id)
+                    .await?;
+                let response = SuccessResponse {
+                    success: true,
+                    id: args.id,
+                    action: "resolved".to_owned(),
+                };
+                print_output(args.output.output, &response, |value| {
+                    format!("alert {} {}", value.id, value.action)
+                })
+            }
+        },
     }
 }
 
@@ -584,7 +826,7 @@ async fn handle_tokens(command: TokenCommands) -> Result<(), CliError> {
         TokenCommands::Create(args) => {
             let response = runtime
                 .access
-                .create_api_token(args.account_id, &args.label)
+                .create_api_token(args.account_id, &args.label, args.scopes)
                 .await?;
 
             print_output(args.output.output, &response, |value| {
@@ -599,24 +841,23 @@ async fn handle_tokens(command: TokenCommands) -> Result<(), CliError> {
     }
 }
 
-async fn dev_up(root: &Path) -> Result<(), CliError> {
-    start_db(root)?;
-    eprintln!("[scemas] waiting for postgres...");
+async fn dev_up(root: &Path, debug: bool, args: DevRunArgs) -> Result<(), CliError> {
+    start_db(root, debug)?;
+    tracing::info!("waiting for postgres");
     tokio::time::sleep(Duration::from_secs(2)).await;
     ensure_database(root)?;
-    eprintln!("[scemas] starting rust engine + dashboard");
-    eprintln!("[scemas] engine on :3001, dashboard on :3000 (ctrl+c to stop all)");
+    tracing::info!("starting rust engine + dashboard");
+    tracing::info!("engine on :3001, dashboard on :3000 (ctrl+c to stop all)");
 
-    let mut engine = spawn_engine(root)?;
+    let mut engine = EngineRuntime::spawn(root, args.reload)?;
     let mut dashboard = spawn_dashboard(root)?;
 
     tokio::select! {
         _ = tokio::signal::ctrl_c() => {
-            eprintln!();
-            eprintln!("[scemas] shutting down...");
-            terminate_child(&mut engine).await?;
+            tracing::info!("shutting down");
+            engine.terminate().await?;
             terminate_child(&mut dashboard).await?;
-            eprintln!("[scemas] stopped");
+            tracing::info!("stopped");
             Ok(())
         }
         status = engine.wait() => {
@@ -629,9 +870,29 @@ async fn dev_up(root: &Path) -> Result<(), CliError> {
         }
         status = dashboard.wait() => {
             let status = status?;
-            terminate_child(&mut engine).await?;
+            engine.terminate().await?;
             Err(CliError::ChildExited {
                 process: "dashboard",
+                code: exit_code_string(&status),
+            })
+        }
+    }
+}
+
+async fn run_engine_command(root: &Path, args: DevRunArgs) -> Result<(), CliError> {
+    let mut engine = EngineRuntime::spawn(root, args.reload)?;
+
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {
+            tracing::info!("shutting down");
+            engine.terminate().await?;
+            tracing::info!("stopped");
+            Ok(())
+        }
+        status = engine.wait() => {
+            let status = status?;
+            Err(CliError::ChildExited {
+                process: "engine",
                 code: exit_code_string(&status),
             })
         }
@@ -680,14 +941,22 @@ fn ensure_database(root: &Path) -> Result<(), CliError> {
     )
 }
 
-fn start_db(root: &Path) -> Result<(), CliError> {
+fn start_db(root: &Path, debug: bool) -> Result<(), CliError> {
     if has_command("initdb") && has_command("pg_ctl") && has_command("createdb") {
         let pgdata = postgres_data_dir(root);
         let pgport = postgres_port();
 
+        if local_postgres_running(root, &pgdata)? {
+            tracing::info!(target: "scemas::postgres", "postgres already running, reusing existing server");
+            if debug {
+                print_postgres_debug(root, &pgdata, &pgport);
+            }
+            return Ok(());
+        }
+
         initialize_postgres(root, &pgdata, &pgport)?;
-        eprintln!("[scemas] starting postgres via local postgres binaries");
-        run_checked(
+        tracing::info!(target: "scemas::postgres", "starting postgres via local postgres binaries");
+        if let Err(error) = run_checked(
             root,
             "pg_ctl",
             &[
@@ -697,15 +966,29 @@ fn start_db(root: &Path) -> Result<(), CliError> {
                 pgdata.join("postgres.log").into_os_string(),
                 OsString::from("start"),
             ],
-        )?;
+        ) {
+            if local_postgres_running(root, &pgdata)? {
+                tracing::warn!(target: "scemas::postgres", "pg_ctl start reported failure, but postgres is already running");
+                if debug {
+                    print_postgres_debug(root, &pgdata, &pgport);
+                }
+                return Ok(());
+            }
+
+            if debug {
+                print_postgres_debug(root, &pgdata, &pgport);
+            }
+
+            return Err(error);
+        }
 
         let _ = Command::new("createdb")
             .current_dir(root)
             .args([
                 OsString::from("-h"),
-                pgdata.into_os_string(),
+                pgdata.as_os_str().to_owned(),
                 OsString::from("-p"),
-                OsString::from(pgport),
+                OsString::from(pgport.clone()),
                 OsString::from("-U"),
                 OsString::from("scemas"),
                 OsString::from("scemas"),
@@ -715,11 +998,15 @@ fn start_db(root: &Path) -> Result<(), CliError> {
             .stderr(Stdio::null())
             .status()?;
 
+        if debug {
+            print_postgres_debug(root, &pgdata, &pgport);
+        }
+
         return Ok(());
     }
 
     if has_command("docker") {
-        eprintln!("[scemas] starting postgres via docker-compose");
+        tracing::info!(target: "scemas::postgres", "starting postgres via docker-compose");
         return run_checked(
             root,
             "docker",
@@ -738,50 +1025,12 @@ fn start_db(root: &Path) -> Result<(), CliError> {
     ))
 }
 
-fn stop_db(root: &Path) -> Result<(), CliError> {
-    let mut attempted = false;
-    let pgdata = postgres_data_dir(root);
-
-    if has_command("pg_ctl") && pgdata.is_dir() {
-        attempted = true;
-        run_checked(
-            root,
-            "pg_ctl",
-            &[
-                OsString::from("-D"),
-                pgdata.into_os_string(),
-                OsString::from("stop"),
-            ],
-        )?;
-    }
-
-    if has_command("docker") {
-        attempted = true;
-        run_checked(
-            root,
-            "docker",
-            &[
-                OsString::from("compose"),
-                OsString::from("-f"),
-                root.join("docker-compose.yml").into_os_string(),
-                OsString::from("down"),
-            ],
-        )?;
-    }
-
-    if attempted || !postgres_data_dir(root).exists() {
-        Ok(())
-    } else {
-        Err(CliError::MissingCommand("pg_ctl or docker".to_owned()))
-    }
-}
-
 fn initialize_postgres(root: &Path, pgdata: &Path, pgport: &str) -> Result<(), CliError> {
     if pgdata.is_dir() {
         return Ok(());
     }
 
-    eprintln!("[scemas] initializing postgres in {}", pgdata.display());
+    tracing::info!(target: "scemas::postgres", pgdata = %pgdata.display(), "initializing postgres");
     run_checked(
         root,
         "initdb",
@@ -805,6 +1054,123 @@ fn initialize_postgres(root: &Path, pgdata: &Path, pgport: &str) -> Result<(), C
     append_line(pgdata.join("postgresql.conf"), &format!("port = {pgport}"))?;
 
     Ok(())
+}
+
+fn local_postgres_running(root: &Path, pgdata: &Path) -> Result<bool, CliError> {
+    if !pgdata.is_dir() {
+        return Ok(false);
+    }
+
+    let status = Command::new("pg_ctl")
+        .current_dir(root)
+        .args([
+            OsString::from("-D"),
+            pgdata.as_os_str().to_owned(),
+            OsString::from("status"),
+        ])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()?;
+
+    Ok(status.success())
+}
+
+fn print_postgres_debug(root: &Path, pgdata: &Path, pgport: &str) {
+    tracing::debug!(target: "scemas::postgres", pgdata = %pgdata.display(), pgport, "postgres debug state");
+    print_command_output(
+        root,
+        "pg_ctl status",
+        "pg_ctl",
+        &[
+            OsString::from("-D"),
+            pgdata.as_os_str().to_owned(),
+            OsString::from("status"),
+        ],
+    );
+    print_command_output(
+        root,
+        "pg_isready",
+        "pg_isready",
+        &[
+            OsString::from("-h"),
+            OsString::from("127.0.0.1"),
+            OsString::from("-p"),
+            OsString::from(pgport),
+            OsString::from("-U"),
+            OsString::from("scemas"),
+            OsString::from("-d"),
+            OsString::from("scemas"),
+        ],
+    );
+    print_log_tail(&pgdata.join("postgres.log"), 20);
+}
+
+fn print_command_output(root: &Path, label: &str, program: &str, args: &[OsString]) {
+    if !has_command(program) {
+        tracing::debug!(target: "scemas::postgres", label, "debug command not found on PATH");
+        return;
+    }
+
+    match Command::new(program)
+        .current_dir(root)
+        .args(args)
+        .stdin(Stdio::null())
+        .output()
+    {
+        Ok(output) => {
+            tracing::debug!(
+                target: "scemas::postgres",
+                label,
+                command = %render_command(program, args),
+                exit = %exit_code_string(&output.status),
+                "debug command completed"
+            );
+
+            let stdout = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+            if !stdout.is_empty() {
+                for line in stdout.lines() {
+                    tracing::debug!(target: "scemas::postgres", label, log_line = line, "debug command stdout");
+                }
+            }
+
+            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+            if !stderr.is_empty() {
+                for line in stderr.lines() {
+                    tracing::debug!(target: "scemas::postgres", label, log_line = line, "debug command stderr");
+                }
+            }
+        }
+        Err(error) => {
+            tracing::warn!(target: "scemas::postgres", label, %error, "debug command failed to execute");
+        }
+    }
+}
+
+fn print_log_tail(path: &Path, lines: usize) {
+    match fs::read_to_string(path) {
+        Ok(contents) => {
+            let tail = contents.lines().rev().take(lines).collect::<Vec<&str>>();
+
+            if tail.is_empty() {
+                tracing::debug!(target: "scemas::postgres", path = %path.display(), "postgres log is empty");
+                return;
+            }
+
+            tracing::debug!(
+                target: "scemas::postgres",
+                path = %path.display(),
+                line_count = tail.len(),
+                "postgres log tail"
+            );
+            for line in tail.iter().rev() {
+                tracing::debug!(target: "scemas::postgres", log_line = *line, "postgres log");
+            }
+        }
+        Err(error) => {
+            tracing::warn!(target: "scemas::postgres", path = %path.display(), %error, "could not read postgres log");
+        }
+    }
 }
 
 fn append_line(path: PathBuf, line: &str) -> Result<(), CliError> {
@@ -834,6 +1200,11 @@ fn run_script(root: &Path, script_name: &str, passthrough_args: &[String]) -> Re
 
 fn run_checked(root: &Path, program: &str, args: &[OsString]) -> Result<(), CliError> {
     require_command(program)?;
+    tracing::debug!(
+        target: "scemas::command",
+        command = %render_command(program, args),
+        "running command"
+    );
 
     let status = Command::new(program)
         .current_dir(root)
@@ -847,31 +1218,6 @@ fn run_checked(root: &Path, program: &str, args: &[OsString]) -> Result<(), CliE
 }
 
 fn spawn_engine(root: &Path) -> Result<Child, CliError> {
-    if has_command("watchexec") {
-        return spawn_checked(
-            root,
-            "watchexec",
-            &[
-                OsString::from("--restart"),
-                OsString::from("--watch"),
-                OsString::from("crates"),
-                OsString::from("--watch"),
-                OsString::from("data"),
-                OsString::from("--watch"),
-                OsString::from("Cargo.toml"),
-                OsString::from("--watch"),
-                OsString::from("Cargo.lock"),
-                OsString::from("--exts"),
-                OsString::from("rs,toml,json,lock"),
-                OsString::from("--"),
-                OsString::from("cargo"),
-                OsString::from("run"),
-                OsString::from("-p"),
-                OsString::from("scemas-server"),
-            ],
-        );
-    }
-
     spawn_checked(
         root,
         "cargo",
@@ -897,6 +1243,11 @@ fn spawn_dashboard(root: &Path) -> Result<Child, CliError> {
 
 fn spawn_checked(root: &Path, program: &str, args: &[OsString]) -> Result<Child, CliError> {
     require_command(program)?;
+    tracing::debug!(
+        target: "scemas::command",
+        command = %render_command(program, args),
+        "spawning command"
+    );
 
     let child = TokioCommand::new(program)
         .current_dir(root)
@@ -929,16 +1280,20 @@ fn ensure_success(program: &str, args: &[OsString], status: ExitStatus) -> Resul
         return Ok(());
     }
 
+    Err(CliError::CommandFailed {
+        program: render_command(program, args),
+        code: exit_code_string(&status),
+    })
+}
+
+fn render_command(program: &str, args: &[OsString]) -> String {
     let rendered_args = args
         .iter()
         .map(|arg| arg.to_string_lossy().into_owned())
         .collect::<Vec<String>>()
         .join(" ");
 
-    Err(CliError::CommandFailed {
-        program: format!("{program} {rendered_args}").trim().to_owned(),
-        code: exit_code_string(&status),
-    })
+    format!("{program} {rendered_args}").trim().to_owned()
 }
 
 fn require_command(program: &str) -> Result<(), CliError> {
@@ -1215,10 +1570,41 @@ impl TryFrom<AlertRow> for AlertView {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RemoteAlert {
+    id: Uuid,
+    rule_id: Option<Uuid>,
+    sensor_id: String,
+    severity: i32,
+    status: String,
+    triggered_value: f64,
+    zone: String,
+    metric_type: String,
+    created_at: DateTime<Utc>,
+    acknowledged_by: Option<Uuid>,
+    acknowledged_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RemoteRule {
+    id: Uuid,
+    metric_type: String,
+    threshold_value: f64,
+    comparison: String,
+    zone: Option<String>,
+    rule_status: String,
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{AlertRow, AlertStatus, AlertView, ThresholdRule, ThresholdRuleRow};
+    use super::{
+        AlertRow, AlertStatus, AlertView, Cli, Commands, DevCommands, ThresholdRule,
+        ThresholdRuleRow, resolve_dev_command,
+    };
     use chrono::Utc;
+    use clap::Parser;
     use scemas_core::models::{Comparison, MetricType, RuleStatus, Severity};
     use uuid::Uuid;
 
@@ -1264,5 +1650,52 @@ mod tests {
         assert_eq!(alert.severity, Severity::Warning);
         assert_eq!(alert.status, AlertStatus::Acknowledged);
         assert_eq!(alert.zone, "downtown_core");
+    }
+
+    #[test]
+    fn bare_dev_defaults_to_up() {
+        let cli = Cli::try_parse_from(["scemas", "dev"]).expect("dev should parse");
+
+        let Commands::Dev(args) = cli.command else {
+            panic!("expected dev command");
+        };
+
+        let DevCommands::Up(up_args) = resolve_dev_command(args) else {
+            panic!("bare dev should resolve to up");
+        };
+
+        assert!(!up_args.reload);
+    }
+
+    #[test]
+    fn bare_dev_passes_reload_to_up() {
+        let cli =
+            Cli::try_parse_from(["scemas", "dev", "--reload"]).expect("dev reload should parse");
+
+        let Commands::Dev(args) = cli.command else {
+            panic!("expected dev command");
+        };
+
+        let DevCommands::Up(up_args) = resolve_dev_command(args) else {
+            panic!("bare dev should resolve to up");
+        };
+
+        assert!(up_args.reload);
+    }
+
+    #[test]
+    fn explicit_dev_subcommand_still_parses() {
+        let cli = Cli::try_parse_from(["scemas", "dev", "engine", "--reload"])
+            .expect("engine reload should parse");
+
+        let Commands::Dev(args) = cli.command else {
+            panic!("expected dev command");
+        };
+
+        let DevCommands::Engine(engine_args) = resolve_dev_command(args) else {
+            panic!("expected explicit engine command");
+        };
+
+        assert!(engine_args.reload);
     }
 }

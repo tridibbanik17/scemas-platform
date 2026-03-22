@@ -1,0 +1,21 @@
+{
+  "name": "@scemas/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "scemas-mcp": "./src/index.ts"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@scemas/types": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.7.0"
+  }
+}

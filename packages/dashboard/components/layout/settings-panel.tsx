@@ -52,9 +52,12 @@ export function SettingsPanel({ open, onOpenChange, role }: SettingsPanelProps) 
             </>
           ) : null}
 
-          <Separator />
-
-          <PublicDisplaySection />
+          {role === 'viewer' ? (
+            <>
+              <Separator />
+              <PublicDisplaySection />
+            </>
+          ) : null}
 
           <Separator />
 

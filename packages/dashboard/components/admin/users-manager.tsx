@@ -325,7 +325,7 @@ function ActiveSessionsPanel() {
         <p className="px-4 py-8 text-center text-sm text-muted-foreground">no active sessions</p>
       ) : (
         <>
-          <div className={`min-h-[calc(theme(spacing.14)*${pageSize})] divide-y divide-border`}>
+          <div className="divide-y divide-border" style={{ minHeight: `${pageSize * 3.5}rem` }}>
             {pageSessions.map(session => (
               <div className="flex h-14 items-center justify-between px-4" key={session.tokenValue}>
                 <div className="space-y-0.5">

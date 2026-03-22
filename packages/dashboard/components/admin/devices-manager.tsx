@@ -15,7 +15,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,9 +32,9 @@ import { cn } from '@/lib/utils'
 const metricTypes = ['temperature', 'humidity', 'air_quality', 'noise_level'] as const
 
 const statusColors: Record<string, string> = {
-  active: 'bg-green-500/15 text-green-700 dark:text-green-400',
-  inactive: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400',
-  revoked: 'bg-muted text-muted-foreground',
+  active: 'border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-400',
+  inactive: 'border-yellow-500/20 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
+  revoked: 'border-border bg-muted text-muted-foreground',
 }
 
 const metricUnits: Record<string, string> = {
@@ -155,7 +154,7 @@ export function DevicesManager() {
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-card">
-          <div className="min-h-[calc(theme(spacing.12)*5)] divide-y divide-border">
+          <div className="divide-y divide-border" style={{ minHeight: `${pageSize * 3}rem` }}>
             {pageDevices.map(device => (
               <div
                 key={device.deviceId}
@@ -178,9 +177,14 @@ export function DevicesManager() {
                 }}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <Badge variant="outline" className={statusColors[device.status]}>
+                  <span
+                    className={cn(
+                      'inline-flex shrink-0 items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium',
+                      statusColors[device.status],
+                    )}
+                  >
                     {device.status}
-                  </Badge>
+                  </span>
                   <span className="truncate text-sm font-medium font-mono">{device.deviceId}</span>
                   <span className="text-xs text-muted-foreground">
                     {device.deviceType.replaceAll('_', ' ')}
@@ -263,9 +267,14 @@ function DeviceDetail({
         </div>
         <div>
           <p className="text-xs text-muted-foreground">status</p>
-          <Badge variant="outline" className={statusColors[device.status]}>
+          <span
+            className={cn(
+              'inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium',
+              statusColors[device.status],
+            )}
+          >
             {device.status}
-          </Badge>
+          </span>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">metric type</p>

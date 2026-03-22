@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   pgTable,
   uuid,
@@ -224,6 +225,10 @@ export const apiTokens = pgTable(
     tokenHash: text('token_hash').notNull(),
     label: text('label').notNull(),
     prefix: text('prefix').notNull(),
+    scopes: text('scopes')
+      .array()
+      .notNull()
+      .default(sql`ARRAY['read']`),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),

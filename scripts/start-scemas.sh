@@ -7,8 +7,6 @@
 # runs first-time setup (cp .env, bun install) automatically, tracked via .derived
 #
 # functions:
-#   scemas-db       start postgres (nix or docker, whichever is available)
-#   scemas-db-stop  stop postgres
 #   scemas-engine   start rust engine on :3001 with hot reload when watchexec is available
 #   scemas-dash     start next.js dashboard on :3000
 #   scemas-dev      start everything (db + engine + dashboard)
@@ -79,7 +77,7 @@ _scemas_engine_cmd() {
   fi
 }
 
-scemas-db() {
+_scemas_start_db() {
   if _scemas_has_nix_pg; then
     echo "[scemas] starting postgres via nix"
     pg_init 2>/dev/null
@@ -93,7 +91,7 @@ scemas-db() {
   fi
 }
 
-scemas-db-stop() {
+_scemas_stop_db() {
   if _scemas_has_nix_pg; then
     pg_stop 2>/dev/null
   fi
@@ -111,7 +109,7 @@ scemas-dash() {
 }
 
 scemas-dev() {
-  scemas-db
+  _scemas_start_db
   echo "[scemas] waiting for postgres..."
   sleep 2
   (cd "$SCEMAS_ROOT" && bun db:push)
@@ -155,7 +153,7 @@ scemas-check() {
 
 scemas-nuke() {
   echo "[scemas] stopping everything"
-  scemas-db-stop
+  _scemas_stop_db
   # kill backgrounded engine/dashboard if running
   pkill -f "scemas-server" 2>/dev/null
   pkill -f "next-server" 2>/dev/null

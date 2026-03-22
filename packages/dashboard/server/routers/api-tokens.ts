@@ -21,7 +21,7 @@ export const apiTokensRouter = router({
 
     const { data, status } = await callRustEndpoint('/internal/tokens', {
       method: 'POST',
-      body: JSON.stringify({ accountId: ctx.user.id, label: input.label }),
+      body: JSON.stringify({ accountId: ctx.user.id, label: input.label, scopes: input.scopes }),
     })
 
     if (status >= 400) {
@@ -58,6 +58,7 @@ export const apiTokensRouter = router({
         label: apiTokens.label,
         accountId: apiTokens.accountId,
         accountUsername: accounts.username,
+        scopes: apiTokens.scopes,
         expiresAt: apiTokens.expiresAt,
         revokedAt: apiTokens.revokedAt,
         lastUsedAt: apiTokens.lastUsedAt,
@@ -74,6 +75,7 @@ export const apiTokensRouter = router({
       label: row.label,
       accountId: row.accountId,
       accountUsername: isAdmin ? row.accountUsername : undefined,
+      scopes: row.scopes,
       expiresAt: row.expiresAt.toISOString(),
       revokedAt: row.revokedAt?.toISOString() ?? null,
       lastUsedAt: row.lastUsedAt?.toISOString() ?? null,

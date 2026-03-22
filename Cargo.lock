@@ -2070,6 +2070,7 @@ dependencies = [
  "clap",
  "clap_complete",
  "dotenvy",
+ "reqwest",
  "scemas-core",
  "scemas-server",
  "serde",
@@ -2077,6 +2078,8 @@ dependencies = [
  "sqlx",
  "thiserror 2.0.18",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
  "uuid",
 ]
 

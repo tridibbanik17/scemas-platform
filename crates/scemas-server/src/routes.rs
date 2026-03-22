@@ -91,7 +91,7 @@ async fn create_api_token(
         .map_err(|_| scemas_core::error::Error::Validation("invalid account_id".into()))?;
     let response = state
         .access
-        .create_api_token(account_id, &request.label)
+        .create_api_token(account_id, &request.label, request.scopes)
         .await?;
     Ok(Json(response))
 }

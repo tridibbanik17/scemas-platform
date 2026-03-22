@@ -1,6 +1,16 @@
 pub const REGION_CATALOG_JSON: &str = include_str!("regions.catalog.json");
 
+type RegionEntry = (&'static str, &'static str, &'static str);
+type DirectZoneAliasEntry = (&'static str, &'static str);
+type GroupedZoneAliasEntry = (&'static str, &'static [&'static str]);
+
 include!(concat!(env!("OUT_DIR"), "/regions_generated.rs"));
+
+pub fn region_label(zone: &str) -> Option<&'static str> {
+    REGIONS
+        .iter()
+        .find_map(|(region_id, label, _sensor_code)| (*region_id == zone).then_some(*label))
+}
 
 pub fn normalize_zone_id(zone: &str, sensor_id: Option<&str>) -> String {
     if let Some(sensor_zone) = sensor_id.and_then(canonical_zone_for_sensor) {
@@ -47,11 +57,15 @@ fn canonical_zone_ids_for_input(zone: &str) -> Vec<String> {
 }
 
 fn direct_zone_alias(zone: &str) -> Option<&'static str> {
-    generated_direct_zone_alias(zone)
+    DIRECT_ZONE_ALIASES
+        .iter()
+        .find_map(|(alias, canonical_region)| (*alias == zone).then_some(*canonical_region))
 }
 
 fn grouped_zone_alias(zone: &str) -> Option<&'static [&'static str]> {
-    generated_grouped_zone_alias(zone)
+    GROUPED_ZONE_ALIASES
+        .iter()
+        .find_map(|(alias, grouped_regions)| (*alias == zone).then_some(*grouped_regions))
 }
 
 fn canonical_zone_for_sensor(sensor_id: &str) -> Option<&'static str> {
@@ -59,15 +73,20 @@ fn canonical_zone_for_sensor(sensor_id: &str) -> Option<&'static str> {
     let _metric_code = segments.next()?;
     let region_code = segments.next()?;
 
-    generated_canonical_zone_for_sensor_code(region_code)
+    REGIONS
+        .iter()
+        .find_map(|(canonical_region, _label, sensor_code)| {
+            (*sensor_code == region_code).then_some(*canonical_region)
+        })
 }
 
 #[cfg(test)]
 mod tests {
     use crate::regions::{
-        ANCASTER_GATEWAY, BATTLEFIELD, COOTES_PARADISE, CROWN_POINT_WEST, DOWNTOWN_CORE,
-        DUNDAS_CENTRAL, EAST_MOUNTAIN, KIRKENDALL_CHEDOKE, NORTH_END_WEST, RED_HILL_VALLEY,
-        normalize_zone_id, zone_filter_matches, zones_filter_match,
+        ANCASTER_GATEWAY, BATTLEFIELD, CANONICAL_REGION_IDS, COOTES_PARADISE, CROWN_POINT_WEST,
+        DOWNTOWN_CORE, DUNDAS_CENTRAL, EAST_MOUNTAIN, KIRKENDALL_CHEDOKE, NORTH_END_WEST,
+        RED_HILL_VALLEY, WEST_MOUNTAIN, normalize_zone_id, region_label, zone_filter_matches,
+        zones_filter_match,
     };
 
     #[test]
@@ -204,5 +223,22 @@ mod tests {
             "cootes_paradise",
             Some("temp-mc-001")
         ));
+    }
+
+    #[test]
+    fn exposes_region_metadata_from_generated_tables() {
+        assert_eq!(region_label(DOWNTOWN_CORE), Some("downtown core"));
+        assert_eq!(region_label(WEST_MOUNTAIN), Some("west mountain"));
+        assert_eq!(region_label("ward_1"), None);
+    }
+
+    #[test]
+    fn exposes_canonical_region_ids() {
+        assert_eq!(
+            CANONICAL_REGION_IDS.first().copied(),
+            Some(ANCASTER_GATEWAY)
+        );
+        assert_eq!(CANONICAL_REGION_IDS.last().copied(), Some(WEST_MOUNTAIN));
+        assert!(CANONICAL_REGION_IDS.contains(&DOWNTOWN_CORE));
     }
 }
