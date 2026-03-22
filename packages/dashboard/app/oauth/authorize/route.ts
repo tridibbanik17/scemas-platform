@@ -1,11 +1,13 @@
 import { oauthClients } from '@scemas/db/schema'
 import { eq } from 'drizzle-orm'
+import { getOrigin } from '@/lib/request-origin'
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/session'
 import { getDb } from '@/server/cached'
 import { generateRandomToken } from '@/server/oauth'
 
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
+  const origin = getOrigin(request)
   const params = url.searchParams
 
   const responseType = params.get('response_type')
@@ -66,13 +68,13 @@ export async function GET(request: Request): Promise<Response> {
 
   if (!token || !jwtSecret) {
     const returnTo = `/oauth/authorize?${params.toString()}`
-    return Response.redirect(new URL(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`, url.origin).toString(), 302)
+    return Response.redirect(new URL(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`, origin).toString(), 302)
   }
 
   const session = await verifySessionToken(token, jwtSecret)
   if (!session) {
     const returnTo = `/oauth/authorize?${params.toString()}`
-    return Response.redirect(new URL(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`, url.origin).toString(), 302)
+    return Response.redirect(new URL(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`, origin).toString(), 302)
   }
 
   const csrfToken = generateRandomToken(16)

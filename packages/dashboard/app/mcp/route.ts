@@ -3,22 +3,34 @@ import { createMcpServer } from '@/server/mcp-server'
 import { validateToken } from '@/server/api-tokens'
 import { validateOAuthToken } from '@/server/oauth'
 import { getDb } from '@/server/cached'
+import { getOrigin } from '@/lib/request-origin'
 
 const TOKEN_PREFIX = 'sk-scemas-'
 
+const CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-expose-headers': 'WWW-Authenticate',
+} as const
+
+function corsify(response: Response): Response {
+  for (const [k, v] of Object.entries(CORS_HEADERS)) {
+    response.headers.set(k, v)
+  }
+  return response
+}
+
 async function handle(request: Request): Promise<Response> {
-  const url = new URL(request.url)
-  const origin = url.origin
+  const origin = getOrigin(request)
   const authHeader = request.headers.get('authorization')
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), {
+    return corsify(new Response(JSON.stringify({ error: 'unauthorized' }), {
       status: 401,
       headers: {
         'content-type': 'application/json',
-        'www-authenticate': `Bearer resource_metadata="${origin}/.well-known/oauth-authorization-server"`,
+        'www-authenticate': `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource"`,
       },
-    })
+    }))
   }
 
   const bearerToken = authHeader.slice(7)
@@ -30,26 +42,26 @@ async function handle(request: Request): Promise<Response> {
   if (bearerToken.startsWith(TOKEN_PREFIX)) {
     const result = await validateToken(db, authHeader)
     if (!result.valid) {
-      return new Response(JSON.stringify({ error: result.error }), {
+      return corsify(new Response(JSON.stringify({ error: result.error }), {
         status: result.status,
         headers: {
           'content-type': 'application/json',
-          'www-authenticate': `Bearer resource_metadata="${origin}/.well-known/oauth-authorization-server"`,
+          'www-authenticate': `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource"`,
         },
-      })
+      }))
     }
     accountId = result.accountId
     scopes = result.scopes
   } else {
     const result = await validateOAuthToken(db, bearerToken)
     if (!result.valid) {
-      return new Response(JSON.stringify({ error: result.error }), {
+      return corsify(new Response(JSON.stringify({ error: result.error }), {
         status: result.status,
         headers: {
           'content-type': 'application/json',
-          'www-authenticate': `Bearer resource_metadata="${origin}/.well-known/oauth-authorization-server"`,
+          'www-authenticate': `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource"`,
         },
-      })
+      }))
     }
     accountId = result.accountId
     scopes = result.scopes
@@ -58,7 +70,7 @@ async function handle(request: Request): Promise<Response> {
   const server = createMcpServer({ accountId, scopes })
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined })
   await server.connect(transport)
-  return transport.handleRequest(request)
+  return corsify(await transport.handleRequest(request))
 }
 
 export { handle as GET, handle as POST, handle as DELETE }

@@ -1,6 +1,7 @@
+import { getOrigin } from '@/lib/request-origin'
+
 export function GET(request: Request): Response {
-  const url = new URL(request.url)
-  const origin = url.origin
+  const origin = getOrigin(request)
 
   return Response.json({
     issuer: origin,

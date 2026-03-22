@@ -82,11 +82,11 @@ export function SubscriptionManager({ availableZones, onSaved }: SubscriptionMan
     <form className="space-y-6 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit}>
       <div className="space-y-3">
         <h2 className="text-sm font-medium">metric filters</h2>
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="grid gap-2">
           {metricTypes.map(metricType => (
             <label className="flex items-center gap-2 text-sm" key={metricType}>
               <input
-                defaultChecked={selectedMetricTypes.includes(metricType)}
+                defaultChecked={selectedMetricTypes.length === 0 || selectedMetricTypes.includes(metricType)}
                 name="metricTypes"
                 type="checkbox"
                 value={metricType}
@@ -99,11 +99,11 @@ export function SubscriptionManager({ availableZones, onSaved }: SubscriptionMan
 
       <div className="space-y-3">
         <h2 className="text-sm font-medium">region filters</h2>
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="grid gap-2">
           {availableZones.map(zone => (
             <label className="flex items-center gap-2 text-sm" key={zone}>
               <input
-                defaultChecked={selectedZones.includes(zone)}
+                defaultChecked={selectedZones.length === 0 || selectedZones.includes(zone)}
                 name="zones"
                 type="checkbox"
                 value={zone}

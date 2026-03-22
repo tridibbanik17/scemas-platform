@@ -1,20 +1,9 @@
 'use client'
 
-import { MoreHorizontalCircle01Icon } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon } from '@hugeicons/react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { SeverityBadge } from '@/components/ui/severity-badge'
 import { Spinner } from '@/components/ui/spinner'
@@ -62,9 +51,13 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
     { getNextPageParam: lastPage => lastPage.nextCursor },
   )
 
+  const [localAcked, setLocalAcked] = useState<Set<string>>(new Set())
+  const [localResolved, setLocalResolved] = useState<Set<string>>(new Set())
+
   const acknowledgeAlert = trpc.alerts.acknowledge.useMutation({
     onMutate: ({ id }) => setInflightId(id),
-    onSuccess: () => {
+    onSuccess: (_data, { id }) => {
+      setLocalAcked(prev => new Set(prev).add(id))
       utils.alerts.list.invalidate()
       utils.alerts.count.invalidate()
     },
@@ -72,17 +65,29 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
   })
   const resolveAlert = trpc.alerts.resolve.useMutation({
     onMutate: ({ id }) => setInflightId(id),
-    onSuccess: () => {
+    onSuccess: (_data, { id }) => {
+      setLocalResolved(prev => new Set(prev).add(id))
       utils.alerts.list.invalidate()
       utils.alerts.count.invalidate()
     },
     onSettled: () => setInflightId(null),
+  })
+  const batchResolve = trpc.alerts.batchResolve.useMutation({
+    onSuccess: () => {
+      utils.alerts.list.invalidate()
+      utils.alerts.count.invalidate()
+    },
   })
 
   const filtered = useMemo(() => {
     const allAlerts = (alertsQuery.data?.pages.flatMap(p => p.items) ?? []) as Alert[]
     return sortAlerts(allAlerts, sortMode)
   }, [alertsQuery.data, sortMode])
+
+  const acknowledgedIds = useMemo(
+    () => filtered.filter(a => a.status === 'acknowledged').map(a => a.id),
+    [filtered],
+  )
 
   const virtualizer = useVirtualizer({
     count: filtered.length,
@@ -129,6 +134,20 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <span className="text-sm font-medium">alert queue</span>
         <div className="flex items-center gap-2">
+          {acknowledgedIds.length > 0 && (
+            <Button
+              className="bg-emerald-600 text-white hover:bg-emerald-600/80 dark:bg-emerald-600 dark:hover:bg-emerald-600/80"
+              disabled={batchResolve.isPending}
+              onClick={() => batchResolve.mutate({ ids: acknowledgedIds.slice(0, 50) })}
+              size="sm"
+            >
+              {batchResolve.isPending ? (
+                <Spinner />
+              ) : (
+                `resolve all (${Math.min(acknowledgedIds.length, 50)})`
+              )}
+            </Button>
+          )}
           <NativeSelect value={zoneFilter} onChange={e => setZoneFilter(e.target.value)}>
             <NativeSelectOption value="all">all zones</NativeSelectOption>
             {availableZones.map(zone => (
@@ -151,56 +170,61 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
           {zoneFilter === 'all' ? 'no alerts' : `no alerts in ${formatZoneName(zoneFilter)}`}
         </p>
       ) : (
-        <div className="h-[400px] overflow-y-auto md:h-[600px]" ref={scrollRef}>
+        <div className="h-100 overflow-y-auto md:h-150" ref={scrollRef}>
           <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
             {virtualItems.map(virtualRow => {
               const alert = filtered[virtualRow.index]
-              const isResolved = alert.status === 'resolved'
+              const isResolved = localResolved.has(alert.id) || alert.status === 'resolved'
               return (
                 <div
-                  className="absolute left-0 top-0 w-full"
+                  className="absolute left-0 top-0 w-full overflow-hidden"
                   key={alert.id}
                   style={{
                     height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  <Link
-                    className={cn(
-                      'flex size-full items-center justify-between gap-2 border-b border-border px-4',
-                      isResolved ? 'bg-emerald-500/5' : '',
-                    )}
-                    href={`/alerts/${alert.id}`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm tabular-nums">
-                          {alert.triggeredValue}
-                        </span>
-                        <SeverityBadge severity={alert.severity} />
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground/60">
-                        <span>{alert.createdAt.toLocaleString()}</span>
-                        <span className="rounded bg-muted px-1 py-px text-xs">
-                          {alert.metricType.replaceAll('_', ' ')}
-                        </span>
-                        <span className="rounded bg-muted px-1 py-px text-xs">
-                          {formatZoneName(alert.zone)}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
                   <div
-                    className="absolute right-4 top-1/2 -translate-y-1/2"
-                    onClick={e => e.stopPropagation()}
+                    className="relative size-full transition-[transform,opacity] duration-250 ease-[cubic-bezier(0.23,1,0.32,1)]"
+                    style={isResolved ? { transform: 'translateX(100%)', opacity: 0 } : undefined}
                   >
-                    <AlertActions
-                      alert={alert}
-                      inflightId={inflightId}
-                      onAck={() => acknowledgeAlert.mutate({ id: alert.id })}
-                      onResolve={() => resolveAlert.mutate({ id: alert.id })}
-                      isPending={acknowledgeAlert.isPending || resolveAlert.isPending}
-                    />
+                    <Link
+                      className="flex size-full items-center justify-between gap-2 border-b border-border px-4 hover:bg-muted"
+                      href={`/alerts/${alert.id}`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm tabular-nums">
+                            {alert.triggeredValue}
+                          </span>
+                          <SeverityBadge severity={alert.severity} />
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground/60">
+                          <span>{alert.createdAt.toLocaleString()}</span>
+                          <span className="rounded bg-muted px-1 py-px text-xs">
+                            {alert.metricType.replaceAll('_', ' ')}
+                          </span>
+                          <span className="rounded bg-muted px-1 py-px text-xs">
+                            {formatZoneName(alert.zone)}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                    <div
+                      className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1.5"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <AlertActions
+                        alert={alert}
+                        inflightId={inflightId}
+                        ackPending={acknowledgeAlert.isPending}
+                        resolvePending={resolveAlert.isPending}
+                        localAcked={localAcked.has(alert.id)}
+                        localResolved={localResolved.has(alert.id)}
+                        onAck={() => acknowledgeAlert.mutate({ id: alert.id })}
+                        onResolve={() => resolveAlert.mutate({ id: alert.id })}
+                      />
+                    </div>
                   </div>
                 </div>
               )
@@ -227,40 +251,52 @@ export function AlertsManager({ availableZones }: { availableZones: string[] }) 
 function AlertActions({
   alert,
   inflightId,
-  isPending,
+  ackPending,
+  resolvePending,
+  localAcked,
+  localResolved,
   onAck,
   onResolve,
 }: {
   alert: Alert
   inflightId: string | null
-  isPending: boolean
+  ackPending: boolean
+  resolvePending: boolean
+  localAcked: boolean
+  localResolved: boolean
   onAck: () => void
   onResolve: () => void
 }) {
-  const isLoading = inflightId === alert.id && isPending
-  const isAcked = alert.status === 'acknowledged' || alert.status === 'resolved'
-  const isResolved = alert.status === 'resolved'
+  const isThisAlert = inflightId === alert.id
+  const ackLoading = isThisAlert && ackPending
+  const resolveLoading = isThisAlert && resolvePending
+  const isAcked = localAcked || alert.status === 'acknowledged' || alert.status === 'resolved'
+  const isResolved = localResolved || alert.status === 'resolved'
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button aria-label="alert actions" size="sm" variant="ghost" disabled={isLoading}>
-          {isLoading ? (
-            <Spinner />
-          ) : (
-            <HugeiconsIcon icon={MoreHorizontalCircle01Icon} size={16} strokeWidth={1.5} />
-          )}
+    <>
+      {isAcked ? (
+        <span className="inline-flex h-6 items-center rounded-md border border-amber-600/20 bg-amber-500/10 px-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+          ack'd
+        </span>
+      ) : (
+        <Button
+          disabled={ackLoading}
+          onClick={onAck}
+          size="sm"
+          variant="outline"
+        >
+          {ackLoading ? <Spinner /> : 'ack'}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{alert.status}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          {!isAcked ? <DropdownMenuItem onClick={onAck}>acknowledge</DropdownMenuItem> : null}
-          {!isResolved ? <DropdownMenuItem onClick={onResolve}>resolve</DropdownMenuItem> : null}
-          {isResolved ? <DropdownMenuItem disabled>resolved</DropdownMenuItem> : null}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      )}
+      <Button
+        className={`border-blue-500/30 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400 ${ackLoading ? 'pointer-events-none' : ''}`}
+        disabled={resolveLoading || isResolved}
+        onClick={onResolve}
+        size="sm"
+      >
+        {resolveLoading ? <Spinner /> : 'resolve'}
+      </Button>
+    </>
   )
 }

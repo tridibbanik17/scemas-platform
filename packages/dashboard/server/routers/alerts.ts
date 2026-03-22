@@ -162,6 +162,15 @@ export const alertsRouter = router({
       }
       return { success: true as const }
     }),
+
+  // batch resolve (max 50 at a time)
+  batchResolve: protectedProcedure
+    .input(z.object({ ids: z.array(z.string().uuid()).min(1).max(50) }))
+    .mutation(async ({ input, ctx }) => {
+      const results = await Promise.all(input.ids.map(id => resolveAlert(id, ctx.user.id)))
+      const failed = results.filter(r => !r.success).length
+      return { resolved: results.length - failed, failed }
+    }),
 })
 
 function buildAlertZoneCondition(zonesToMatch: string[]) {
