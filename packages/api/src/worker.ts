@@ -47,32 +47,17 @@ export default {
       return await container.fetch(request)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'unknown container startup failure'
-
-      console.error('container bootstrap failed', {
-        message,
-        missingEnvKeys,
-        pingEndpoint: '/internal/health',
-        port: 3001,
-      })
-
+      console.error('container bootstrap failed', { message })
       return Response.json({ error: `container bootstrap failed: ${message}` }, { status: 503 })
     }
   },
 }
 
 function buildContainerEnv(env: Env): Record<string, string> {
-  const databaseUrl = getContainerEnvValue(env, 'DATABASE_URL')
-  const jwtSecret = getContainerEnvValue(env, 'JWT_SECRET')
-  const deviceAuthSecret = getContainerEnvValue(env, 'DEVICE_AUTH_SECRET')
-
-  if (!databaseUrl || !jwtSecret || !deviceAuthSecret) {
-    throw new Error('container environment validation was bypassed')
-  }
-
   return {
-    DATABASE_URL: databaseUrl,
-    JWT_SECRET: jwtSecret,
-    DEVICE_AUTH_SECRET: deviceAuthSecret,
+    DATABASE_URL: env.DATABASE_URL,
+    JWT_SECRET: env.JWT_SECRET,
+    DEVICE_AUTH_SECRET: env.DEVICE_AUTH_SECRET,
     DEVICE_CATALOG_PATH: 'data/hamilton-sensor-catalog.json',
     RUST_LOG: 'info',
     RUST_PORT: '3001',

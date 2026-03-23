@@ -9,6 +9,14 @@ import { router, protectedProcedure } from '../trpc'
 
 const MAX_ACTIVE_TOKENS_PER_USER = 5
 
+const TokenResponseSchema = z.object({
+  id: z.string(),
+  token: z.string(),
+  prefix: z.string(),
+  label: z.string(),
+  expiresAt: z.string(),
+})
+
 export const apiTokensRouter = router({
   create: protectedProcedure.input(CreateApiTokenSchema).mutation(async ({ input, ctx }) => {
     const activeCount = await countActiveTokens(ctx.db, ctx.user.id)
@@ -31,21 +39,7 @@ export const apiTokensRouter = router({
       })
     }
 
-    const result = data as {
-      id: string
-      token: string
-      prefix: string
-      label: string
-      expiresAt: string
-    }
-
-    return {
-      id: result.id,
-      token: result.token,
-      prefix: result.prefix,
-      label: result.label,
-      expiresAt: result.expiresAt,
-    }
+    return TokenResponseSchema.parse(data)
   }),
 
   list: protectedProcedure.query(async ({ ctx }) => {
