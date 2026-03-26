@@ -65,14 +65,7 @@ scemas-platform/
 
 ## getting started
 
-### with nix (recommended)
-
-```sh
-nix develop       # rust, bun, postgres, shell helpers, first-time setup
-scemas dev        # starts db + schema + default accounts + engine + dashboard
-```
-
-### without nix
+Linux is recommended. For Windows recommend to run in WSL.
 
 install rustup, bun (>= 1.2), and docker manually. the repo pins rust in `rust-toolchain.toml`, so `rustup` will pull the correct stable toolchain automatically.
 
@@ -81,32 +74,7 @@ source scripts/start-scemas.sh   # shell helpers + first-time setup
 scemas-dev                       # starts db (docker) + schema + accounts + engine + dashboard
 ```
 
-or step by step:
-
-```sh
-docker-compose up -d                    # postgres
-bun install && bun db:push              # deps + schema + default accounts
-cargo run -p scemas-server &            # rust engine on :3001
-bun --filter @scemas/dashboard dev      # next.js on :3000
-```
-
 first-time setup (`.env` copy, `bun install`) runs automatically on first source and is tracked via a `.derived` sentinel file. delete `.derived` to re-run it.
-
-### desktop app
-
-for local desktop development, use the desktop-specific path instead of `scemas-dev`:
-
-```sh
-nix develop
-scemas dev desktop
-```
-
-without nix, install rust, bun, tauri prerequisites, and postgres 16 first. then run:
-
-```sh
-source scripts/start-scemas.sh
-cargo run -p scemas-cli -- dev desktop
-```
 
 ### default accounts
 

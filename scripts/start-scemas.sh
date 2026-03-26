@@ -109,6 +109,9 @@ scemas-dash() {
 }
 
 scemas-dev() {
+  if [ -f "$SCEMAS_ROOT/.env" ]; then
+    source "$SCEMAS_ROOT/.env"
+  fi
   _scemas_start_db
   echo "[scemas] waiting for postgres..."
   sleep 2
