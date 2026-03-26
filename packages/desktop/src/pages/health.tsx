@@ -9,8 +9,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { makeChartTimeFormatter } from '@/lib/chart-utils'
-import { useHealth, useTauriQuery } from '@/lib/tauri'
 import { useSettings } from '@/lib/settings'
+import { useHealth, useTauriQuery } from '@/lib/tauri'
 
 interface PlatformStatusRow {
   id: number
@@ -137,59 +137,68 @@ export function HealthPage() {
           <p className="p-4 text-sm text-muted-foreground">no status records yet</p>
         ) : (
           <>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="px-4 py-2 font-medium">subsystem</th>
-                <th className="px-4 py-2 font-medium">status</th>
-                <th className="px-4 py-2 font-medium">latency</th>
-                <th className="px-4 py-2 font-medium">error rate</th>
-                <th className="px-4 py-2 font-medium">time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {statusSlice.items.map(s => (
-                <tr key={s.id} className="border-b last:border-0">
-                  <td className="px-4 py-2 font-medium">{s.subsystem}</td>
-                  <td className="px-4 py-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        s.status === 'healthy'
-                          ? 'bg-green-500/15 text-green-700'
-                          : s.status === 'degraded'
-                            ? 'bg-yellow-500/15 text-yellow-700'
-                            : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {s.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 tabular-nums">
-                    {s.latencyMs != null ? `${s.latencyMs.toFixed(1)}ms` : '\u2014'}
-                  </td>
-                  <td className="px-4 py-2 tabular-nums">
-                    {s.errorRate != null ? `${(s.errorRate * 100).toFixed(1)}%` : '\u2014'}
-                  </td>
-                  <td className="px-4 py-2 text-muted-foreground">
-                    {new Date(s.time).toLocaleTimeString()}
-                  </td>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">subsystem</th>
+                  <th className="px-4 py-2 font-medium">status</th>
+                  <th className="px-4 py-2 font-medium">latency</th>
+                  <th className="px-4 py-2 font-medium">error rate</th>
+                  <th className="px-4 py-2 font-medium">time</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="flex items-center justify-between border-t px-4 py-2">
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {statusSlice.start + 1}–{statusSlice.start + statusSlice.items.length} of {statusSlice.total}
-            </span>
-            <div className="flex items-center gap-1">
-              <button disabled={statusPage === 0} onClick={() => setStatusPage(p => p - 1)} className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent">
-                previous
-              </button>
-              <button disabled={statusSlice.start + pageSize >= statusSlice.total} onClick={() => setStatusPage(p => p + 1)} className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent">
-                next
-              </button>
+              </thead>
+              <tbody>
+                {statusSlice.items.map(s => (
+                  <tr key={s.id} className="border-b last:border-0">
+                    <td className="px-4 py-2 font-medium">{s.subsystem}</td>
+                    <td className="px-4 py-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          s.status === 'healthy'
+                            ? 'bg-green-500/15 text-green-700'
+                            : s.status === 'degraded'
+                              ? 'bg-yellow-500/15 text-yellow-700'
+                              : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {s.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 tabular-nums">
+                      {s.latencyMs != null ? `${s.latencyMs.toFixed(1)}ms` : '\u2014'}
+                    </td>
+                    <td className="px-4 py-2 tabular-nums">
+                      {s.errorRate != null ? `${(s.errorRate * 100).toFixed(1)}%` : '\u2014'}
+                    </td>
+                    <td className="px-4 py-2 text-muted-foreground">
+                      {new Date(s.time).toLocaleTimeString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="flex items-center justify-between border-t px-4 py-2">
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {statusSlice.start + 1}–{statusSlice.start + statusSlice.items.length} of{' '}
+                {statusSlice.total}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  disabled={statusPage === 0}
+                  onClick={() => setStatusPage(p => p - 1)}
+                  className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent"
+                >
+                  previous
+                </button>
+                <button
+                  disabled={statusSlice.start + pageSize >= statusSlice.total}
+                  onClick={() => setStatusPage(p => p + 1)}
+                  className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent"
+                >
+                  next
+                </button>
+              </div>
             </div>
-          </div>
           </>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { useTauriQuery, useTauriMutation } from '@/lib/tauri'
 import { useSettings } from '@/lib/settings'
+import { useTauriQuery, useTauriMutation } from '@/lib/tauri'
 
 type DeviceStatus = 'active' | 'inactive' | 'revoked'
 type MetricType = 'temperature' | 'humidity' | 'air_quality' | 'noise_level'
@@ -284,13 +284,22 @@ export function DevicesPage() {
           </div>
           <div className="flex items-center justify-between border-t px-4 py-2">
             <span className="text-xs tabular-nums text-muted-foreground">
-              {deviceSlice.start + 1}–{deviceSlice.start + deviceSlice.items.length} of {deviceSlice.total}
+              {deviceSlice.start + 1}–{deviceSlice.start + deviceSlice.items.length} of{' '}
+              {deviceSlice.total}
             </span>
             <div className="flex items-center gap-1">
-              <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent">
+              <button
+                disabled={page === 0}
+                onClick={() => setPage(p => p - 1)}
+                className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent"
+              >
                 previous
               </button>
-              <button disabled={deviceSlice.start + pageSize >= deviceSlice.total} onClick={() => setPage(p => p + 1)} className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent">
+              <button
+                disabled={deviceSlice.start + pageSize >= deviceSlice.total}
+                onClick={() => setPage(p => p + 1)}
+                className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent"
+              >
                 next
               </button>
             </div>

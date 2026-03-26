@@ -35,7 +35,7 @@ function DragRegion() {
   return (
     <div
       data-tauri-drag-region
-      className="fixed inset-x-0 top-0 z-50 h-8"
+      className="fixed inset-x-0 top-0 z-50 h-12"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     />
   )

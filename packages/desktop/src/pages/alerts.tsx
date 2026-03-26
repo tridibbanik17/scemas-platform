@@ -359,8 +359,12 @@ function AlertList({
                   </div>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground/60">
                     <span>{new Date(alert.createdAt).toLocaleString()}</span>
-                    <span className="rounded bg-muted px-1.5 py-px">{alert.metricType.replaceAll('_', ' ')}</span>
-                    <span className="rounded bg-muted px-1.5 py-px">{alert.zone.replaceAll('_', ' ')}</span>
+                    <span className="rounded bg-muted px-1.5 py-px">
+                      {alert.metricType.replaceAll('_', ' ')}
+                    </span>
+                    <span className="rounded bg-muted px-1.5 py-px">
+                      {alert.zone.replaceAll('_', ' ')}
+                    </span>
                   </div>
                 </Link>
                 {!isResolved && (

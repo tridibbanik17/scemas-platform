@@ -1,7 +1,7 @@
 import { type FormEvent, useState, useMemo } from 'react'
+import { useSettings } from '@/lib/settings'
 import { useTauriQuery, useTauriMutation } from '@/lib/tauri'
 import { useAuthStore } from '@/store/auth'
-import { useSettings } from '@/lib/settings'
 
 type MetricType = 'temperature' | 'humidity' | 'air_quality' | 'noise_level'
 type Comparison = 'gt' | 'gte' | 'lt' | 'lte'
@@ -195,80 +195,82 @@ export function RulesPage() {
           </p>
         ) : (
           <>
-          <div className="divide-y">
-            {ruleSlice.items.map(rule =>
-              editingId === rule.id ? (
-                <RuleEditRow
-                  key={rule.id}
-                  rule={rule}
-                  saving={editRule.isPending}
-                  onSave={values => {
-                    editRule.mutate(
-                      { args: { ruleId: rule.id, ...values } },
-                      {
-                        onSuccess: () => {
-                          setEditingId(null)
-                          setSubmissionError(null)
-                        },
-                        onError: () => setSubmissionError('failed to save edit'),
-                      },
-                    )
-                  }}
-                  onCancel={() => setEditingId(null)}
-                />
-              ) : (
-                <div
-                  key={rule.id}
-                  className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between"
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">
-                      {rule.metricType.replaceAll('_', ' ')} {rule.comparison}{' '}
-                      <span className="font-mono tabular-nums">{rule.thresholdValue}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      scope: {rule.zone?.replaceAll('_', ' ') ?? 'all regions'} | status: {rule.ruleStatus}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setEditingId(rule.id)}
-                      className="h-8 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent"
-                    >
-                      edit
-                    </button>
-                    <button
-                      disabled={updateStatus.isPending}
-                      onClick={() =>
-                        updateStatus.mutate({
-                          args: {
-                            ruleId: rule.id,
-                            ruleStatus: rule.ruleStatus === 'active' ? 'inactive' : 'active',
+            <div className="divide-y">
+              {ruleSlice.items.map(rule =>
+                editingId === rule.id ? (
+                  <RuleEditRow
+                    key={rule.id}
+                    rule={rule}
+                    saving={editRule.isPending}
+                    onSave={values => {
+                      editRule.mutate(
+                        { args: { ruleId: rule.id, ...values } },
+                        {
+                          onSuccess: () => {
+                            setEditingId(null)
+                            setSubmissionError(null)
                           },
-                        })
-                      }
-                      className="h-8 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent disabled:opacity-50"
-                    >
-                      {rule.ruleStatus === 'active' ? 'pause' : 'activate'}
-                    </button>
-                    <button
-                      disabled={deleteRule.isPending}
-                      onClick={() => deleteRule.mutate({ args: { ruleId: rule.id } })}
-                      className="h-8 rounded-md border border-red-500/30 bg-red-500/10 px-3 text-xs font-medium text-red-600 hover:bg-red-500/20 disabled:opacity-50"
-                    >
-                      delete
-                    </button>
+                          onError: () => setSubmissionError('failed to save edit'),
+                        },
+                      )
+                    }}
+                    onCancel={() => setEditingId(null)}
+                  />
+                ) : (
+                  <div
+                    key={rule.id}
+                    className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">
+                        {rule.metricType.replaceAll('_', ' ')} {rule.comparison}{' '}
+                        <span className="font-mono tabular-nums">{rule.thresholdValue}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        scope: {rule.zone?.replaceAll('_', ' ') ?? 'all regions'} | status:{' '}
+                        {rule.ruleStatus}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setEditingId(rule.id)}
+                        className="h-8 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent"
+                      >
+                        edit
+                      </button>
+                      <button
+                        disabled={updateStatus.isPending}
+                        onClick={() =>
+                          updateStatus.mutate({
+                            args: {
+                              ruleId: rule.id,
+                              ruleStatus: rule.ruleStatus === 'active' ? 'inactive' : 'active',
+                            },
+                          })
+                        }
+                        className="h-8 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent disabled:opacity-50"
+                      >
+                        {rule.ruleStatus === 'active' ? 'pause' : 'activate'}
+                      </button>
+                      <button
+                        disabled={deleteRule.isPending}
+                        onClick={() => deleteRule.mutate({ args: { ruleId: rule.id } })}
+                        className="h-8 rounded-md border border-red-500/30 bg-red-500/10 px-3 text-xs font-medium text-red-600 hover:bg-red-500/20 disabled:opacity-50"
+                      >
+                        delete
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ),
-            )}
-          </div>
-          <div className="border-t px-4 py-2">
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {ruleSlice.start + 1}–{ruleSlice.start + ruleSlice.items.length} of {ruleSlice.total}
-            </span>
-          </div>
+                ),
+              )}
+            </div>
+            <div className="border-t px-4 py-2">
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {ruleSlice.start + 1}–{ruleSlice.start + ruleSlice.items.length} of{' '}
+                {ruleSlice.total}
+              </span>
+            </div>
           </>
         )}
       </div>

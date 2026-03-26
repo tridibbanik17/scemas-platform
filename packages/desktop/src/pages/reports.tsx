@@ -118,7 +118,9 @@ export function ReportsPage() {
                 }}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${STATUS_CLS[report.status] ?? ''}`}>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${STATUS_CLS[report.status] ?? ''}`}
+                  >
                     {report.status}
                   </span>
                   <span className="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-medium">
@@ -142,7 +144,9 @@ export function ReportsPage() {
                   )}
 
                   {report.reviewNote && (
-                    <p className="text-xs text-muted-foreground">review note: {report.reviewNote}</p>
+                    <p className="text-xs text-muted-foreground">
+                      review note: {report.reviewNote}
+                    </p>
                   )}
 
                   {(report.status === 'pending' || report.status === 'reviewing') && (

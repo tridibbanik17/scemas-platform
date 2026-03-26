@@ -1,5 +1,5 @@
 //! embedded postgres lifecycle management.
-//! default mode for the desktop app (SCEMAS_USE_EMBEDDED_POSTGRES=1).
+//! fallback mode when DATABASE_URL is not set.
 //! manages initdb, start, stop, schema apply, and stale PID cleanup.
 
 use std::path::{Path, PathBuf};

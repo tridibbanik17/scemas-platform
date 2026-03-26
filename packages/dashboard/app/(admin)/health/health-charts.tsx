@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { IngestionFunnelChart } from '@/components/charts/ingestion-funnel-chart'
 import { PlatformHealthChart } from '@/components/charts/platform-health-chart'
 import { ListPagination } from '@/components/list-pagination'
-import { cn } from '@/lib/utils'
 import { usePageSize } from '@/lib/settings'
+import { cn } from '@/lib/utils'
 
 export function IngestionFunnelWrapper({
   stats,

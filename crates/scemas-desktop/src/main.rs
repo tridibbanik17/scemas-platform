@@ -22,7 +22,13 @@ use tokio::sync::{Mutex, watch};
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env().add_directive(
+                "sqlx_postgres::options::parse=error"
+                    .parse()
+                    .expect("valid directive"),
+            ),
+        )
         .try_init()
         .ok();
 
@@ -59,72 +65,49 @@ fn main() {
 
             let schema_sql = app
                 .path()
-                .resolve(
-                    "resources/schema.sql",
-                    tauri::path::BaseDirectory::Resource,
-                )
+                .resolve("resources/schema.sql", tauri::path::BaseDirectory::Resource)
                 .ok()
                 .filter(|p| p.exists())
-                .unwrap_or_else(|| {
-                    repo_root.join("crates/scemas-desktop/resources/schema.sql")
-                });
+                .unwrap_or_else(|| repo_root.join("crates/scemas-desktop/resources/schema.sql"));
 
             let secrets = load_or_generate_secrets(&data_dir);
 
-            let remote_url = std::env::var("SCEMAS_REMOTE_URL")
-                .unwrap_or_else(|_| "https://api.scemas.dev".to_string());
+            let remote_url = std::env::var("INTERNAL_RUST_URL")
+                .or_else(|_| std::env::var("SCEMAS_REMOTE_URL"))
+                .unwrap_or_else(|_| "http://localhost:3001".to_string());
             let remote_auth = Arc::new(RemoteAuth::new(remote_url));
             app.manage(Arc::clone(&remote_auth));
 
             let (shutdown_tx, shutdown_rx) = watch::channel(false);
             app.manage(ShutdownSignal(shutdown_tx));
 
-            // postgres mode:
-            //   SCEMAS_USE_EMBEDDED_POSTGRES=1 (default) → start embedded pg
-            //   SCEMAS_USE_EMBEDDED_POSTGRES=0            → read DATABASE_URL from env
-            let use_embedded = std::env::var("SCEMAS_USE_EMBEDDED_POSTGRES")
-                .unwrap_or_else(|_| "1".to_string())
-                != "0";
+            let remote_db_url = std::env::var("SCEMAS_REMOTE_DB_URL").ok();
 
             tauri::async_runtime::block_on(async move {
-                let database_url = if !use_embedded {
-                    // explicit external mode
-                    let url = std::env::var("DATABASE_URL")
-                        .unwrap_or_else(|_| {
-                            "postgres://scemas:scemas@localhost:5432/scemas".to_string()
-                        });
-                    tracing::info!(url = %url, "using external postgres (SCEMAS_USE_EMBEDDED_POSTGRES=0)");
-                    url
-                } else if is_postgres_reachable().await {
-                    // dashboard/docker-compose postgres is already running, reuse it
-                    let url = std::env::var("DATABASE_URL")
-                        .unwrap_or_else(|_| {
-                            "postgres://scemas:scemas@localhost:5432/scemas".to_string()
-                        });
-                    tracing::info!(url = %url, "reusing existing postgres (already running on :5432)");
+                // postgres mode: DATABASE_URL takes priority (dev, docker-compose, nix).
+                // if DATABASE_URL is not set, start embedded postgres as fallback.
+                let database_url = if let Ok(url) = std::env::var("DATABASE_URL") {
+                    tracing::info!(url = %url, "using DATABASE_URL");
                     url
                 } else {
                     // start embedded postgres
                     let bundled_pg = app_handle
                         .path()
-                        .resolve(
-                            "resources/pg/bin",
-                            tauri::path::BaseDirectory::Resource,
-                        )
+                        .resolve("resources/pg/bin", tauri::path::BaseDirectory::Resource)
                         .ok()
                         .filter(|p| p.join("pg_ctl").exists());
-                    let pg_bin_dir = find_pg_bin_dir(bundled_pg.as_deref())
-                        .expect(
-                            "postgres not found. either:\n  \
+                    let pg_bin_dir = find_pg_bin_dir(bundled_pg.as_deref()).expect(
+                        "postgres not found. either:\n  \
                              - set POSTGRES_BIN_DIR to your postgres bin directory\n  \
                              - ensure pg_ctl is in PATH (e.g. `nix develop`)\n  \
                              - install postgres: brew install postgresql@16",
-                        );
+                    );
 
                     let pg_port = find_available_port();
-                    let pg = EmbeddedPostgres::start(&pg_bin_dir, data_dir.clone(), pg_port, "scemas")
-                        .await
-                        .expect("failed to start embedded postgres");
+                    let pg =
+                        EmbeddedPostgres::start(&pg_bin_dir, data_dir.clone(), pg_port, "scemas")
+                            .await
+                            .expect("failed to start embedded postgres");
 
                     let url = pg.connection_url();
                     tracing::info!(url = %url, "started embedded postgres");
@@ -153,12 +136,14 @@ fn main() {
                 let sync_pool = runtime.pool.clone();
                 app_handle.manage(runtime);
 
-                let mut sync_svc = sync::SyncService::new(
+                let (mut sync_svc, sync_trigger) = sync::SyncService::new(
                     remote_auth,
                     sync_pool,
+                    remote_db_url,
                     Duration::from_secs(300),
                     shutdown_rx,
                 );
+                app_handle.manage(sync_trigger);
                 tauri::async_runtime::spawn(async move {
                     sync_svc.run().await;
                 });
@@ -340,21 +325,6 @@ fn find_repo_root() -> PathBuf {
     }
 
     PathBuf::from(".")
-}
-
-/// check if postgres is already running on the default port (docker-compose / scemas dev up).
-async fn is_postgres_reachable() -> bool {
-    let url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://scemas:scemas@localhost:5432/scemas".to_string());
-
-    match ::sqlx::PgPool::connect(&url).await {
-        Ok(pool) => {
-            let ok = ::sqlx::query("SELECT 1").execute(&pool).await.is_ok();
-            pool.close().await;
-            ok
-        }
-        Err(_) => false,
-    }
 }
 
 fn find_available_port() -> u16 {

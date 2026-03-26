@@ -26,11 +26,7 @@ import { SidebarStatus } from './sidebar-status'
 
 type AgentNavItem = { href: string; label: string }
 
-type AgentShellProps = {
-  title: string
-  navItems?: AgentNavItem[]
-  children: ReactNode
-}
+type AgentShellProps = { title: string; navItems?: AgentNavItem[]; children: ReactNode }
 
 export async function AgentShell({ title, navItems = [], children }: AgentShellProps) {
   const cookieStore = await cookies()

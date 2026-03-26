@@ -13,7 +13,7 @@
     "lint:fix": "oxlint --fix packages/ && cargo clippy --all --all-features --fix --allow-dirty",
     "format": "oxfmt --write --ignore-path .gitignore packages/ && cargo fmt --all",
     "format:check": "oxfmt --check --ignore-path .gitignore packages/ && cargo fmt --all -- --check",
-    "db:push": "if [ -f .env ]; then set -a && . ./.env && set +a; fi; bun --filter @scemas/db push && bun --filter @scemas/db ensure-users",
+    "db:push": "bun --filter @scemas/db push && bun --filter @scemas/db ensure-users",
     "db:generate": "bun --filter @scemas/db generate",
     "db:sync": "bun --filter @scemas/db sync-desktop-schema",
     "db:studio": "bun --filter @scemas/db studio",

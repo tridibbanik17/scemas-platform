@@ -13,9 +13,11 @@ import {
   Legend,
 } from 'recharts'
 import { PeriodSelector } from '@/components/period-selector'
+import { ZoneMap, type SensorPin } from '@/components/zone-map'
 import { CHART_PERIODS, makeChartTimeFormatter } from '@/lib/chart-utils'
 import { useTauriQuery } from '@/lib/tauri'
 import { useAuthStore } from '@/store/auth'
+import sensorCatalog from '../../../../data/hamilton-sensor-catalog.json'
 
 interface SensorReading {
   id: number
@@ -138,6 +140,31 @@ export function DashboardPage() {
     [alerts.data],
   )
 
+  const alertCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const a of alerts.data?.items ?? []) {
+      if (a.status !== 'resolved') counts[a.zone] = (counts[a.zone] ?? 0) + 1
+    }
+    return counts
+  }, [alerts.data])
+
+  const sensorPins = useMemo<SensorPin[]>(() => {
+    const readingsByKey = new Map<string, SensorReading>()
+    for (const r of readings.data ?? []) readingsByKey.set(`${r.sensorId}:${r.metricType}`, r)
+    return sensorCatalog.map(s => {
+      const reading = readingsByKey.get(`${s.sensor_id}:${s.device_type}`)
+      return {
+        sensorId: s.sensor_id,
+        displayName: s.display_name,
+        zone: s.zone,
+        lat: s.lat,
+        lng: s.lng,
+        metricType: s.device_type,
+        value: reading?.value ?? 0,
+      }
+    })
+  }, [readings.data])
+
   const fmt = useMemo(() => makeChartTimeFormatter(chartHours), [chartHours])
   const chartData = timeSeries.data ?? []
 
@@ -149,7 +176,11 @@ export function DashboardPage() {
   const allReadings = readings.data ?? []
   const feedSlice = useMemo(() => {
     const start = feedPage * feedSize
-    return { items: allReadings.slice(start, start + feedSize), total: Math.min(allReadings.length, 50), start }
+    return {
+      items: allReadings.slice(start, start + feedSize),
+      total: Math.min(allReadings.length, 50),
+      start,
+    }
   }, [allReadings, feedPage])
 
   return (
@@ -257,6 +288,11 @@ export function DashboardPage() {
         </div>
       </div>
 
+      <div className="space-y-2">
+        <h2 className="text-sm font-medium">sensor map by monitoring region</h2>
+        <ZoneMap sensors={sensorPins} alertCounts={alertCounts} />
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border">
           <div className="border-b px-4 py-3">
@@ -271,28 +307,39 @@ export function DashboardPage() {
             <>
               <div className="divide-y">
                 {feedSlice.items.map(r => (
-                  <div key={`${r.sensorId}-${r.id}`} className="flex items-center justify-between px-4 py-3">
+                  <div
+                    key={`${r.sensorId}-${r.id}`}
+                    className="flex items-center justify-between px-4 py-3"
+                  >
                     <div>
                       <p className="text-sm font-medium">{r.sensorId}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {r.zone.replaceAll('_', ' ')}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{r.zone.replaceAll('_', ' ')}</p>
                     </div>
                     <p className="font-mono text-sm tabular-nums text-muted-foreground">
-                      {r.metricType.replaceAll('_', ' ')} <span className="text-foreground">{r.value.toFixed(2)}</span>
+                      {r.metricType.replaceAll('_', ' ')}{' '}
+                      <span className="text-foreground">{r.value.toFixed(2)}</span>
                     </p>
                   </div>
                 ))}
               </div>
               <div className="flex items-center justify-between border-t px-4 py-2">
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {feedSlice.start + 1}–{feedSlice.start + feedSlice.items.length} of {feedSlice.total}
+                  {feedSlice.start + 1}–{feedSlice.start + feedSlice.items.length} of{' '}
+                  {feedSlice.total}
                 </span>
                 <div className="flex items-center gap-1">
-                  <button disabled={feedPage === 0} onClick={() => setFeedPage(p => p - 1)} className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent">
+                  <button
+                    disabled={feedPage === 0}
+                    onClick={() => setFeedPage(p => p - 1)}
+                    className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent"
+                  >
                     previous
                   </button>
-                  <button disabled={feedSlice.start + feedSize >= feedSlice.total} onClick={() => setFeedPage(p => p + 1)} className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent">
+                  <button
+                    disabled={feedSlice.start + feedSize >= feedSlice.total}
+                    onClick={() => setFeedPage(p => p + 1)}
+                    className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent"
+                  >
                     next
                   </button>
                 </div>

@@ -6,6 +6,8 @@ use tauri::{
     tray::{TrayIcon, TrayIconBuilder},
 };
 
+use crate::sync::SyncTrigger;
+
 pub struct AuthInfo {
     pub email: String,
     pub status: PlatformStatus,
@@ -60,6 +62,11 @@ pub fn create_tray<R: Runtime>(app: &AppHandle<R>) -> Result<TrayIcon<R>, tauri:
                 show_main_window(app);
                 navigate(app, "/sign-in");
             }
+            "sync-now" => {
+                if let Some(trigger) = app.try_state::<SyncTrigger>() {
+                    trigger.notify_one();
+                }
+            }
             "sign-out" => {
                 if let Some(window) = find_main_window(app) {
                     let _ = window.eval("window.__traySignOut && window.__traySignOut()");
@@ -85,13 +92,14 @@ fn build_menu<R: Runtime>(
         let email = MenuItem::with_id(app, "email", &info.email, false, None::<&str>)?;
         let status = MenuItem::with_id(app, "status", info.status.label(), false, None::<&str>)?;
         let sep2 = PredefinedMenuItem::separator(app)?;
+        let sync_now = MenuItem::with_id(app, "sync-now", "Sync Now", true, None::<&str>)?;
         let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
         let sign_out = MenuItem::with_id(app, "sign-out", "Sign Out", true, None::<&str>)?;
 
         Menu::with_items(
             app,
             &[
-                &show, &sep1, &email, &status, &sep2, &settings, &sign_out, &quit,
+                &show, &sep1, &email, &status, &sep2, &sync_now, &settings, &sign_out, &quit,
             ],
         )
     } else {

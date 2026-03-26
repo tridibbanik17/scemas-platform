@@ -1007,7 +1007,10 @@ async fn dev_desktop(root: &Path, debug: bool) -> Result<(), CliError> {
     sync_desktop_schema(root)?;
 
     let pg_bin_dir = find_pg_bin_dir_for_desktop();
-    tracing::info!("starting desktop app (tauri + vite)");
+    let db_url = env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://scemas:scemas@localhost:5432/scemas".to_string());
+
+    tracing::info!("starting desktop app (reading from dev postgres)");
     tracing::info!("ctrl+c to stop");
 
     let mut tauri = TokioCommand::new("cargo")
@@ -1019,6 +1022,8 @@ async fn dev_desktop(root: &Path, debug: bool) -> Result<(), CliError> {
             "crates/scemas-desktop/Cargo.toml",
         ])
         .env("POSTGRES_BIN_DIR", &pg_bin_dir)
+        .env("DATABASE_URL", &db_url)
+        .env("SCEMAS_REMOTE_DB_URL", &db_url)
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())

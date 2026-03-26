@@ -170,7 +170,7 @@ see `.env.example`. defaults work out of the box for the web stack. desktop-spec
 | `DATABASE_URL` | `postgres://scemas:scemas@localhost:5432/scemas` | external postgres connection, used by the web stack and by desktop when embedded mode is disabled or when a local postgres is already reachable |
 | `SCEMAS_USE_EMBEDDED_POSTGRES` | `1` | desktop-only switch. `1` tries embedded postgres first, unless an external postgres is already reachable; `0` forces external postgres |
 | `POSTGRES_BIN_DIR` | unset, auto-detected | desktop-only path to a postgres 16 `bin/` directory containing `pg_ctl`, `initdb`, `postgres`, `createdb`, and `psql` |
-| `SCEMAS_REMOTE_URL` | `https://api.scemas.dev` | desktop remote sync/auth endpoint |
+| `INTERNAL_RUST_URL` | `http://localhost:3001` | rust engine URL for remote auth fallback and sync. shared with dashboard. desktop also accepts legacy `SCEMAS_REMOTE_URL` |
 
 ## source of truth
 

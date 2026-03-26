@@ -15,7 +15,7 @@ export function PublicLayout() {
     <div className="flex h-dvh flex-col">
       <div
         data-tauri-drag-region
-        className="flex h-8 shrink-0 items-center justify-end gap-4 border-b px-4 text-xs"
+        className="flex h-12 shrink-0 items-center justify-end gap-4 border-b px-4 text-xs"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <span

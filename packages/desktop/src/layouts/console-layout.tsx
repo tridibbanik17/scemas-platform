@@ -79,7 +79,7 @@ export function ConsoleLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <div
           data-tauri-drag-region
-          className="flex h-8 shrink-0 items-center gap-0.5 border-b px-2"
+          className="flex h-10 shrink-0 items-center gap-0.5 border-b px-2"
           style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
           <div

@@ -1,6 +1,6 @@
 import { type FormEvent, useState, useMemo } from 'react'
-import { useTauriQuery, useTauriMutation } from '@/lib/tauri'
 import { useSettings } from '@/lib/settings'
+import { useTauriQuery, useTauriMutation } from '@/lib/tauri'
 
 type Role = 'admin' | 'operator' | 'viewer'
 
@@ -62,9 +62,16 @@ export function UsersPage() {
     setSubmissionError(null)
     const fd = new FormData(event.currentTarget)
     createUser.mutate(
-      { email: String(fd.get('email')), username: String(fd.get('username')), password: String(fd.get('password')) },
       {
-        onSuccess: () => { setSubmissionError(null); (event.target as HTMLFormElement).reset() },
+        email: String(fd.get('email')),
+        username: String(fd.get('username')),
+        password: String(fd.get('password')),
+      },
+      {
+        onSuccess: () => {
+          setSubmissionError(null)
+          ;(event.target as HTMLFormElement).reset()
+        },
         onError: () => setSubmissionError('failed to create account'),
       },
     )
@@ -130,13 +137,44 @@ export function UsersPage() {
         <div className="border-b px-4 py-3 text-sm font-medium">accounts and permissions</div>
 
         <form className="grid gap-3 border-b px-4 py-4 md:grid-cols-5" onSubmit={handleCreateUser}>
-          <input name="email" type="email" placeholder="email" required className="h-9 rounded-md border border-input bg-transparent px-2 text-sm" />
-          <input name="username" placeholder="username" minLength={3} required className="h-9 rounded-md border border-input bg-transparent px-2 text-sm" />
-          <input name="password" type="password" placeholder="password" minLength={8} required className="h-9 rounded-md border border-input bg-transparent px-2 text-sm" />
-          <select name="role" defaultValue="operator" className="h-9 rounded-md border border-input bg-transparent px-2 text-sm">
-            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          <input
+            name="email"
+            type="email"
+            placeholder="email"
+            required
+            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+          />
+          <input
+            name="username"
+            placeholder="username"
+            minLength={3}
+            required
+            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="password"
+            minLength={8}
+            required
+            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+          />
+          <select
+            name="role"
+            defaultValue="operator"
+            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+          >
+            {ROLES.map(r => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
           </select>
-          <button type="submit" disabled={createUser.isPending} className="h-9 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={createUser.isPending}
+            className="h-9 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
             create account
           </button>
         </form>
@@ -149,11 +187,15 @@ export function UsersPage() {
           <>
             <div className="divide-y">
               {userSlice.items.map(account => (
-                <div key={account.id} className="relative flex items-center justify-between px-4 py-3">
+                <div
+                  key={account.id}
+                  className="relative flex items-center justify-between px-4 py-3"
+                >
                   <div>
                     <p className="text-sm font-medium">{account.username}</p>
                     <p className="text-xs text-muted-foreground">
-                      {account.email} · {account.role} · created {new Date(account.createdAt).toLocaleString()}
+                      {account.email} · {account.role} · created{' '}
+                      {new Date(account.createdAt).toLocaleString()}
                     </p>
                   </div>
                   <div className="relative">
@@ -166,12 +208,15 @@ export function UsersPage() {
                     </button>
                     {menuOpenId === account.id && (
                       <div className="absolute right-0 top-8 z-20 w-40 rounded-md border bg-popover p-1 shadow-md">
-                        <p className="px-2 py-1 text-[10px] font-medium text-muted-foreground">role</p>
+                        <p className="px-2 py-1 text-[10px] font-medium text-muted-foreground">
+                          role
+                        </p>
                         {ROLES.map(r => (
                           <button
                             key={r}
                             onClick={() => {
-                              if (r !== account.role) updateRole.mutate({ args: { userId: account.id, role: r } })
+                              if (r !== account.role)
+                                updateRole.mutate({ args: { userId: account.id, role: r } })
                               setMenuOpenId(null)
                             }}
                             className={`flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs hover:bg-accent ${r === account.role ? 'text-primary font-medium' : ''}`}
@@ -212,9 +257,22 @@ export function UsersPage() {
   )
 }
 
-function Pagination({ start, count, total, onPrev, onNext, hasPrev, hasNext }: {
-  start: number; count: number; total: number
-  onPrev: () => void; onNext: () => void; hasPrev: boolean; hasNext: boolean
+function Pagination({
+  start,
+  count,
+  total,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+}: {
+  start: number
+  count: number
+  total: number
+  onPrev: () => void
+  onNext: () => void
+  hasPrev: boolean
+  hasNext: boolean
 }) {
   return (
     <div className="flex items-center justify-between border-t px-4 py-2">
@@ -222,10 +280,18 @@ function Pagination({ start, count, total, onPrev, onNext, hasPrev, hasNext }: {
         {start + 1}–{start + count} of {total}
       </span>
       <div className="flex items-center gap-1">
-        <button disabled={!hasPrev} onClick={onPrev} className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent">
+        <button
+          disabled={!hasPrev}
+          onClick={onPrev}
+          className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent"
+        >
           previous
         </button>
-        <button disabled={!hasNext} onClick={onNext} className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent">
+        <button
+          disabled={!hasNext}
+          onClick={onNext}
+          className="h-7 rounded-md border border-input px-2 text-xs font-medium disabled:opacity-30 hover:bg-accent"
+        >
           next
         </button>
       </div>
