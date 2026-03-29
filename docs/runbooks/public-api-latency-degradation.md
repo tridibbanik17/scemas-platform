@@ -28,7 +28,7 @@ time curl -s http://localhost:3000/api/v1/zones/aqi > /dev/null
 2. **missing or stale indexes**. the schema has `analytics_latest_aggregate_idx` and `analytics_bucket_unique_idx`, but query plans can degrade with table bloat
 3. **cloudflare container cold start** (production). the durable object container sleeps after 30s of inactivity. a sleeping container pays the full rust binary boot cost on the first request
 4. **connection pool overhead**. in cloudflare worker mode, each request may create a new postgres connection if hyperdrive isn't configured
-5. **large response payloads**. `getPublicZoneSummary()` queries all zones and all metric types, then computes AQI in-memory. with many zones, this is O(zones * metric_types)
+5. **large response payloads**. `getPublicZoneSummary()` queries all zones and all metric types, then computes AQI in-memory. with many zones, this is O(zones \* metric_types)
 
 ## step-by-step mitigation
 

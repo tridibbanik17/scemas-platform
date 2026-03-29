@@ -31,17 +31,10 @@ type GeoJsonGeometry = GeoJsonPolygon | GeoJsonMultiPolygon
 type PlanningUnitFeature = {
   type: 'Feature'
   geometry: GeoJsonGeometry
-  properties: {
-    COMMUNITY: string
-    NEIGHBOURHOOD: string
-    PLANNING_UNIT: string
-  }
+  properties: { COMMUNITY: string; NEIGHBOURHOOD: string; PLANNING_UNIT: string }
 }
 
-type PlanningUnitCollection = {
-  type: 'FeatureCollection'
-  features: PlanningUnitFeature[]
-}
+type PlanningUnitCollection = { type: 'FeatureCollection'; features: PlanningUnitFeature[] }
 
 type MonitoringRegionFeature = {
   type: 'Feature'
@@ -62,10 +55,7 @@ type MonitoringRegionFeature = {
   geometry: GeoJsonMultiPolygon
 }
 
-type MonitoringRegionCollection = {
-  type: 'FeatureCollection'
-  features: MonitoringRegionFeature[]
-}
+type MonitoringRegionCollection = { type: 'FeatureCollection'; features: MonitoringRegionFeature[] }
 
 type SensorSimulationProfile = {
   mean: number
@@ -148,7 +138,9 @@ type MetricDefinition = {
   installHeightByProfile: Record<StationProfile, number>
   samplingIntervalByProfile: Record<StationProfile, number>
   baseSimulation: SensorSimulationProfile
-  profileAdjustments: Partial<Record<StationProfile, { mean?: number; variance?: number; spike?: number }>>
+  profileAdjustments: Partial<
+    Record<StationProfile, { mean?: number; variance?: number; spike?: number }>
+  >
   jitter: { lat: number; lng: number }
 }
 
@@ -970,9 +962,7 @@ async function main() {
 
   const regionCollection: MonitoringRegionCollection = {
     type: 'FeatureCollection',
-    features: regionDefinitions.map(region =>
-      buildRegionFeature(region, featureByPlanningUnit),
-    ),
+    features: regionDefinitions.map(region => buildRegionFeature(region, featureByPlanningUnit)),
   }
 
   const sensors = regionDefinitions.flatMap(region =>
@@ -1072,9 +1062,7 @@ function mapByHeight(metric: MetricType): Record<StationProfile, number> {
   ) as Record<StationProfile, number>
 }
 
-function mapBySampling(
-  key: 'climate' | 'chemistry' | 'acoustics',
-): Record<StationProfile, number> {
+function mapBySampling(key: 'climate' | 'chemistry' | 'acoustics'): Record<StationProfile, number> {
   return Object.fromEntries(
     Object.entries(stationProfileMetadata).map(([profile, metadata]) => [
       profile,
@@ -1122,7 +1110,9 @@ function buildRegionFeature(
     new Set(unitFeatures.map(feature => feature.properties.COMMUNITY.trim())),
   )
   if (communities.length !== 1) {
-    throw new Error(`region ${region.zoneId} spans unexpected communities: ${communities.join(', ')}`)
+    throw new Error(
+      `region ${region.zoneId} spans unexpected communities: ${communities.join(', ')}`,
+    )
   }
 
   return {
@@ -1162,7 +1152,9 @@ function buildRegionSensors(
   return region.stations.flatMap(station => {
     const hostPlanningUnit = featureByPlanningUnit.get(station.planningUnit)
     if (!hostPlanningUnit) {
-      throw new Error(`missing planning unit ${station.planningUnit} for station ${station.stationId}`)
+      throw new Error(
+        `missing planning unit ${station.planningUnit} for station ${station.stationId}`,
+      )
     }
 
     const basePoint = findPointInsideGeometry(hostPlanningUnit.geometry, station.anchor)
@@ -1176,13 +1168,16 @@ function buildRegionSensors(
       const regionSimulation = region.metricAdjustments[metric.deviceType] ?? {}
       const profileSimulation = metric.profileAdjustments[station.profile] ?? {}
       const simulation = clampSimulation({
-        mean: metric.baseSimulation.mean + (regionSimulation.mean ?? 0) + (profileSimulation.mean ?? 0),
+        mean:
+          metric.baseSimulation.mean + (regionSimulation.mean ?? 0) + (profileSimulation.mean ?? 0),
         variance:
           metric.baseSimulation.variance +
           (regionSimulation.variance ?? 0) +
           (profileSimulation.variance ?? 0),
         spike:
-          metric.baseSimulation.spike + (regionSimulation.spike ?? 0) + (profileSimulation.spike ?? 0),
+          metric.baseSimulation.spike +
+          (regionSimulation.spike ?? 0) +
+          (profileSimulation.spike ?? 0),
         min: metric.baseSimulation.min,
         max: metric.baseSimulation.max,
       })
@@ -1244,10 +1239,7 @@ function findPointInsideGeometry(
   for (let radius = 1; radius <= 18; radius += 1) {
     for (let offsetLng = -radius; offsetLng <= radius; offsetLng += 1) {
       for (let offsetLat = -radius; offsetLat <= radius; offsetLat += 1) {
-        if (
-          Math.abs(offsetLng) !== radius &&
-          Math.abs(offsetLat) !== radius
-        ) {
+        if (Math.abs(offsetLng) !== radius && Math.abs(offsetLat) !== radius) {
           continue
         }
 

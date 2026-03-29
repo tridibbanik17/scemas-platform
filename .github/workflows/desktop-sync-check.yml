@@ -3,12 +3,12 @@ name: desktop sync check
 on:
   pull_request:
     paths:
-      - "packages/dashboard/components/**"
-      - "packages/dashboard/app/**"
-      - "packages/dashboard/server/routers/**"
-      - "packages/dashboard/server/data-distribution-manager.ts"
-      - "packages/dashboard/app/globals.css"
-      - "packages/db/src/schema.ts"
+      - 'packages/dashboard/components/**'
+      - 'packages/dashboard/app/**'
+      - 'packages/dashboard/server/routers/**'
+      - 'packages/dashboard/server/data-distribution-manager.ts'
+      - 'packages/dashboard/app/globals.css'
+      - 'packages/db/src/schema.ts'
 
 jobs:
   check:

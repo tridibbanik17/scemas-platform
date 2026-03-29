@@ -42,6 +42,7 @@ if this returns rows, the rules exist in postgres. the question is whether they 
 ### 3. check enum values
 
 the rust evaluator only recognizes these exact strings:
+
 - metric_type: `temperature`, `humidity`, `air_quality`, `noise_level`
 - comparison: `gt`, `lt`, `gte`, `lte`
 - rule_status: `active`, `inactive`

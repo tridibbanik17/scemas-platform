@@ -80,12 +80,12 @@ first-time setup (`.env` copy, `bun install`) runs automatically on first source
 
 `bun db:push` runs `@scemas/db`'s `ensure-users` script. it creates one account per role, skips any that already exist, and uses `1234` for all three defaults.
 
-| email | role | dashboard |
-|-------|------|-----------|
-| `admin@example.com` | admin | `/rules`, `/users`, `/health`, `/audit` |
+| email                  | role     | dashboard                                             |
+| ---------------------- | -------- | ----------------------------------------------------- |
+| `admin@example.com`    | admin    | `/rules`, `/users`, `/health`, `/audit`               |
 | `operator@example.com` | operator | `/dashboard`, `/alerts`, `/subscriptions`, `/metrics` |
-| `viewer@example.com` | viewer | `/display` (public AQI grid) |
-| `public@example.com` | viewer |  |
+| `viewer@example.com`   | viewer   | `/display` (public AQI grid)                          |
+| `public@example.com`   | viewer   |                                                       |
 
 ### seed sensor data
 
@@ -101,24 +101,24 @@ pass `--rate 8` or `--rate=8` to increase the aggregate generation frequency acr
 
 both paths give you the same functions:
 
-| function | description |
-|----------|-------------|
-| `scemas-dev` | start everything (db + schema + accounts + engine + dashboard) |
-| `scemas-engine` | rust engine on :3001 |
-| `scemas-dash` | next.js dashboard on :3000 |
-| `scemas-seed` | seed sample data (supports `--spike` and `--rate <n>`) |
-| `scemas-check` | run all lints (cargo fmt + clippy + tsc) |
-| `scemas-nuke` | stop everything |
+| function        | description                                                    |
+| --------------- | -------------------------------------------------------------- |
+| `scemas-dev`    | start everything (db + schema + accounts + engine + dashboard) |
+| `scemas-engine` | rust engine on :3001                                           |
+| `scemas-dash`   | next.js dashboard on :3000                                     |
+| `scemas-seed`   | seed sample data (supports `--spike` and `--rate <n>`)         |
+| `scemas-check`  | run all lints (cargo fmt + clippy + tsc)                       |
+| `scemas-nuke`   | stop everything                                                |
 
 ### environment variables
 
 see `.env.example`. defaults work out of the box for the web stack. desktop-specific knobs:
 
-| variable | default | meaning |
-|----------|---------|---------|
-| `DATABASE_URL` | `postgres://scemas:scemas@localhost:5432/scemas` | external postgres connection, used by the web stack and by desktop when embedded mode is disabled or when a local postgres is already reachable |
-| `POSTGRES_BIN_DIR` | unset, auto-detected | desktop-only path to a postgres 16 `bin/` directory containing `pg_ctl`, `initdb`, `postgres`, `createdb`, and `psql` |
-| `INTERNAL_RUST_URL` | `http://localhost:3001` | rust engine URL for remote auth fallback and sync. shared with dashboard. desktop also accepts legacy `SCEMAS_REMOTE_URL` |
+| variable            | default                                          | meaning                                                                                                                                         |
+| ------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`      | `postgres://scemas:scemas@localhost:5432/scemas` | external postgres connection, used by the web stack and by desktop when embedded mode is disabled or when a local postgres is already reachable |
+| `POSTGRES_BIN_DIR`  | unset, auto-detected                             | desktop-only path to a postgres 16 `bin/` directory containing `pg_ctl`, `initdb`, `postgres`, `createdb`, and `psql`                           |
+| `INTERNAL_RUST_URL` | `http://localhost:3001`                          | rust engine URL for remote auth fallback and sync. shared with dashboard. desktop also accepts legacy `SCEMAS_REMOTE_URL`                       |
 
 ## architecture tests
 
@@ -154,61 +154,61 @@ all classes, attributes, methods, and relationships derive from the UML class di
 
 ### web routes
 
-| route | audience | purpose |
-|-------|----------|---------|
-| `/` | everyone | root redirect to `/sign-in` |
-| `/sign-in` | operator, admin, viewer | canonical login page |
-| `/sign-up` | new users | canonical signup page |
-| `/dashboard` | operator | main city operator dashboard |
-| `/alerts` | operator | live alert queue |
-| `/alerts/[alertId]` | operator | alert detail drill-down |
-| `/subscriptions` | operator | personal alert subscription controls |
-| `/metrics` | operator | sensor subagent overview |
-| `/metrics/[zone]` | operator | zone-specific metric drill-down |
-| `/rules` | admin | threshold rule CRUD |
-| `/rules/[ruleId]` | admin | threshold rule detail page |
-| `/users` | admin | user and role management |
-| `/users/[userId]` | admin | account-specific audit trail |
-| `/health` | admin | ingestion counters, failures, platform status |
-| `/audit` | admin | audit log viewer |
-| `/display` | public, viewer, third-party developers | public AQI display |
+| route               | audience                               | purpose                                       |
+| ------------------- | -------------------------------------- | --------------------------------------------- |
+| `/`                 | everyone                               | root redirect to `/sign-in`                   |
+| `/sign-in`          | operator, admin, viewer                | canonical login page                          |
+| `/sign-up`          | new users                              | canonical signup page                         |
+| `/dashboard`        | operator                               | main city operator dashboard                  |
+| `/alerts`           | operator                               | live alert queue                              |
+| `/alerts/[alertId]` | operator                               | alert detail drill-down                       |
+| `/subscriptions`    | operator                               | personal alert subscription controls          |
+| `/metrics`          | operator                               | sensor subagent overview                      |
+| `/metrics/[zone]`   | operator                               | zone-specific metric drill-down               |
+| `/rules`            | admin                                  | threshold rule CRUD                           |
+| `/rules/[ruleId]`   | admin                                  | threshold rule detail page                    |
+| `/users`            | admin                                  | user and role management                      |
+| `/users/[userId]`   | admin                                  | account-specific audit trail                  |
+| `/health`           | admin                                  | ingestion counters, failures, platform status |
+| `/audit`            | admin                                  | audit log viewer                              |
+| `/display`          | public, viewer, third-party developers | public AQI display                            |
 
 ### internal rust routes
 
 these are server-to-server routes used by the next/tRPC layer and seed scripts, not browser pages.
 
-| route | method | purpose |
-|-------|--------|---------|
-| `/internal/auth/signup` | `POST` | create account and issue session |
-| `/internal/auth/login` | `POST` | authenticate and issue session |
-| `/internal/auth/reset-password` | `POST` | admin password reset (argon2 hash) |
-| `/internal/alerting/rules` | `POST` | create threshold rule |
-| `/internal/alerting/rules/{rule_id}/status` | `POST` | activate or pause rule |
-| `/internal/alerting/rules/{rule_id}/delete` | `POST` | delete rule |
-| `/internal/alerting/alerts/{alert_id}/acknowledge` | `POST` | acknowledge alert |
-| `/internal/alerting/alerts/{alert_id}/resolve` | `POST` | resolve alert |
-| `/internal/telemetry/ingest` | `POST` | ingest seeded or device telemetry |
-| `/internal/health` | `GET` | ingestion health counters |
+| route                                              | method | purpose                            |
+| -------------------------------------------------- | ------ | ---------------------------------- |
+| `/internal/auth/signup`                            | `POST` | create account and issue session   |
+| `/internal/auth/login`                             | `POST` | authenticate and issue session     |
+| `/internal/auth/reset-password`                    | `POST` | admin password reset (argon2 hash) |
+| `/internal/alerting/rules`                         | `POST` | create threshold rule              |
+| `/internal/alerting/rules/{rule_id}/status`        | `POST` | activate or pause rule             |
+| `/internal/alerting/rules/{rule_id}/delete`        | `POST` | delete rule                        |
+| `/internal/alerting/alerts/{alert_id}/acknowledge` | `POST` | acknowledge alert                  |
+| `/internal/alerting/alerts/{alert_id}/resolve`     | `POST` | resolve alert                      |
+| `/internal/telemetry/ingest`                       | `POST` | ingest seeded or device telemetry  |
+| `/internal/health`                                 | `GET`  | ingestion health counters          |
 
 ### public API routes
 
-| route | method | purpose |
-|-------|--------|---------|
-| `/api/v1/zones/aqi` | `GET` | public, versioned AQI feed |
-| `/api/trpc/*` | `GET`, `POST` | dashboard tRPC transport for authenticated app views |
+| route               | method        | purpose                                              |
+| ------------------- | ------------- | ---------------------------------------------------- |
+| `/api/v1/zones/aqi` | `GET`         | public, versioned AQI feed                           |
+| `/api/trpc/*`       | `GET`, `POST` | dashboard tRPC transport for authenticated app views |
 
 ## document map
 
-| path | purpose |
-|------|---------|
-| `docs/D1.pdf` | requirements and system framing |
-| `docs/D2.pdf` | design/package deliverable |
-| `docs/diagrams/class_diagram.puml` | UML class source of truth |
-| `docs/diagrams/signup_and_login.puml` | signup/login interaction flow |
-| `docs/diagrams/define_alert_rule.puml` | admin rule creation sequence |
-| `docs/diagrams/acknowledge_critical_env.puml` | operator alert acknowledgement sequence |
+| path                                                         | purpose                                     |
+| ------------------------------------------------------------ | ------------------------------------------- |
+| `docs/D1.pdf`                                                | requirements and system framing             |
+| `docs/D2.pdf`                                                | design/package deliverable                  |
+| `docs/diagrams/class_diagram.puml`                           | UML class source of truth                   |
+| `docs/diagrams/signup_and_login.puml`                        | signup/login interaction flow               |
+| `docs/diagrams/define_alert_rule.puml`                       | admin rule creation sequence                |
+| `docs/diagrams/acknowledge_critical_env.puml`                | operator alert acknowledgement sequence     |
 | `docs/diagrams/data_distribution_management_controller.puml` | distribution controller sequence/state flow |
-| `docs/diagrams/encryption_manager.puml` | auth/encryption manager notes |
+| `docs/diagrams/encryption_manager.puml`                      | auth/encryption manager notes               |
 
 ## building desktop releases
 
@@ -220,6 +220,7 @@ cargo tauri build --manifest-path crates/scemas-desktop/Cargo.toml
 ```
 
 output in `target/release/bundle/`:
+
 - macOS: `macos/SCEMAS.app` + `dmg/SCEMAS_0.1.0_aarch64.dmg`
 - linux: `appimage/` + `deb/`
 - windows: `msi/` + `nsis/`
@@ -260,15 +261,15 @@ bash scripts/bundle-postgres.sh   # macOS/linux
 
 ## tech stack
 
-| layer | tech |
-|-------|------|
-| rust engine | axum, sqlx, tokio, argon2, jsonwebtoken |
-| database | postgresql (drizzle migrations) |
-| api surface | tRPC v11 (next.js server) |
-| frontend | next.js 15, tailwind v4, shadcn/ui, recharts, maplibre |
-| validation | zod (typescript), thiserror (rust) |
-| deployment | cloudflare workers via opennext |
-| runtime | bun (typescript), tokio (rust) |
+| layer       | tech                                                   |
+| ----------- | ------------------------------------------------------ |
+| rust engine | axum, sqlx, tokio, argon2, jsonwebtoken                |
+| database    | postgresql (drizzle migrations)                        |
+| api surface | tRPC v11 (next.js server)                              |
+| frontend    | next.js 15, tailwind v4, shadcn/ui, recharts, maplibre |
+| validation  | zod (typescript), thiserror (rust)                     |
+| deployment  | cloudflare workers via opennext                        |
+| runtime     | bun (typescript), tokio (rust)                         |
 
 ## webhook dispatch
 

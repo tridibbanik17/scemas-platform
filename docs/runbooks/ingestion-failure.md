@@ -61,6 +61,7 @@ LIMIT 20;
 ```
 
 the `stage` column tells you where the pipeline broke:
+
 - `schema` -> payload doesn't match expected JSON structure
 - `range` -> values outside plausible bounds
 - `timestamp` -> clock drift beyond 5 minutes

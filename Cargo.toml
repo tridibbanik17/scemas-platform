@@ -1,12 +1,12 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/scemas-core",
-    "crates/scemas-telemetry",
-    "crates/scemas-alerting",
-    "crates/scemas-server",
-    "crates/scemas-cli",
-    "crates/scemas-desktop",
+  "crates/scemas-core",
+  "crates/scemas-telemetry",
+  "crates/scemas-alerting",
+  "crates/scemas-server",
+  "crates/scemas-cli",
+  "crates/scemas-desktop",
 ]
 
 [workspace.package]
@@ -22,7 +22,13 @@ tower = "0.5"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 
 # database
-sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json"] }
+sqlx = { version = "0.8", features = [
+  "runtime-tokio-rustls",
+  "postgres",
+  "uuid",
+  "chrono",
+  "json",
+] }
 
 # serialization
 serde = { version = "1", features = ["derive"] }

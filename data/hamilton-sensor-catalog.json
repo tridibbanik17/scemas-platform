@@ -22,13 +22,7 @@
     "install_height_m": 4.8,
     "lat": 43.2619,
     "lng": -79.8723,
-    "simulation": {
-      "mean": 24,
-      "variance": 12,
-      "spike": 41,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 24, "variance": 12, "spike": 41, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-dt-001",
@@ -53,13 +47,7 @@
     "install_height_m": 4.8,
     "lat": 43.2616,
     "lng": -79.8723,
-    "simulation": {
-      "mean": 58,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 58, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-dt-001",
@@ -84,13 +72,7 @@
     "install_height_m": 4.6,
     "lat": 43.2618,
     "lng": -79.8726,
-    "simulation": {
-      "mean": 27,
-      "variance": 50,
-      "spike": 146,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 27, "variance": 50, "spike": 146, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-dt-001",
@@ -115,13 +97,7 @@
     "install_height_m": 6.2,
     "lat": 43.2616,
     "lng": -79.8725,
-    "simulation": {
-      "mean": 65,
-      "variance": 21,
-      "spike": 92,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 65, "variance": 21, "spike": 92, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-dt-002",
@@ -146,13 +122,7 @@
     "install_height_m": 21,
     "lat": 43.249,
     "lng": -79.8764,
-    "simulation": {
-      "mean": 25.4,
-      "variance": 13.5,
-      "spike": 43,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 25.4, "variance": 13.5, "spike": 43, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-dt-002",
@@ -177,13 +147,7 @@
     "install_height_m": 21,
     "lat": 43.2487,
     "lng": -79.8764,
-    "simulation": {
-      "mean": 56,
-      "variance": 29,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 56, "variance": 29, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-dt-002",
@@ -208,13 +172,7 @@
     "install_height_m": 21.5,
     "lat": 43.2489,
     "lng": -79.8767,
-    "simulation": {
-      "mean": 27,
-      "variance": 50,
-      "spike": 146,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 27, "variance": 50, "spike": 146, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-dt-002",
@@ -239,13 +197,7 @@
     "install_height_m": 22,
     "lat": 43.2487,
     "lng": -79.8766,
-    "simulation": {
-      "mean": 65,
-      "variance": 21,
-      "spike": 92,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 65, "variance": 21, "spike": 92, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-dt-003",
@@ -270,13 +222,7 @@
     "install_height_m": 5.6,
     "lat": 43.251,
     "lng": -79.8665,
-    "simulation": {
-      "mean": 24,
-      "variance": 12,
-      "spike": 41,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 24, "variance": 12, "spike": 41, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-dt-003",
@@ -301,13 +247,7 @@
     "install_height_m": 5.6,
     "lat": 43.2507,
     "lng": -79.8665,
-    "simulation": {
-      "mean": 58,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 58, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-dt-003",
@@ -332,13 +272,7 @@
     "install_height_m": 4.8,
     "lat": 43.2509,
     "lng": -79.8668,
-    "simulation": {
-      "mean": 31,
-      "variance": 60,
-      "spike": 160,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 31, "variance": 60, "spike": 160, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-dt-003",
@@ -363,13 +297,7 @@
     "install_height_m": 6.4,
     "lat": 43.2507,
     "lng": -79.8667,
-    "simulation": {
-      "mean": 70,
-      "variance": 24,
-      "spike": 98,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 70, "variance": 24, "spike": 98, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-wf-001",
@@ -394,13 +322,7 @@
     "install_height_m": 4.7,
     "lat": 43.2727,
     "lng": -79.8655,
-    "simulation": {
-      "mean": 19.8,
-      "variance": 8,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 19.8, "variance": 8, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-wf-001",
@@ -425,13 +347,7 @@
     "install_height_m": 4.7,
     "lat": 43.2724,
     "lng": -79.8654,
-    "simulation": {
-      "mean": 74,
-      "variance": 16,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 74, "variance": 16, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-wf-001",
@@ -456,13 +372,7 @@
     "install_height_m": 4.2,
     "lat": 43.2726,
     "lng": -79.8657,
-    "simulation": {
-      "mean": 17,
-      "variance": 18,
-      "spike": 100,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 17, "variance": 18, "spike": 100, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-wf-001",
@@ -487,13 +397,7 @@
     "install_height_m": 4.1,
     "lat": 43.2724,
     "lng": -79.8657,
-    "simulation": {
-      "mean": 53,
-      "variance": 11,
-      "spike": 79,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 53, "variance": 11, "spike": 79, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-wf-002",
@@ -518,13 +422,7 @@
     "install_height_m": 4.7,
     "lat": 43.2667,
     "lng": -79.8859,
-    "simulation": {
-      "mean": 19.8,
-      "variance": 8,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 19.8, "variance": 8, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-wf-002",
@@ -549,13 +447,7 @@
     "install_height_m": 4.7,
     "lat": 43.2664,
     "lng": -79.8858,
-    "simulation": {
-      "mean": 74,
-      "variance": 16,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 74, "variance": 16, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-wf-002",
@@ -580,13 +472,7 @@
     "install_height_m": 4.2,
     "lat": 43.2666,
     "lng": -79.8861,
-    "simulation": {
-      "mean": 17,
-      "variance": 18,
-      "spike": 100,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 17, "variance": 18, "spike": 100, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-wf-002",
@@ -611,13 +497,7 @@
     "install_height_m": 4.1,
     "lat": 43.2664,
     "lng": -79.8861,
-    "simulation": {
-      "mean": 53,
-      "variance": 11,
-      "spike": 79,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 53, "variance": 11, "spike": 79, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-wf-003",
@@ -642,13 +522,7 @@
     "install_height_m": 4.5,
     "lat": 43.2736,
     "lng": -79.8846,
-    "simulation": {
-      "mean": 20.2,
-      "variance": 8,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 20.2, "variance": 8, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-wf-003",
@@ -673,13 +547,7 @@
     "install_height_m": 4.5,
     "lat": 43.2733,
     "lng": -79.8845,
-    "simulation": {
-      "mean": 71,
-      "variance": 19,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 71, "variance": 19, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-wf-003",
@@ -704,13 +572,7 @@
     "install_height_m": 4.1,
     "lat": 43.2735,
     "lng": -79.8848,
-    "simulation": {
-      "mean": 17,
-      "variance": 18,
-      "spike": 100,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 17, "variance": 18, "spike": 100, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-wf-003",
@@ -735,13 +597,7 @@
     "install_height_m": 4.2,
     "lat": 43.2733,
     "lng": -79.8848,
-    "simulation": {
-      "mean": 52,
-      "variance": 9,
-      "spike": 76,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 52, "variance": 9, "spike": 76, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-kd-001",
@@ -766,13 +622,7 @@
     "install_height_m": 4.9,
     "lat": 43.2551,
     "lng": -79.8921,
-    "simulation": {
-      "mean": 22.2,
-      "variance": 9.5,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22.2, "variance": 9.5, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-kd-001",
@@ -797,13 +647,7 @@
     "install_height_m": 4.9,
     "lat": 43.2548,
     "lng": -79.892,
-    "simulation": {
-      "mean": 62,
-      "variance": 25,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 62, "variance": 25, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-kd-001",
@@ -828,13 +672,7 @@
     "install_height_m": 4.2,
     "lat": 43.255,
     "lng": -79.8923,
-    "simulation": {
-      "mean": 17,
-      "variance": 31,
-      "spike": 114,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 17, "variance": 31, "spike": 114, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-kd-001",
@@ -859,13 +697,7 @@
     "install_height_m": 4.6,
     "lat": 43.2548,
     "lng": -79.8922,
-    "simulation": {
-      "mean": 59,
-      "variance": 17,
-      "spike": 86,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 59, "variance": 17, "spike": 86, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-kd-002",
@@ -890,13 +722,7 @@
     "install_height_m": 4.9,
     "lat": 43.2465,
     "lng": -79.8911,
-    "simulation": {
-      "mean": 22.2,
-      "variance": 9.5,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22.2, "variance": 9.5, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-kd-002",
@@ -921,13 +747,7 @@
     "install_height_m": 4.9,
     "lat": 43.2462,
     "lng": -79.8911,
-    "simulation": {
-      "mean": 62,
-      "variance": 25,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 62, "variance": 25, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-kd-002",
@@ -952,13 +772,7 @@
     "install_height_m": 4.2,
     "lat": 43.2464,
     "lng": -79.8914,
-    "simulation": {
-      "mean": 17,
-      "variance": 31,
-      "spike": 114,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 17, "variance": 31, "spike": 114, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-kd-002",
@@ -983,13 +797,7 @@
     "install_height_m": 4.6,
     "lat": 43.2462,
     "lng": -79.8913,
-    "simulation": {
-      "mean": 59,
-      "variance": 17,
-      "spike": 86,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 59, "variance": 17, "spike": 86, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-kd-003",
@@ -1014,13 +822,7 @@
     "install_height_m": 4,
     "lat": 43.2499,
     "lng": -79.915,
-    "simulation": {
-      "mean": 21,
-      "variance": 7.5,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 21, "variance": 7.5, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-kd-003",
@@ -1045,13 +847,7 @@
     "install_height_m": 4,
     "lat": 43.2496,
     "lng": -79.9149,
-    "simulation": {
-      "mean": 67,
-      "variance": 19,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 67, "variance": 19, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-kd-003",
@@ -1076,13 +872,7 @@
     "install_height_m": 3.7,
     "lat": 43.2498,
     "lng": -79.9152,
-    "simulation": {
-      "mean": 13,
-      "variance": 21,
-      "spike": 96,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 13, "variance": 21, "spike": 96, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-kd-003",
@@ -1107,13 +897,7 @@
     "install_height_m": 3.5,
     "lat": 43.2496,
     "lng": -79.9151,
-    "simulation": {
-      "mean": 53,
-      "variance": 11,
-      "spike": 78,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 53, "variance": 11, "spike": 78, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-ee-001",
@@ -1138,13 +922,7 @@
     "install_height_m": 5.3,
     "lat": 43.2494,
     "lng": -79.8211,
-    "simulation": {
-      "mean": 24,
-      "variance": 12,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 24, "variance": 12, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-ee-001",
@@ -1169,13 +947,7 @@
     "install_height_m": 5.3,
     "lat": 43.2491,
     "lng": -79.821,
-    "simulation": {
-      "mean": 60,
-      "variance": 27,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 60, "variance": 27, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-ee-001",
@@ -1200,13 +972,7 @@
     "install_height_m": 4.3,
     "lat": 43.2493,
     "lng": -79.8213,
-    "simulation": {
-      "mean": 31,
-      "variance": 64,
-      "spike": 160,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 31, "variance": 64, "spike": 160, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-ee-001",
@@ -1231,13 +997,7 @@
     "install_height_m": 6,
     "lat": 43.2491,
     "lng": -79.8213,
-    "simulation": {
-      "mean": 71,
-      "variance": 24,
-      "spike": 98,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 71, "variance": 24, "spike": 98, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-ee-002",
@@ -1262,13 +1022,7 @@
     "install_height_m": 4.5,
     "lat": 43.2527,
     "lng": -79.8326,
-    "simulation": {
-      "mean": 22.2,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22.2, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-ee-002",
@@ -1293,13 +1047,7 @@
     "install_height_m": 4.5,
     "lat": 43.2524,
     "lng": -79.8325,
-    "simulation": {
-      "mean": 64,
-      "variance": 23,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 64, "variance": 23, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-ee-002",
@@ -1324,13 +1072,7 @@
     "install_height_m": 4.1,
     "lat": 43.2526,
     "lng": -79.8328,
-    "simulation": {
-      "mean": 23,
-      "variance": 38,
-      "spike": 128,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 23, "variance": 38, "spike": 128, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-ee-002",
@@ -1355,13 +1097,7 @@
     "install_height_m": 4.2,
     "lat": 43.2524,
     "lng": -79.8328,
-    "simulation": {
-      "mean": 61,
-      "variance": 16,
-      "spike": 86,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 61, "variance": 16, "spike": 86, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-ee-003",
@@ -1386,13 +1122,7 @@
     "install_height_m": 4.9,
     "lat": 43.2569,
     "lng": -79.8435,
-    "simulation": {
-      "mean": 23,
-      "variance": 11,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 23, "variance": 11, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-ee-003",
@@ -1417,13 +1147,7 @@
     "install_height_m": 4.9,
     "lat": 43.2566,
     "lng": -79.8434,
-    "simulation": {
-      "mean": 61,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 61, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-ee-003",
@@ -1448,13 +1172,7 @@
     "install_height_m": 4.2,
     "lat": 43.2568,
     "lng": -79.8437,
-    "simulation": {
-      "mean": 25,
-      "variance": 46,
-      "spike": 138,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 25, "variance": 46, "spike": 138, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-ee-003",
@@ -1479,13 +1197,7 @@
     "install_height_m": 4.6,
     "lat": 43.2566,
     "lng": -79.8436,
-    "simulation": {
-      "mean": 64,
-      "variance": 20,
-      "spike": 91,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 64, "variance": 20, "spike": 91, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-rh-001",
@@ -1510,13 +1222,7 @@
     "install_height_m": 4.5,
     "lat": 43.2142,
     "lng": -79.7961,
-    "simulation": {
-      "mean": 21.7,
-      "variance": 9,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 21.7, "variance": 9, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-rh-001",
@@ -1541,13 +1247,7 @@
     "install_height_m": 4.5,
     "lat": 43.2139,
     "lng": -79.796,
-    "simulation": {
-      "mean": 65,
-      "variance": 23,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 65, "variance": 23, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-rh-001",
@@ -1572,13 +1272,7 @@
     "install_height_m": 4.1,
     "lat": 43.2141,
     "lng": -79.7963,
-    "simulation": {
-      "mean": 21,
-      "variance": 35,
-      "spike": 122,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 21, "variance": 35, "spike": 122, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-rh-001",
@@ -1603,13 +1297,7 @@
     "install_height_m": 4.2,
     "lat": 43.2139,
     "lng": -79.7963,
-    "simulation": {
-      "mean": 58,
-      "variance": 14,
-      "spike": 84,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 58, "variance": 14, "spike": 84, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-rh-002",
@@ -1634,13 +1322,7 @@
     "install_height_m": 5.3,
     "lat": 43.2157,
     "lng": -79.789,
-    "simulation": {
-      "mean": 23.5,
-      "variance": 11,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 23.5, "variance": 11, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-rh-002",
@@ -1665,13 +1347,7 @@
     "install_height_m": 5.3,
     "lat": 43.2154,
     "lng": -79.789,
-    "simulation": {
-      "mean": 61,
-      "variance": 27,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 61, "variance": 27, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-rh-002",
@@ -1696,13 +1372,7 @@
     "install_height_m": 4.3,
     "lat": 43.2156,
     "lng": -79.7893,
-    "simulation": {
-      "mean": 29,
-      "variance": 61,
-      "spike": 154,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 29, "variance": 61, "spike": 154, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-rh-002",
@@ -1727,13 +1397,7 @@
     "install_height_m": 6,
     "lat": 43.2154,
     "lng": -79.7892,
-    "simulation": {
-      "mean": 68,
-      "variance": 22,
-      "spike": 96,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 68, "variance": 22, "spike": 96, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-rh-003",
@@ -1758,13 +1422,7 @@
     "install_height_m": 5.2,
     "lat": 43.2262,
     "lng": -79.7708,
-    "simulation": {
-      "mean": 23.3,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 23.3, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-rh-003",
@@ -1789,13 +1447,7 @@
     "install_height_m": 5.2,
     "lat": 43.2259,
     "lng": -79.7707,
-    "simulation": {
-      "mean": 62,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 62, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-rh-003",
@@ -1820,13 +1472,7 @@
     "install_height_m": 4.4,
     "lat": 43.2261,
     "lng": -79.771,
-    "simulation": {
-      "mean": 25,
-      "variance": 47,
-      "spike": 138,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 25, "variance": 47, "spike": 138, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-rh-003",
@@ -1851,13 +1497,7 @@
     "install_height_m": 5,
     "lat": 43.2259,
     "lng": -79.771,
-    "simulation": {
-      "mean": 63,
-      "variance": 19,
-      "spike": 91,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 63, "variance": 19, "spike": 91, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-em-001",
@@ -1882,13 +1522,7 @@
     "install_height_m": 8.5,
     "lat": 43.241,
     "lng": -79.871,
-    "simulation": {
-      "mean": 23.4,
-      "variance": 10.5,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 23.4, "variance": 10.5, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-em-001",
@@ -1913,13 +1547,7 @@
     "install_height_m": 8.5,
     "lat": 43.2407,
     "lng": -79.8709,
-    "simulation": {
-      "mean": 61,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 61, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-em-001",
@@ -1944,13 +1572,7 @@
     "install_height_m": 9.2,
     "lat": 43.2409,
     "lng": -79.8712,
-    "simulation": {
-      "mean": 20,
-      "variance": 38,
-      "spike": 126,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 20, "variance": 38, "spike": 126, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-em-001",
@@ -1975,13 +1597,7 @@
     "install_height_m": 5.5,
     "lat": 43.2407,
     "lng": -79.8711,
-    "simulation": {
-      "mean": 57,
-      "variance": 15,
-      "spike": 85,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 57, "variance": 15, "spike": 85, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-em-002",
@@ -2006,13 +1622,7 @@
     "install_height_m": 4.9,
     "lat": 43.2312,
     "lng": -79.8746,
-    "simulation": {
-      "mean": 22.8,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22.8, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-em-002",
@@ -2037,13 +1647,7 @@
     "install_height_m": 4.9,
     "lat": 43.2309,
     "lng": -79.8745,
-    "simulation": {
-      "mean": 61,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 61, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-em-002",
@@ -2068,13 +1672,7 @@
     "install_height_m": 4.2,
     "lat": 43.2311,
     "lng": -79.8748,
-    "simulation": {
-      "mean": 20,
-      "variance": 38,
-      "spike": 126,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 20, "variance": 38, "spike": 126, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-em-002",
@@ -2099,13 +1697,7 @@
     "install_height_m": 4.6,
     "lat": 43.2309,
     "lng": -79.8748,
-    "simulation": {
-      "mean": 59,
-      "variance": 17,
-      "spike": 87,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 59, "variance": 17, "spike": 87, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-em-003",
@@ -2130,13 +1722,7 @@
     "install_height_m": 4.5,
     "lat": 43.2353,
     "lng": -79.8496,
-    "simulation": {
-      "mean": 22,
-      "variance": 9,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22, "variance": 9, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-em-003",
@@ -2161,13 +1747,7 @@
     "install_height_m": 4.5,
     "lat": 43.235,
     "lng": -79.8495,
-    "simulation": {
-      "mean": 64,
-      "variance": 23,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 64, "variance": 23, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-em-003",
@@ -2192,13 +1772,7 @@
     "install_height_m": 4.1,
     "lat": 43.2352,
     "lng": -79.8498,
-    "simulation": {
-      "mean": 18,
-      "variance": 30,
-      "spike": 116,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 18, "variance": 30, "spike": 116, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-em-003",
@@ -2223,13 +1797,7 @@
     "install_height_m": 4.2,
     "lat": 43.235,
     "lng": -79.8497,
-    "simulation": {
-      "mean": 56,
-      "variance": 13,
-      "spike": 82,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 56, "variance": 13, "spike": 82, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-wm-001",
@@ -2254,13 +1822,7 @@
     "install_height_m": 5.3,
     "lat": 43.2412,
     "lng": -79.8898,
-    "simulation": {
-      "mean": 24.2,
-      "variance": 11,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 24.2, "variance": 11, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-wm-001",
@@ -2285,13 +1847,7 @@
     "install_height_m": 5.3,
     "lat": 43.2409,
     "lng": -79.8897,
-    "simulation": {
-      "mean": 60,
-      "variance": 27,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 60, "variance": 27, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-wm-001",
@@ -2316,13 +1872,7 @@
     "install_height_m": 4.3,
     "lat": 43.2411,
     "lng": -79.89,
-    "simulation": {
-      "mean": 27,
-      "variance": 58,
-      "spike": 150,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 27, "variance": 58, "spike": 150, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-wm-001",
@@ -2347,13 +1897,7 @@
     "install_height_m": 6,
     "lat": 43.2409,
     "lng": -79.89,
-    "simulation": {
-      "mean": 68,
-      "variance": 22,
-      "spike": 95,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 68, "variance": 22, "spike": 95, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-wm-002",
@@ -2378,13 +1922,7 @@
     "install_height_m": 4.5,
     "lat": 43.2378,
     "lng": -79.9032,
-    "simulation": {
-      "mean": 22.4,
-      "variance": 9,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22.4, "variance": 9, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-wm-002",
@@ -2409,13 +1947,7 @@
     "install_height_m": 4.5,
     "lat": 43.2375,
     "lng": -79.9031,
-    "simulation": {
-      "mean": 64,
-      "variance": 23,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 64, "variance": 23, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-wm-002",
@@ -2440,13 +1972,7 @@
     "install_height_m": 4.1,
     "lat": 43.2377,
     "lng": -79.9034,
-    "simulation": {
-      "mean": 19,
-      "variance": 32,
-      "spike": 118,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 19, "variance": 32, "spike": 118, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-wm-002",
@@ -2471,13 +1997,7 @@
     "install_height_m": 4.2,
     "lat": 43.2375,
     "lng": -79.9034,
-    "simulation": {
-      "mean": 58,
-      "variance": 14,
-      "spike": 83,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 58, "variance": 14, "spike": 83, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-wm-003",
@@ -2502,13 +2022,7 @@
     "install_height_m": 12.5,
     "lat": 43.2335,
     "lng": -79.8931,
-    "simulation": {
-      "mean": 23.2,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 23.2, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-wm-003",
@@ -2533,13 +2047,7 @@
     "install_height_m": 12.5,
     "lat": 43.2332,
     "lng": -79.893,
-    "simulation": {
-      "mean": 63,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 63, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-wm-003",
@@ -2564,13 +2072,7 @@
     "install_height_m": 12.9,
     "lat": 43.2334,
     "lng": -79.8933,
-    "simulation": {
-      "mean": 19,
-      "variance": 34,
-      "spike": 120,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 19, "variance": 34, "spike": 120, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-wm-003",
@@ -2595,13 +2097,7 @@
     "install_height_m": 5.2,
     "lat": 43.2332,
     "lng": -79.8933,
-    "simulation": {
-      "mean": 57,
-      "variance": 14,
-      "spike": 84,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 57, "variance": 14, "spike": 84, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-mc-001",
@@ -2626,13 +2122,7 @@
     "install_height_m": 4,
     "lat": 43.2675,
     "lng": -79.9126,
-    "simulation": {
-      "mean": 19.8,
-      "variance": 6,
-      "spike": 37,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 19.8, "variance": 6, "spike": 37, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-mc-001",
@@ -2657,13 +2147,7 @@
     "install_height_m": 4,
     "lat": 43.2672,
     "lng": -79.9125,
-    "simulation": {
-      "mean": 73,
-      "variance": 14,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 73, "variance": 14, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-mc-001",
@@ -2688,13 +2172,7 @@
     "install_height_m": 3.7,
     "lat": 43.2675,
     "lng": -79.9128,
-    "simulation": {
-      "mean": 8,
-      "variance": 14,
-      "spike": 85,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 8, "variance": 14, "spike": 85, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-mc-001",
@@ -2719,13 +2197,7 @@
     "install_height_m": 3.5,
     "lat": 43.2673,
     "lng": -79.9128,
-    "simulation": {
-      "mean": 43,
-      "variance": 4,
-      "spike": 68,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 43, "variance": 4, "spike": 68, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-mc-002",
@@ -2750,13 +2222,7 @@
     "install_height_m": 12.5,
     "lat": 43.2511,
     "lng": -79.9395,
-    "simulation": {
-      "mean": 21,
-      "variance": 8,
-      "spike": 37,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 21, "variance": 8, "spike": 37, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-mc-002",
@@ -2781,13 +2247,7 @@
     "install_height_m": 12.5,
     "lat": 43.2508,
     "lng": -79.9394,
-    "simulation": {
-      "mean": 70,
-      "variance": 20,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 70, "variance": 20, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-mc-002",
@@ -2812,13 +2272,7 @@
     "install_height_m": 12.9,
     "lat": 43.251,
     "lng": -79.9397,
-    "simulation": {
-      "mean": 10,
-      "variance": 18,
-      "spike": 95,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 10, "variance": 18, "spike": 95, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-mc-002",
@@ -2843,13 +2297,7 @@
     "install_height_m": 5.2,
     "lat": 43.2508,
     "lng": -79.9397,
-    "simulation": {
-      "mean": 45,
-      "variance": 6,
-      "spike": 72,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 45, "variance": 6, "spike": 72, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-mc-003",
@@ -2874,13 +2322,7 @@
     "install_height_m": 4.9,
     "lat": 43.2678,
     "lng": -79.8977,
-    "simulation": {
-      "mean": 21,
-      "variance": 8,
-      "spike": 37,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 21, "variance": 8, "spike": 37, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-mc-003",
@@ -2905,13 +2347,7 @@
     "install_height_m": 4.9,
     "lat": 43.2675,
     "lng": -79.8976,
-    "simulation": {
-      "mean": 68,
-      "variance": 20,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 68, "variance": 20, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-mc-003",
@@ -2936,13 +2372,7 @@
     "install_height_m": 4.2,
     "lat": 43.2677,
     "lng": -79.8979,
-    "simulation": {
-      "mean": 12,
-      "variance": 24,
-      "spike": 103,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 12, "variance": 24, "spike": 103, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-mc-003",
@@ -2967,13 +2397,7 @@
     "install_height_m": 4.6,
     "lat": 43.2675,
     "lng": -79.8979,
-    "simulation": {
-      "mean": 49,
-      "variance": 10,
-      "spike": 76,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 49, "variance": 10, "spike": 76, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-du-001",
@@ -2998,13 +2422,7 @@
     "install_height_m": 4.9,
     "lat": 43.2654,
     "lng": -79.9506,
-    "simulation": {
-      "mean": 21.6,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 21.6, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-du-001",
@@ -3029,13 +2447,7 @@
     "install_height_m": 4.9,
     "lat": 43.2651,
     "lng": -79.9505,
-    "simulation": {
-      "mean": 64,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 64, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-du-001",
@@ -3060,13 +2472,7 @@
     "install_height_m": 4.2,
     "lat": 43.2653,
     "lng": -79.9508,
-    "simulation": {
-      "mean": 16,
-      "variance": 30,
-      "spike": 112,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 16, "variance": 30, "spike": 112, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-du-001",
@@ -3091,13 +2497,7 @@
     "install_height_m": 4.6,
     "lat": 43.2651,
     "lng": -79.9507,
-    "simulation": {
-      "mean": 57,
-      "variance": 15,
-      "spike": 83,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 57, "variance": 15, "spike": 83, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-du-002",
@@ -3122,13 +2522,7 @@
     "install_height_m": 4.5,
     "lat": 43.2704,
     "lng": -79.9681,
-    "simulation": {
-      "mean": 20.8,
-      "variance": 9,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 20.8, "variance": 9, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-du-002",
@@ -3153,13 +2547,7 @@
     "install_height_m": 4.5,
     "lat": 43.2701,
     "lng": -79.968,
-    "simulation": {
-      "mean": 67,
-      "variance": 23,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 67, "variance": 23, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-du-002",
@@ -3184,13 +2572,7 @@
     "install_height_m": 4.1,
     "lat": 43.2703,
     "lng": -79.9683,
-    "simulation": {
-      "mean": 14,
-      "variance": 22,
-      "spike": 102,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 14, "variance": 22, "spike": 102, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-du-002",
@@ -3215,13 +2597,7 @@
     "install_height_m": 4.2,
     "lat": 43.2703,
     "lng": -79.9682,
-    "simulation": {
-      "mean": 54,
-      "variance": 11,
-      "spike": 78,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 54, "variance": 11, "spike": 78, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-du-003",
@@ -3246,13 +2622,7 @@
     "install_height_m": 4.8,
     "lat": 43.2704,
     "lng": -79.9575,
-    "simulation": {
-      "mean": 21.6,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 21.6, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-du-003",
@@ -3277,13 +2647,7 @@
     "install_height_m": 4.8,
     "lat": 43.2701,
     "lng": -79.9574,
-    "simulation": {
-      "mean": 64,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 64, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-du-003",
@@ -3308,13 +2672,7 @@
     "install_height_m": 4.6,
     "lat": 43.2703,
     "lng": -79.9577,
-    "simulation": {
-      "mean": 16,
-      "variance": 30,
-      "spike": 112,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 16, "variance": 30, "spike": 112, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-du-003",
@@ -3339,13 +2697,7 @@
     "install_height_m": 6.2,
     "lat": 43.2701,
     "lng": -79.9577,
-    "simulation": {
-      "mean": 57,
-      "variance": 15,
-      "spike": 83,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 57, "variance": 15, "spike": 83, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-an-001",
@@ -3370,13 +2722,7 @@
     "install_height_m": 5.2,
     "lat": 43.2124,
     "lng": -79.9679,
-    "simulation": {
-      "mean": 23.5,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 23.5, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-an-001",
@@ -3401,13 +2747,7 @@
     "install_height_m": 5.2,
     "lat": 43.2123,
     "lng": -79.9677,
-    "simulation": {
-      "mean": 61,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 61, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-an-001",
@@ -3432,13 +2772,7 @@
     "install_height_m": 4.4,
     "lat": 43.2124,
     "lng": -79.9679,
-    "simulation": {
-      "mean": 20,
-      "variance": 36,
-      "spike": 122,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 20, "variance": 36, "spike": 122, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-an-001",
@@ -3463,13 +2797,7 @@
     "install_height_m": 5,
     "lat": 43.2123,
     "lng": -79.968,
-    "simulation": {
-      "mean": 61,
-      "variance": 18,
-      "spike": 88,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 61, "variance": 18, "spike": 88, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-an-002",
@@ -3494,13 +2822,7 @@
     "install_height_m": 4.8,
     "lat": 43.2248,
     "lng": -80.0006,
-    "simulation": {
-      "mean": 22.7,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22.7, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-an-002",
@@ -3525,13 +2847,7 @@
     "install_height_m": 4.8,
     "lat": 43.2245,
     "lng": -80.0006,
-    "simulation": {
-      "mean": 61,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 61, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-an-002",
@@ -3556,13 +2872,7 @@
     "install_height_m": 4.6,
     "lat": 43.2247,
     "lng": -80.0009,
-    "simulation": {
-      "mean": 18,
-      "variance": 32,
-      "spike": 116,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 18, "variance": 32, "spike": 116, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-an-002",
@@ -3587,13 +2897,7 @@
     "install_height_m": 6.2,
     "lat": 43.2245,
     "lng": -80.0008,
-    "simulation": {
-      "mean": 59,
-      "variance": 17,
-      "spike": 86,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 59, "variance": 17, "spike": 86, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-an-003",
@@ -3618,13 +2922,7 @@
     "install_height_m": 4.9,
     "lat": 43.2383,
     "lng": -79.9604,
-    "simulation": {
-      "mean": 22.7,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22.7, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-an-003",
@@ -3649,13 +2947,7 @@
     "install_height_m": 4.9,
     "lat": 43.238,
     "lng": -79.9603,
-    "simulation": {
-      "mean": 61,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 61, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-an-003",
@@ -3680,13 +2972,7 @@
     "install_height_m": 4.2,
     "lat": 43.2382,
     "lng": -79.9606,
-    "simulation": {
-      "mean": 18,
-      "variance": 32,
-      "spike": 116,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 18, "variance": 32, "spike": 116, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-an-003",
@@ -3711,13 +2997,7 @@
     "install_height_m": 4.6,
     "lat": 43.238,
     "lng": -79.9606,
-    "simulation": {
-      "mean": 59,
-      "variance": 17,
-      "spike": 86,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 59, "variance": 17, "spike": 86, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-sc-001",
@@ -3742,13 +3022,7 @@
     "install_height_m": 5.3,
     "lat": 43.2222,
     "lng": -79.75,
-    "simulation": {
-      "mean": 23.4,
-      "variance": 11,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 23.4, "variance": 11, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-sc-001",
@@ -3773,13 +3047,7 @@
     "install_height_m": 5.3,
     "lat": 43.2219,
     "lng": -79.7499,
-    "simulation": {
-      "mean": 61,
-      "variance": 27,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 61, "variance": 27, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-sc-001",
@@ -3804,13 +3072,7 @@
     "install_height_m": 4.3,
     "lat": 43.2221,
     "lng": -79.7502,
-    "simulation": {
-      "mean": 26,
-      "variance": 52,
-      "spike": 142,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 26, "variance": 52, "spike": 142, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-sc-001",
@@ -3835,13 +3097,7 @@
     "install_height_m": 6,
     "lat": 43.2219,
     "lng": -79.7502,
-    "simulation": {
-      "mean": 67,
-      "variance": 21,
-      "spike": 93,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 67, "variance": 21, "spike": 93, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-sc-002",
@@ -3866,13 +3122,7 @@
     "install_height_m": 4.5,
     "lat": 43.2235,
     "lng": -79.7631,
-    "simulation": {
-      "mean": 21.6,
-      "variance": 9,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 21.6, "variance": 9, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-sc-002",
@@ -3897,13 +3147,7 @@
     "install_height_m": 4.5,
     "lat": 43.2232,
     "lng": -79.763,
-    "simulation": {
-      "mean": 65,
-      "variance": 23,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 65, "variance": 23, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-sc-002",
@@ -3928,13 +3172,7 @@
     "install_height_m": 4.1,
     "lat": 43.2234,
     "lng": -79.7633,
-    "simulation": {
-      "mean": 18,
-      "variance": 26,
-      "spike": 110,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 18, "variance": 26, "spike": 110, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-sc-002",
@@ -3959,13 +3197,7 @@
     "install_height_m": 4.2,
     "lat": 43.2232,
     "lng": -79.7633,
-    "simulation": {
-      "mean": 57,
-      "variance": 13,
-      "spike": 81,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 57, "variance": 13, "spike": 81, "min": 0, "max": 130 }
   },
   {
     "sensor_id": "temp-sc-003",
@@ -3990,13 +3222,7 @@
     "install_height_m": 4.9,
     "lat": 43.2152,
     "lng": -79.7627,
-    "simulation": {
-      "mean": 22.4,
-      "variance": 10,
-      "spike": 38,
-      "min": -10,
-      "max": 45
-    }
+    "simulation": { "mean": 22.4, "variance": 10, "spike": 38, "min": -10, "max": 45 }
   },
   {
     "sensor_id": "hum-sc-003",
@@ -4021,13 +3247,7 @@
     "install_height_m": 4.9,
     "lat": 43.2149,
     "lng": -79.7627,
-    "simulation": {
-      "mean": 62,
-      "variance": 26,
-      "spike": 92,
-      "min": 0,
-      "max": 100
-    }
+    "simulation": { "mean": 62, "variance": 26, "spike": 92, "min": 0, "max": 100 }
   },
   {
     "sensor_id": "aqi-sc-003",
@@ -4052,13 +3272,7 @@
     "install_height_m": 4.2,
     "lat": 43.2151,
     "lng": -79.763,
-    "simulation": {
-      "mean": 20,
-      "variance": 34,
-      "spike": 120,
-      "min": 0,
-      "max": 500
-    }
+    "simulation": { "mean": 20, "variance": 34, "spike": 120, "min": 0, "max": 500 }
   },
   {
     "sensor_id": "noise-sc-003",
@@ -4083,12 +3297,6 @@
     "install_height_m": 4.6,
     "lat": 43.2149,
     "lng": -79.7629,
-    "simulation": {
-      "mean": 60,
-      "variance": 17,
-      "spike": 86,
-      "min": 0,
-      "max": 130
-    }
+    "simulation": { "mean": 60, "variance": 17, "spike": 86, "min": 0, "max": 130 }
   }
 ]

@@ -1,7 +1,6 @@
 {
   "name": "scemas-platform",
   "private": true,
-  "packageManager": "bun@1.3.10",
   "workspaces": [
     "packages/*"
   ],
@@ -26,5 +25,6 @@
     "oxfmt": "^0.41.0",
     "oxlint": "^1.57.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "packageManager": "bun@1.3.10"
 }

@@ -1,60 +1,16 @@
 {
   "regions": [
-    {
-      "id": "ancaster_gateway",
-      "label": "ancaster gateway",
-      "sensorCode": "an"
-    },
-    {
-      "id": "battlefield",
-      "label": "battlefield village",
-      "sensorCode": "sc"
-    },
-    {
-      "id": "cootes_paradise",
-      "label": "cootes paradise / westdale",
-      "sensorCode": "mc"
-    },
-    {
-      "id": "crown_point_west",
-      "label": "crown point west",
-      "sensorCode": "ee"
-    },
-    {
-      "id": "downtown_core",
-      "label": "downtown core",
-      "sensorCode": "dt"
-    },
-    {
-      "id": "dundas_central",
-      "label": "dundas central",
-      "sensorCode": "du"
-    },
-    {
-      "id": "east_mountain",
-      "label": "east mountain",
-      "sensorCode": "em"
-    },
-    {
-      "id": "kirkendall_chedoke",
-      "label": "kirkendall / chedoke",
-      "sensorCode": "kd"
-    },
-    {
-      "id": "north_end_west",
-      "label": "west harbour",
-      "sensorCode": "wf"
-    },
-    {
-      "id": "red_hill_valley",
-      "label": "red hill valley",
-      "sensorCode": "rh"
-    },
-    {
-      "id": "west_mountain",
-      "label": "west mountain",
-      "sensorCode": "wm"
-    }
+    { "id": "ancaster_gateway", "label": "ancaster gateway", "sensorCode": "an" },
+    { "id": "battlefield", "label": "battlefield village", "sensorCode": "sc" },
+    { "id": "cootes_paradise", "label": "cootes paradise / westdale", "sensorCode": "mc" },
+    { "id": "crown_point_west", "label": "crown point west", "sensorCode": "ee" },
+    { "id": "downtown_core", "label": "downtown core", "sensorCode": "dt" },
+    { "id": "dundas_central", "label": "dundas central", "sensorCode": "du" },
+    { "id": "east_mountain", "label": "east mountain", "sensorCode": "em" },
+    { "id": "kirkendall_chedoke", "label": "kirkendall / chedoke", "sensorCode": "kd" },
+    { "id": "north_end_west", "label": "west harbour", "sensorCode": "wf" },
+    { "id": "red_hill_valley", "label": "red hill valley", "sensorCode": "rh" },
+    { "id": "west_mountain", "label": "west mountain", "sensorCode": "wm" }
   ],
   "directAliases": {
     "ancaster": "ancaster_gateway",
@@ -77,18 +33,8 @@
     "west_harbour": "north_end_west"
   },
   "groupAliases": {
-    "ward_1": [
-      "cootes_paradise",
-      "kirkendall_chedoke",
-      "north_end_west"
-    ],
-    "ward_2": [
-      "downtown_core",
-      "north_end_west"
-    ],
-    "ward_5": [
-      "battlefield",
-      "red_hill_valley"
-    ]
+    "ward_1": ["cootes_paradise", "kirkendall_chedoke", "north_end_west"],
+    "ward_2": ["downtown_core", "north_end_west"],
+    "ward_5": ["battlefield", "red_hill_valley"]
   }
 }

@@ -9,7 +9,7 @@ const port = parsePort(process.argv.slice(2))
 
 const server = Bun.serve({
   port,
-  fetch: async (req) => {
+  fetch: async req => {
     const ts = new Date().toISOString()
     const method = req.method
     const url = new URL(req.url).pathname

@@ -54,14 +54,14 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.10"
+          bun-version: '1.3.10'
 
       - run: bun install
       - run: bun --filter @scemas/desktop build
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "."
+          workspaces: '.'
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -73,7 +73,7 @@ jobs:
           tauriScript: cargo tauri
           args: --target ${{ matrix.target }}
           tagName: desktop-v__VERSION__
-          releaseName: "SCEMAS Desktop v__VERSION__"
-          releaseBody: "cross-platform desktop release for SE 3A04"
+          releaseName: 'SCEMAS Desktop v__VERSION__'
+          releaseBody: 'cross-platform desktop release for SE 3A04'
           releaseDraft: true
           prerelease: false
