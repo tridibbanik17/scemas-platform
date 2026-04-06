@@ -71,8 +71,9 @@ export function UsersManager() {
       )
       await Promise.all([utils.users.list.invalidate(), utils.audit.list.invalidate()])
     },
-    onError: error => {
+    onError: async error => {
       setSubmissionError(error.message)
+      await utils.users.list.invalidate()
     },
   })
 

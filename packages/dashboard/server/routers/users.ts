@@ -206,7 +206,7 @@ export const usersRouter = router({
     })
 
     if (!target) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'account not found' })
+      return { success: true }
     }
 
     await ctx.db.delete(accounts).where(eq(accounts.id, input.userId))
