@@ -64,16 +64,12 @@ export function UsersManager() {
     },
   })
   const deleteUser = trpc.users.delete.useMutation({
-    onSuccess: async (_, variables) => {
-      utils.users.list.setData(
-        undefined,
-        current => current?.filter(u => u.id !== variables.userId) ?? current,
-      )
-      await Promise.all([utils.users.list.invalidate(), utils.audit.list.invalidate()])
+    onSuccess: async () => {
+      await Promise.all([utils.users.list.refetch(), utils.audit.list.invalidate()])
     },
     onError: async error => {
       setSubmissionError(error.message)
-      await utils.users.list.invalidate()
+      await utils.users.list.refetch()
     },
   })
 
