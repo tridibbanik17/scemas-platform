@@ -31,12 +31,6 @@ export default function OperatorDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Suspense fallback={<MetricCardsSkeleton />}>
-          <MetricCards />
-        </Suspense>
-      </div>
-
       <Suspense fallback={<ChartSkeleton label="loading region metrics" />}>
         <DashboardChartsPanelWrapper />
       </Suspense>
