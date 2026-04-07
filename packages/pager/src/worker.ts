@@ -4,6 +4,12 @@ interface Env {
   PAGER: DurableObjectNamespace<PagerRoom>
 }
 
+const CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, OPTIONS',
+  'access-control-allow-headers': 'content-type',
+}
+
 export class PagerRoom implements DurableObject {
   state: DurableObjectState
   events: Array<{ id: string; receivedAt: string; payload: unknown }> = []
@@ -17,6 +23,10 @@ export class PagerRoom implements DurableObject {
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url)
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: CORS_HEADERS })
+    }
 
     if (url.pathname === '/ws') {
       const [client, server] = Object.values(new WebSocketPair())
@@ -45,7 +55,7 @@ export class PagerRoom implements DurableObject {
         } catch {}
       }
 
-      return new Response('ok')
+      return new Response('ok', { headers: CORS_HEADERS })
     }
 
     if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '')) {
@@ -61,6 +71,7 @@ export class PagerRoom implements DurableObject {
   webSocketClose(ws: WebSocket) {
     ws.close()
   }
+  webSocketError() {}
 }
 
 export default {

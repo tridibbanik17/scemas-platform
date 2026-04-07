@@ -26,11 +26,13 @@ export function renderPage(): string {
     --fg: #1a1a1a; --muted-fg: #737068;
     --critical: #dc2626; --warning: #d97706; --low: #16a34a;
     --connected: #16a34a; --disconnected: #dc2626;
+    --raw-bg: #e8e5df;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #1a1917; --card: #242320; --border: rgba(255,255,255,0.1); --muted: #2a2926;
       --fg: #e8e6e1; --muted-fg: #9c9890;
+      --raw-bg: #353330;
     }
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -52,7 +54,8 @@ export function renderPage(): string {
   .dot.on { background: var(--connected); }
   .dot.off { background: var(--disconnected); }
   .count { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted-fg); margin-left: 8px; }
-  #feed { flex: 1; overflow-y: auto; }
+  #feed { flex: 1; overflow-y: auto; position: relative; }
+  .sentinel { pointer-events: none; width: 1px; }
   .empty {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 12px; height: 60vh; color: var(--muted-fg); font-size: 13px; padding: 16px;
@@ -70,10 +73,11 @@ export function renderPage(): string {
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .event {
+    position: absolute; left: 0; right: 0;
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
     padding: 10px 16px; min-height: 56px; border-bottom: 1px solid var(--border);
     cursor: pointer; transition: background 0.15s;
-    content-visibility: auto; contain-intrinsic-block-size: 56px;
+    background: var(--bg);
   }
   .event:hover { background: var(--muted); }
   .event-left { min-width: 0; flex: 1; }
@@ -100,13 +104,13 @@ export function renderPage(): string {
   .raw { display: none; }
   .event.expanded .raw {
     display: block; margin-top: 8px; padding: 8px; border-radius: 4px;
-    background: var(--muted); font-family: ui-monospace, monospace;
+    background: var(--raw-bg); font-family: ui-monospace, monospace;
     font-size: 11px; white-space: pre-wrap; word-break: break-all;
     color: var(--muted-fg); max-height: 200px; overflow-y: auto;
   }
-  .event.expanded { align-items: flex-start; contain-intrinsic-block-size: auto; }
+  .event.expanded { align-items: flex-start; z-index: 1; }
   footer {
-    position: sticky; bottom: 0;
+    position: sticky; bottom: 0; z-index: 10;
     padding: 8px 16px; border-top: 1px solid var(--border);
     background: var(--card); font-size: 11px; color: var(--muted-fg);
     display: flex; justify-content: space-between; gap: 8px;
@@ -139,6 +143,10 @@ export function renderPage(): string {
   <code id="url"></code>
 </footer>
 <script>
+const ROW_H = 56;
+const EXPANDED_H = 280;
+const OVERSCAN = 5;
+
 const feed = document.getElementById('feed');
 const empty = document.getElementById('empty');
 const dot = document.getElementById('dot');
@@ -146,13 +154,91 @@ const statusLabel = document.getElementById('status-label');
 const countEl = document.getElementById('count');
 const urlEl = document.getElementById('url');
 const webhookUrlEl = document.getElementById('webhook-url');
-let eventCount = 0;
-let ws;
-let retryMs = 500;
 
 const webhookUrl = location.origin + '/webhook';
 urlEl.textContent = webhookUrl;
 webhookUrlEl.textContent = webhookUrl;
+
+let items = [];
+let heights = [];
+let offsets = [];
+let totalH = 0;
+let expandedId = null;
+const pool = new Map();
+let sentinel = null;
+let rafPending = false;
+let retryMs = 500;
+
+function recalcOffsets() {
+  offsets = new Array(items.length);
+  let cum = 0;
+  for (let i = 0; i < items.length; i++) {
+    offsets[i] = cum;
+    cum += heights[i];
+  }
+  totalH = cum;
+  if (sentinel) sentinel.style.height = totalH + 'px';
+}
+
+function findStart(scrollTop) {
+  let lo = 0, hi = items.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >>> 1;
+    if (offsets[mid] + heights[mid] <= scrollTop) lo = mid + 1;
+    else hi = mid - 1;
+  }
+  return Math.max(0, lo - OVERSCAN);
+}
+
+function scheduleRender() {
+  if (!rafPending) {
+    rafPending = true;
+    requestAnimationFrame(doRender);
+  }
+}
+
+function doRender() {
+  rafPending = false;
+  if (items.length === 0) return;
+
+  const scrollTop = feed.scrollTop;
+  const viewH = feed.clientHeight;
+  const start = findStart(scrollTop);
+
+  let end = start;
+  let accH = offsets[start] || 0;
+  const limit = scrollTop + viewH + OVERSCAN * ROW_H;
+  while (end < items.length && accH < limit) {
+    accH += heights[end];
+    end++;
+  }
+
+  const needed = new Map();
+  for (let i = start; i < end; i++) needed.set(items[i].id, i);
+
+  for (const [id] of pool) {
+    if (!needed.has(id)) {
+      pool.get(id).el.remove();
+      pool.delete(id);
+    }
+  }
+
+  for (const [id, idx] of needed) {
+    if (pool.has(id)) {
+      const entry = pool.get(id);
+      if (entry.idx !== idx) {
+        entry.el.style.top = offsets[idx] + 'px';
+        entry.idx = idx;
+      }
+    } else {
+      const el = createRow(items[idx]);
+      el.style.top = offsets[idx] + 'px';
+      if (items[idx].id === expandedId) el.classList.add('expanded');
+      feed.appendChild(el);
+      pool.set(id, { el, idx });
+    }
+  }
+}
 
 function severity(n) {
   if (n === 3) return { cls: 'critical', label: 'critical' };
@@ -182,12 +268,31 @@ function extractAlert(payload) {
   return null;
 }
 
-function addEvent(evt) {
-  if (empty && empty.parentNode) empty.remove();
+function createRow(evt) {
   const a = extractAlert(evt.payload);
   const el = document.createElement('div');
   el.className = 'event';
-  el.onclick = () => el.classList.toggle('expanded');
+
+  el.onclick = () => {
+    const idx = items.findIndex(e => e.id === evt.id);
+    if (idx < 0) return;
+    const wasExpanded = expandedId === evt.id;
+
+    if (expandedId && expandedId !== evt.id) {
+      const prevIdx = items.findIndex(e => e.id === expandedId);
+      if (prevIdx >= 0) {
+        heights[prevIdx] = ROW_H;
+        const prev = pool.get(expandedId);
+        if (prev) prev.el.classList.remove('expanded');
+      }
+    }
+
+    expandedId = wasExpanded ? null : evt.id;
+    heights[idx] = wasExpanded ? ROW_H : EXPANDED_H;
+    el.classList.toggle('expanded');
+    recalcOffsets();
+    for (const [, entry] of pool) entry.el.style.top = offsets[entry.idx] + 'px';
+  };
 
   if (a) {
     const s = severity(a.severity);
@@ -222,14 +327,47 @@ function addEvent(evt) {
       '</div>';
   }
 
-  feed.prepend(el);
-  eventCount++;
-  countEl.textContent = eventCount + ' event' + (eventCount === 1 ? '' : 's');
+  return el;
+}
+
+function ensureFeed() {
+  if (empty && empty.parentNode) empty.remove();
+  if (!sentinel) {
+    sentinel = document.createElement('div');
+    sentinel.className = 'sentinel';
+    feed.appendChild(sentinel);
+  }
+}
+
+function updateCount() {
+  countEl.textContent = items.length + ' event' + (items.length === 1 ? '' : 's');
+}
+
+function setEvents(evts) {
+  for (const [, entry] of pool) entry.el.remove();
+  pool.clear();
+  expandedId = null;
+  items = evts;
+  heights = new Array(evts.length).fill(ROW_H);
+  ensureFeed();
+  recalcOffsets();
+  scheduleRender();
+  updateCount();
+}
+
+function addEvent(evt) {
+  ensureFeed();
+  items.unshift(evt);
+  heights.unshift(ROW_H);
+  for (const [, entry] of pool) entry.idx++;
+  recalcOffsets();
+  scheduleRender();
+  updateCount();
 }
 
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(proto + '//' + location.host + '/ws');
+  const ws = new WebSocket(proto + '//' + location.host + '/ws');
   ws.onopen = () => {
     dot.className = 'dot on';
     statusLabel.textContent = 'connected';
@@ -246,13 +384,16 @@ function connect() {
   ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
-      if (Array.isArray(msg)) { msg.forEach(addEvent); }
+      if (Array.isArray(msg)) { setEvents(msg); }
       else { addEvent(msg); }
     } catch (err) {
       console.error('[pager] failed to process message', err, e.data);
     }
   };
 }
+
+feed.addEventListener('scroll', scheduleRender, { passive: true });
+window.addEventListener('resize', scheduleRender, { passive: true });
 connect();
 </script>
 </body>
