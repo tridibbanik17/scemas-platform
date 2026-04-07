@@ -36,10 +36,11 @@ export function renderPage(): string {
     }
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { height: 100dvh; overflow: hidden; }
   body {
     font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
     background: var(--bg); color: var(--fg);
-    min-height: 100dvh; display: flex; flex-direction: column;
+    height: 100%; display: flex; flex-direction: column;
     -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   }
   header {
@@ -54,7 +55,7 @@ export function renderPage(): string {
   .dot.on { background: var(--connected); }
   .dot.off { background: var(--disconnected); }
   .count { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted-fg); margin-left: 8px; }
-  #feed { flex: 1; overflow-y: auto; position: relative; }
+  #feed { flex: 1; height: 100%; overflow-y: auto; position: relative; }
   .sentinel { pointer-events: none; width: 1px; }
   .empty {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -144,8 +145,6 @@ export function renderPage(): string {
 </footer>
 <script>
 const ROW_H = 56;
-const EXPANDED_H = 280;
-const OVERSCAN = 5;
 
 const feed = document.getElementById('feed');
 const empty = document.getElementById('empty');
@@ -169,25 +168,29 @@ let sentinel = null;
 let rafPending = false;
 let retryMs = 500;
 
+function overscan() {
+  return Math.max(3, Math.ceil(feed.clientHeight / ROW_H));
+}
+
 function recalcOffsets() {
   offsets = new Array(items.length);
   let cum = 0;
   for (let i = 0; i < items.length; i++) {
     offsets[i] = cum;
-    cum += heights[i];
+    cum += (heights[i] || ROW_H);
   }
   totalH = cum;
   if (sentinel) sentinel.style.height = totalH + 'px';
 }
 
-function findStart(scrollTop) {
+function findStart(scrollTop, buf) {
   let lo = 0, hi = items.length - 1;
   while (lo <= hi) {
     const mid = (lo + hi) >>> 1;
-    if (offsets[mid] + heights[mid] <= scrollTop) lo = mid + 1;
+    if (offsets[mid] + (heights[mid] || ROW_H) <= scrollTop) lo = mid + 1;
     else hi = mid - 1;
   }
-  return Math.max(0, lo - OVERSCAN);
+  return Math.max(0, lo - buf);
 }
 
 function scheduleRender() {
@@ -203,24 +206,29 @@ function doRender() {
 
   const scrollTop = feed.scrollTop;
   const viewH = feed.clientHeight;
-  const start = findStart(scrollTop);
+  if (viewH === 0) return;
+
+  const buf = overscan();
+  const start = findStart(scrollTop, buf);
 
   let end = start;
   let accH = offsets[start] || 0;
-  const limit = scrollTop + viewH + OVERSCAN * ROW_H;
+  const limit = scrollTop + viewH + buf * ROW_H;
   while (end < items.length && accH < limit) {
-    accH += heights[end];
+    accH += (heights[end] || ROW_H);
     end++;
   }
 
   const needed = new Map();
   for (let i = start; i < end; i++) needed.set(items[i].id, i);
 
+  const stale = [];
   for (const [id] of pool) {
-    if (!needed.has(id)) {
-      pool.get(id).el.remove();
-      pool.delete(id);
-    }
+    if (!needed.has(id)) stale.push(id);
+  }
+  for (const id of stale) {
+    pool.get(id).el.remove();
+    pool.delete(id);
   }
 
   for (const [id, idx] of needed) {
@@ -236,6 +244,16 @@ function doRender() {
       if (items[idx].id === expandedId) el.classList.add('expanded');
       feed.appendChild(el);
       pool.set(id, { el, idx });
+    }
+  }
+
+  if (expandedId && pool.has(expandedId)) {
+    const entry = pool.get(expandedId);
+    const measured = entry.el.offsetHeight;
+    if (measured > 0 && Math.abs(measured - heights[entry.idx]) > 2) {
+      heights[entry.idx] = measured;
+      recalcOffsets();
+      for (const [, e] of pool) e.el.style.top = offsets[e.idx] + 'px';
     }
   }
 }
@@ -288,10 +306,10 @@ function createRow(evt) {
     }
 
     expandedId = wasExpanded ? null : evt.id;
-    heights[idx] = wasExpanded ? ROW_H : EXPANDED_H;
     el.classList.toggle('expanded');
+    heights[idx] = wasExpanded ? ROW_H : Math.max(ROW_H, el.offsetHeight);
     recalcOffsets();
-    for (const [, entry] of pool) entry.el.style.top = offsets[entry.idx] + 'px';
+    scheduleRender();
   };
 
   if (a) {
@@ -343,15 +361,19 @@ function updateCount() {
   countEl.textContent = items.length + ' event' + (items.length === 1 ? '' : 's');
 }
 
-function setEvents(evts) {
+function clearPool() {
   for (const [, entry] of pool) entry.el.remove();
   pool.clear();
+}
+
+function setEvents(evts) {
+  clearPool();
   expandedId = null;
   items = evts;
   heights = new Array(evts.length).fill(ROW_H);
   ensureFeed();
   recalcOffsets();
-  scheduleRender();
+  doRender();
   updateCount();
 }
 
@@ -359,9 +381,10 @@ function addEvent(evt) {
   ensureFeed();
   items.unshift(evt);
   heights.unshift(ROW_H);
-  for (const [, entry] of pool) entry.idx++;
+  const ids = Array.from(pool.keys());
+  for (const id of ids) pool.get(id).idx++;
   recalcOffsets();
-  scheduleRender();
+  doRender();
   updateCount();
 }
 
