@@ -4,6 +4,14 @@
 
 ---
 
+## SCEMAS Demo Video
+
+🎥 **Demo Video Link:** https://youtu.be/Z0CMdAJFqNo
+
+This video demonstrates the working implementation of SCEMAS, including core platform functionality, subsystem interactions, and how the system satisfies key functional and non-functional requirements.
+
+---
+
 ## Deliverable 1 – Software Requirements Specification
 
 - Provided definitions of all terms, acronyms, and abbreviations required to properly interpret the specification
